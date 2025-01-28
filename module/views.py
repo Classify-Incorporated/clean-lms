@@ -92,6 +92,13 @@ def createModule(request, subject_id):
         if not start_date or not end_date:
             messages.error(request, "Please provide both start and end dates.")
             has_errors = True
+        else:
+            start_date_obj = timezone.datetime.fromisoformat(start_date).date()
+            end_date_obj = timezone.datetime.fromisoformat(end_date).date()
+            
+            if end_date_obj < start_date_obj:
+                messages.error(request, "End date must be later than the start date.")
+                has_errors = True
         
         if has_errors or not form.is_valid():
             return redirect('subjectDetail', pk=subject_id)
@@ -162,6 +169,13 @@ def createModuleCM(request, subject_id):
         if not start_date or not end_date:
             messages.error(request, "Please provide both start and end dates.")
             has_errors = True
+        else:
+            start_date_obj = timezone.datetime.fromisoformat(start_date).date()
+            end_date_obj = timezone.datetime.fromisoformat(end_date).date()
+            
+            if end_date_obj < start_date_obj:
+                messages.error(request, "End date must be later than the start date.")
+                has_errors = True
                 
         if has_errors or not form.is_valid():
             return redirect('classroom_mode', pk=subject_id)

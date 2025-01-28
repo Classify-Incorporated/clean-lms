@@ -28,6 +28,7 @@ class scheduleForm(forms.ModelForm):
 
 class subjectForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
+        only_photo = kwargs.pop('only_photo', False)
         super(subjectForm, self).__init__(*args, **kwargs)
         teacher_role = Role.objects.get(name__iexact='teacher')
 
@@ -44,16 +45,18 @@ class subjectForm(forms.ModelForm):
                 id=self.instance.assign_teacher.id
             )
 
+        if only_photo:
+            for field in self.fields:
+                if field != 'subject_photo':  # Allow only subject_photo to be editable
+                    self.fields[field].widget.attrs['readonly'] = True
+                    self.fields[field].widget.attrs['disabled'] = True
+
     class Meta:
         model = Subject
         exclude = ['allow_substitute_teacher']
         widgets = {
             'subject_name': forms.TextInput(attrs={'class': 'form-control'}),
             'subject_short_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'subject_photo': forms.ClearableFileInput(attrs={
-                'class': 'custom-file-input',
-                'id': 'customFile',
-            }),
             'assign_teacher': forms.Select(attrs={
                 'class': 'form-control selectpicker',
                 'data-live-search': 'true',
@@ -72,7 +75,15 @@ class subjectForm(forms.ModelForm):
             'subject_code': forms.TextInput(attrs={'class': 'form-control'}),
             'room_number': forms.TextInput(attrs={'class': 'form-control'}),
             'unit': forms.NumberInput(attrs={'class': 'form-control'}),
+            'subject_descriptive_title': forms.TextInput(attrs={'class': 'form-control'}),
         }
+
+
+class subjectPhotoForm(forms.ModelForm):
+    """ Form specifically for updating only the subject photo """
+    class Meta:
+        model = Subject
+        fields = ['subject_photo']
 
 
 

@@ -83,18 +83,19 @@ class profileForm(forms.ModelForm):
 class StudentUpdateForm(forms.ModelForm):
     phone_number = forms.CharField(
         required=False,
-        max_length=15,  # Maintain the max length if needed, but remove validation
+        max_length=15, 
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter phone number'})
     )
 
     class Meta:
         model = Profile
-        fields = ['student_photo', 'phone_number', 'gender', 'address','grade_year_level']
+        fields = ['student_photo', 'phone_number', 'gender', 'address','grade_year_level','course']
         widgets = {
             'student_photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
             'gender': forms.Select(attrs={'class': 'form-control'}),
             'address': forms.Textarea(attrs={'class': 'form-control'}),
             'grade_year_level': forms.Select(attrs={'class': 'form-control'}),
+            'course': forms.Select(attrs={'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -106,6 +107,7 @@ class StudentUpdateForm(forms.ModelForm):
             self.initial['phone_number'] = '+63' + initial_phone_number
         elif not initial_phone_number:
             self.initial['phone_number'] = '+63'
+            
 
 
 class registrarProfileForm(forms.ModelForm):

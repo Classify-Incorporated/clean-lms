@@ -4,6 +4,7 @@ urlpatterns = [
     path('subject/', subjectList, name='subject'),
     path('createSubject/', createSubject, name='createSubject'), 
     path('updateSubject/<int:pk>/', updateSubject, name='updateSubject'),
+    path('updateSubjectPhoto/<int:pk>/', updateSubjectPhoto, name='updateSubjectPhoto'),
     path('deleteSubject/<int:pk>/', deleteSubject, name='deleteSubject'),
     path('check-duplicate-subject/', check_duplicate_subject, name='check_duplicate_subject'),
     path('filter_substitute_teacher/<int:assign_teacher_id>/', filter_substitute_teacher, name='filter_substitute_teacher'),

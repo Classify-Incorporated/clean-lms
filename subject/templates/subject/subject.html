@@ -64,7 +64,7 @@
                     <th>Teacher Name</th>
                     <th>Substitute Teacher Name</th>
                     <th>Room Number</th>
-                    {% if perms.subject.add_subject %}
+                    {% if perms.subject.view_subject %}
                       <th>Action</th>
                     {% endif %}
                   </tr>
@@ -83,13 +83,20 @@
                       {% endif %}
                     </td>
                       <td>{{ subject.room_number|default:"--" }}</td>
-                      {% if perms.subject.add_subject %}
+                      {% if perms.subject.view_subject %}
                         <td>
                           <div class="dropdown">
                             <button class="btn btn-white btn-sm no-caret" type="button" id="dropdownMenuButton{{ subject.id }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button>
                             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton{{ subject.id }}">
-                              <a class="dropdown-item" href="javascript:void(0);" onclick="openEditModal({{ subject.id }})"><i class="fas fa-edit"></i> Update</a>
-                              <a class="dropdown-item" href="javascript:void(0);" onclick="confirmDelete({{ subject.id }})"><i class="fas fa-trash"></i> Delete</a>
+                              {% if perms.subject.add_subject %}
+                                <a class="dropdown-item" href="javascript:void(0);" onclick="openEditModal({{ subject.id }})"><i class="fas fa-edit"></i> Update</a>              
+                                <a class="dropdown-item" href="javascript:void(0);" onclick="confirmDelete({{ subject.id }})"><i class="fas fa-trash"></i> Delete</a>
+                              {% endif %}  
+                              {% if request.user.profile.role.name|lower == "teacher" %}
+                                <a class="dropdown-item" href="{% url 'updateSubjectPhoto' subject.id %}">
+                                  <i class="fas fa-edit"></i> Change Subject Photo
+                                </a>         
+                              {% endif %}  
                             </div>
                           </div>
                         </td>

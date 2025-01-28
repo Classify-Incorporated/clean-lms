@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Grade Essays and Documents for {{ activity.activity_name }}
+{% endblock %}
+
+{% block content %}
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0">Grade Essays and Documents for {{ activity.activity_name }}</h1>
+          </div>
+          <!-- /.col -->
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                <a href="#">Home</a>
+              </li>
+              <li class="breadcrumb-item active">Grade Essays</li>
+            </ol>
+          </div>
+          <!-- /.col -->
+        </div>
+        <!-- /.row -->
+      </div>
+      <!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        {% if error %}
+          <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" action="{% url 'grade_essays' activity.id %}">
+          {% csrf_token %}
+          <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-light d-flex justify-content-between align-items-center">
+              <h5 class="m-0">Essay Submissions</h5>
+            </div>
+            <div class="card-body">
+              <table class="table table-hover table-bordered">
+                <thead class="text-center">
+                  <tr>
+                    <th>Student</th>
+                    <th>Type</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="text-center">
+                  {% for student_question in student_questions %}
+                    <tr>
+                      <td>{{ student_question.student.first_name }} {{ student_question.student.last_name }}</td>
+                      <td>{{ student_question.activity_question.quiz_type.name }}</td>
+                      <td>
+                        <a href="{% url 'grade_individual_essay' activity.id student_question.id %}" class="btn btn-sm btn-secondary">View Answer</a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Back Button -->
+          <div class="text-center">
+            <a href="{% url 'subjectDetail' activity.subject.id %}" class="btn btn-lg btn-outline-secondary shadow-sm"><i class="fas fa-arrow-left"></i> Back to Subject</a>
+          </div>
+        </form>
+      </div>
+    </section>
+    <!-- /.content -->
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('input[type="number"]').forEach((input) => {
+        input.addEventListener('input', function () {
+          const max = parseFloat(this.getAttribute('max'))
+          if (parseFloat(this.value) > max) {
+            this.setCustomValidity('Score cannot exceed the maximum score')
+          } else {
+            this.setCustomValidity('')
+          }
+        })
+      })
+    })
+  </script>
+{% endblock %}

@@ -1,0 +1,135 @@
+<div class="message-view-container">
+  <!-- Parent message details -->
+  <h4>{{ message.subject }}</h4>
+  <p>
+    <strong>From:</strong> {% if message.sender == request.user %}
+      You
+    {% else %}
+      {{ message.sender.get_full_name }}
+    {% endif %}
+  </p>
+  <p>
+    <strong>Sent:</strong> {{ message.timestamp|date:'l, F j, Y, g:i A' }}
+  </p>
+  <p>{{ message.body|safe }}</p>
+
+  <hr />
+  <h5>Replies:</h5>
+
+  <!-- Display replies with conditional alignment -->
+  <div class="replies">
+    {% for reply in replies %}
+      <!-- Check if the reply is from the user or the other person -->
+      <div class="{% if reply.sender == request.user %}
+          
+          text-right
+
+        {% else %}
+          
+          text-left
+
+        {% endif %} reply-container">
+        <div class="message-header">
+          <strong>
+            {% if reply.sender == request.user %}
+              You
+            {% else %}
+              {{ reply.sender.get_full_name }}
+            {% endif %}&nbsp; <small>{{ reply.timestamp|date:'l, F j, Y, g:i A' }}</small>
+          </strong>
+          <br />
+        </div>
+        <div class="message-body">{{ reply.body|safe }}</div>
+      </div>
+    {% empty %}
+      <p>No replies yet.</p>
+    {% endfor %}
+  </div>
+
+  <!-- Reply form -->
+  <div class="reply-form mt-3">
+    <form method="post" action="{% url 'reply_message' message.id %}">
+      {% csrf_token %}
+      <div class="form-group">
+        <textarea name="body" rows="4" class="form-control" placeholder="Write your reply..." required></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary">Reply</button>
+    </form>
+  </div>
+</div>
+
+<style>
+  /* Message view container */
+  .message-view-container {
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .dark-mode .message-view-container {
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    background-color: #343a40;
+    color: #ffffff;
+  }
+  
+  /* Align replies */
+  .reply-container.text-right {
+    text-align: right;
+    background-color: #e1f5fe; /* Light blue background for sender */
+    margin-left: auto;
+    border-radius: 10px;
+    padding: 10px;
+    max-width: 75%;
+    margin-top: 15px;
+    margin-bottom: 15px;
+  }
+  
+  /* Align replies */
+  .dark-mode .reply-container.text-right {
+    text-align: right;
+    background-color: #e1f5fe; /* Light blue background for sender */
+    margin-left: auto;
+    border-radius: 10px;
+    padding: 10px;
+    max-width: 75%;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    color: #343a40;
+  }
+  
+  .reply-container.text-left {
+    text-align: left;
+    background-color: #f1f1f1; /* Light gray background for recipient */
+    margin-right: auto;
+    border-radius: 10px;
+    padding: 10px;
+    max-width: 75%;
+    margin-top: 15px;
+    margin-bottom: 15px;
+  }
+  
+  .dark-mode .reply-container.text-left {
+    text-align: left;
+    background-color: #f1f1f1; /* Light gray background for recipient */
+    margin-right: auto;
+    border-radius: 10px;
+    padding: 10px;
+    max-width: 75%;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    color: #343a40;
+  }
+  
+  /* Reply message styles */
+  .message-header {
+    margin-bottom: 5px;
+  }
+  
+  .message-body {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+</style>

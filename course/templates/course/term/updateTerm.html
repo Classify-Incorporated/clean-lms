@@ -1,0 +1,9 @@
+
+<!-- update term .html -->
+<form method="post" action="{% url 'updateTerm' term.id %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Submit</button>
+    <a href="{% url 'termList' %}" class="btn btn-secondary">Back</a>
+  </form>
+  

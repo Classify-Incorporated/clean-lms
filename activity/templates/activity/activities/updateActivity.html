@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Update Activity
+{% endblock %}
+
+{% block content %}
+  <div class="content-wrapper">
+    <!-- Content Header with centered title and modern typography -->
+    <div class="content-header py-4">
+      <div class="container-fluid">
+        <h1 class="display-5 text-center">Update Activity: {{ activity.activity_name }}</h1>
+        <p class="text-center text-muted">Please fill out the form to update the activity details.</p>
+      </div>
+    </div>
+
+    <!-- Main content with centered form card -->
+    <section class="content">
+      <div class="container-fluid d-flex justify-content-center">
+        <!-- Card wrapper for the form, centered with col-md-8 -->
+        <div class="col-md-8">
+          <div class="card shadow-lg border-0 mb-4">
+            <!-- Card header with a primary gradient and white text for a polished look -->
+            <div class="card-header bg-success text-white py-3">
+              <h6 class="m-0 font-weight-bold text-uppercase">Update Activity Details</h6>
+            </div>
+
+            <!-- Card body with enhanced spacing and form controls -->
+            <div class="card-body px-5 py-4">
+              <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="activity_type" value="{{ activity.activity_type.id }}">
+                <input type="hidden" name="subject" value="{{ activity.subject.id }}">
+
+                <!-- First Row: Activity Name, Activity Type, Term -->
+                <div class="row mb-4">
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <label for="activity_name">
+                        Activity Name
+                        <span data-bs-toggle="tooltip" data-bs-placement="right" title="This is the name of the activity you are editing."><i class="fas fa-info-circle text-muted"></i></span>
+                      </label>
+                      <input type="text" id="activity_name" name="activity_name" value="{{ form.activity_name.value }}" class="form-control shadow-sm" required />
+                      <div class="invalid-feedback">Please provide an activity name.</div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <label for="term">
+                        Term
+                        <span data-bs-toggle="tooltip" data-bs-placement="right" title="Select the term in which the activity will take place."><i class="fas fa-info-circle text-muted"></i></span>
+                      </label>
+                      {{ form.term }}
+                      <div class="invalid-feedback">Please select a term.</div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <label for="module">
+                        Select Module
+                        <span data-bs-toggle="tooltip" data-bs-placement="right" title="Select the module related to this activity."><i class="fas fa-info-circle text-muted"></i></span>
+                      </label>
+                      <select id="module" name="module" class="form-control shadow-sm" required>
+                        {% for module in modules %}
+                          <option value="{{ module.id }}" {% if module.id == form.module.value %}selected{% endif %}>{{ module.file_name }}</option>
+                        {% endfor %}
+                      </select>
+                      <div class="invalid-feedback">Please select a module.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Second Row: Module Selection, Max Retakes, Retake Method -->
+                <div class="row mb-4">
+                  
+
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <label for="max_retake">
+                        Maximum Attempt
+                        <span data-bs-toggle="tooltip" data-bs-placement="right" title="Set the maximum number of attempts allowed for this activity."><i class="fas fa-info-circle text-muted"></i></span>
+                      </label>
+                      {{ form.max_retake }}
+                      <div class="invalid-feedback">Please provide a valid number of attempts.</div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <label for="retake_method">
+                        Retake Method
+                        <span data-bs-toggle="tooltip" data-bs-placement="right" title="Choose how the retake score will be calculated (highest or lowest)."><i class="fas fa-info-circle text-muted"></i></span>
+                      </label>
+                      <select id="retake_method" name="retake_method" class="form-control shadow-sm" required>
+                        <option value="highest" {% if form.retake_method.value == 'highest' %}selected{% endif %}>Highest Score</option>
+                        <option value="lowest" {% if form.retake_method.value == 'lowest' %}selected{% endif %}>Lowest Score</option>
+                      </select>
+                      <div class="invalid-feedback">Please select a retake method.</div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <label for="time_duration">
+                        Time Duration
+                        <span data-bs-toggle="tooltip" data-bs-placement="right" title="Set the time duration for this activity."><i class="fas fa-info-circle text-muted"></i></span>
+                      </label>
+                      {{ form.time_duration }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Third Row: Start Time, End Time -->
+                <div class="row mb-4">
+                  <div class="col-md-3">
+                    <div class="form-group">
+                      <label for="passing_score">
+                        Passing Score
+                        <span data-bs-toggle="tooltip" data-bs-placement="right" title="Set the passing score for this activity."><i class="fas fa-info-circle text-muted"></i></span>
+                      </label>
+                      {{ form.passing_score }}
+                      <div class="invalid-feedback">Please provide a valid number.</div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-1">
+                    <div class="form-group">
+                      <label for="passing_score">
+                        Type
+                        <span data-bs-toggle="tooltip" data-bs-placement="right" title="Set the passing score for this activity."><i class="fas fa-info-circle text-muted"></i></span>
+                      </label>
+                      {{ form.passing_score_type }}
+                      <div class="invalid-feedback">Please provide a valid number.</div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <label for="start_time">
+                        Start Time
+                        <span data-bs-toggle="tooltip" data-bs-placement="right" title="Set the starting time of the activity."><i class="fas fa-info-circle text-muted"></i></span>
+                      </label>
+                      <input type="datetime-local" id="start_time" name="start_time" value="{{ form.start_time.value|date:'Y-m-d\\TH:i' }}" class="form-control shadow-sm" required />
+                      <div class="invalid-feedback">Please select a start time.</div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <label for="end_time">
+                        End Time
+                        <span data-bs-toggle="tooltip" data-bs-placement="right" title="Set the deadline for completing the activity."><i class="fas fa-info-circle text-muted"></i></span>
+                      </label>
+                      <input type="datetime-local" id="end_time" name="end_time" value="{{ form.end_time.value|date:'Y-m-d\\TH:i' }}" class="form-control shadow-sm" required />
+                      <div class="invalid-feedback">Please select an end time.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Remedial Activity checkbox -->
+                <div class="form-check mb-4">
+                  <input type="checkbox" id="remedial" name="remedial" class="form-check-input" {% if form.remedial.value %}checked{% endif %} />
+                  <label for="remedial" class="form-check-label">
+                    Remedial Activity
+                    <span data-bs-toggle="tooltip" data-bs-placement="right" title="Check this box if this is a remedial activity for selected students."><i class="fas fa-info-circle text-muted"></i></span>
+                  </label>
+                </div>
+
+                <!-- Remedial Students selection (only visible if checkbox is checked) -->
+                <div class="form-group" id="remedial_students_field" style="display: {% if form.remedial.value %}block{% else %}none{% endif %};">
+                  <label for="remedial_students">
+                    Select Students
+                    <span data-bs-toggle="tooltip" data-bs-placement="right" title="Select the students who will participate in this remedial activity."><i class="fas fa-info-circle text-muted"></i></span>
+                  </label>
+                  <select id="remedial_students" name="remedial_students" class="form-control selectpicker shadow-sm" multiple data-live-search="true" data-actions-box="true">
+                    {% for student in students %}
+                      <option value="{{ student.id }}" {% if student.id in form.remedial_students.value %}selected{% endif %}>{{ student.get_full_name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <!-- Form submission buttons with sleek design -->
+                <div class="text-right mt-4">
+                  <button type="submit" class="btn btn-primary btn-lg rounded-pill shadow-lg px-5">Save Changes</button>
+                  <a href="javascript:history.back()" class="btn btn-secondary btn-lg rounded-pill shadow-lg px-5">Back</a>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Include Bootstrap Tooltip JS and Font Awesome for icons -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- JavaScript section for dynamic behavior -->
+  <script>
+    // Initialize Bootstrap tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+
+    // Show/hide remedial students field based on checkbox toggle
+    document.getElementById('remedial').addEventListener('change', function () {
+      var remedialStudentField = document.getElementById('remedial_students_field')
+      if (this.checked) {
+        remedialStudentField.style.display = 'block';
+        // Initialize selectpicker once remedial checkbox is checked
+        $('.selectpicker').selectpicker('refresh');
+      } else {
+        remedialStudentField.style.display = 'none';
+        // Destroy selectpicker if remedial is unchecked
+        $('.selectpicker').selectpicker('destroy');
+      }
+    });
+  </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Set the minimum date and time to the current date and time for both fields
+      var now = new Date();
+      var year = now.getFullYear();
+      var month = (now.getMonth() + 1).toString().padStart(2, '0'); // Months are 0-indexed
+      var day = now.getDate().toString().padStart(2, '0');
+      var hours = now.getHours().toString().padStart(2, '0');
+      var minutes = now.getMinutes().toString().padStart(2, '0');
+  
+      var currentDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+      
+      // Apply min attribute to both start_time and end_time fields
+      document.getElementById('start_time').setAttribute('min', currentDateTime);
+      document.getElementById('end_time').setAttribute('min', currentDateTime);
+  
+      // Update the min attribute of end_time whenever start_time changes to prevent selecting an end time before the start time
+      document.getElementById('start_time').addEventListener('input', function() {
+        document.getElementById('end_time').setAttribute('min', this.value);
+      });
+    });
+  </script>
+{% endblock %}

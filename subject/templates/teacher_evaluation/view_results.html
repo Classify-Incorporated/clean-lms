@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0 text-primary">Teacher Evaluation Results</h1>
+                    <p class="text-muted">Summary of student feedback and ratings for the teacher's performance</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <section class="content">
+        <div class="container-fluid">
+            <!-- Average Ratings Section -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Average Ratings</h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Below are the average ratings based on student responses:</p>
+                    <ul class="list-unstyled">
+                        {% for question, avg_rating in average_ratings.items %}
+                            <li class="d-flex align-items-center mb-3">
+                                <div class="mr-3 font-weight-bold">{{ question }}</div>
+                                <div class="star-rating mr-2">
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= avg_rating|floatformat:0 %}
+                                            <i class="fas fa-star" style="color: #FFD700;"></i>
+                                        {% elif forloop.counter == avg_rating|floatformat:0|add:1 and avg_rating|floatformat:1 != avg_rating|floatformat:0 %}
+                                            <i class="fas fa-star-half-alt" style="color: #FFD700;"></i>
+                                        {% else %}
+                                            <i class="far fa-star" style="color: #FFD700;"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <span class="text-muted">({{ avg_rating|floatformat:1 }})</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Student Feedback Section -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Student Feedback</h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Students provided the following comments regarding the teacher’s performance:</p>
+                    <ul class="list-unstyled">
+                        {% for item in feedback_with_students %}
+                            <li class="mb-3">
+                                <blockquote class="blockquote">
+                                    <p class="mb-0 text-muted">“{{ item.general_feedback }}”</p>
+                                    {% if not is_teacher %}
+                                        <footer class="blockquote-footer">{{ item.student__first_name }} {{ item.student__last_name }}</footer>
+                                    {% endif %}
+                                </blockquote>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+{% endblock %}

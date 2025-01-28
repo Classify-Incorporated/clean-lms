@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Activity Progress by Subject
+{% endblock %}
+
+{% block content %}
+  <div class="content-wrapper">
+    <!-- Content Header -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-3">
+          <div class="col-sm-6">
+            <h1 class="display-4">Activity Progress by Subject</h1>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <!-- Accordion for Subjects -->
+        <div class="accordion" id="subjectsAccordion">
+          {% for subject, items in subjects.items %}
+            <div class="card shadow-sm mb-3">
+              <div class="card-header bg-success" id="heading{{ forloop.counter }}">
+                <h5 class="mb-0">
+                  <button class="btn text-light" type="button" data-toggle="collapse" data-target="#collapse{{ forloop.counter }}" aria-expanded="true" aria-controls="collapse{{ forloop.counter }}">
+                    {{ subject.subject_name }}
+                    <small class="badge badge-warning ml-3">{{ items.modules|length }} Modules, {{ items.activities|length }} Activities</small>
+                    <small class="ml-2 text-muted">(Click to expand)</small>
+                  </button>
+                </h5>
+              </div>
+
+              <div id="collapse{{ forloop.counter }}" class="collapse" aria-labelledby="heading{{ forloop.counter }}" data-parent="#subjectsAccordion">
+                <div class="card-body">
+                  <!-- Table for Modules -->
+                  <h5>Modules</h5>
+                  <table class="table table-hover table-bordered">
+                    <thead class="thead bg-primary text-center">
+                      <tr>
+                        <th>#</th>
+                        <th>Module Name</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody class="text-center">
+                      {% for module in items.modules %}
+                        <tr>
+                          <td>{{ forloop.counter }}</td>
+                          <td>{{ module.file_name }}</td>
+                          <td>
+                            <a href="{% url 'detailModuleProgress' module_id=module.id %}" class="btn btn-info btn-sm">View Module</a>
+                          </td>
+                        </tr>
+                      {% empty %}
+                        <tr>
+                          <td colspan="4">No modules available.</td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+
+                  <br />
+
+                  <!-- Table for Activities -->
+                  <h5>Activities</h5>
+                  <table class="table table-hover table-bordered">
+                    <thead class="thead bg-primary text-center">
+                      <tr>
+                        <th>#</th>
+                        <th>Activity Name</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody class="text-center">
+                      {% for activity in items.activities %}
+                        <tr>
+                          <td>{{ forloop.counter }}</td>
+                          <td>{{ activity.activity_name }}</td>
+                          <td>
+                            <a href="{% url 'activityProgress' activity_id=activity.id %}" class="btn btn-info btn-sm">View Activity</a>
+                          </td>
+                        </tr>
+                      {% empty %}
+                        <tr>
+                          <td colspan="4">No activities available.</td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  </div>
+{% endblock %}

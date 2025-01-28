@@ -1,0 +1,296 @@
+{% extends 'base.html' %}
+{% block title %}
+  Subjects
+{% endblock %}
+{% block content %}
+  <!-- Page Heading with LMS Icon -->
+  <div class="content-wrapper">
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="d-flex align-items-center mb-3">
+          <i class="fas fa-book text-success" style="font-size: 2.0rem; margin-right: 10px;"></i>
+          <h1 class="text-left mb-0 display-10">
+            {% now 'Y' as current_year %}
+            {% if selected_semester %}
+              <h1 class="font-weight-bold text-dark">{{ selected_semester.semester_name }} - {{ current_year }}-{{ current_year|add:'1' }} Subjects</h1>
+            {% else %}
+              <h1 class="font-weight-bold text-dark">Subjects ({{ current_year }}-{{ current_year|add:'1' }})</h1>
+            {% endif %}
+          </h1>
+        </div>
+      </div>
+    </div>
+
+    <!-- Semester Dropdown Filter -->
+    <div class="container-fluid mb-3">
+      <form method="get" class="form-inline">
+        <label for="semester-select" class="mr-2">Select Semester:</label>
+        <select name="semester" id="semester-select" class="form-control mr-3" onchange="this.form.submit()">
+          <option value="">All Semesters</option>
+          {% for semester in semesters %}
+            <option value="{{ semester.id }}" {% if selected_semester and selected_semester.id == semester.id %}selected{% endif %}>
+              {{ semester.semester_name }} - 
+                {% if semester.start_date|date:"Y" == semester.end_date|date:"Y" %}
+                    {{ semester.start_date|date:"Y" }}
+                {% else %}
+                    {{ semester.start_date|date:"Y" }}-{{ semester.end_date|date:"Y" }}
+                {% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </form>
+    </div>
+
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <!-- DataTales Example -->
+        <div class="card shadow mb-4">
+          <div class="card-header py-3">
+            {% if perms.subject.add_subject %}
+              <button class="btn btn-success" id="openAddModalBtn">Add New Subject</button>
+              <button class="btn btn-info" id="openImportModalBtn">Import Subjects</button>
+            {% endif %}
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-bordered table-striped" id="dataTable" width="100%" cellspacing="0">
+                <thead class="text-center bg-primary">
+                  <tr>
+                    <th>Subject Name</th>
+                    <th>Subject Short Name</th>
+                    <th>Subject Code</th>
+                    <th>Teacher Name</th>
+                    <th>Substitute Teacher Name</th>
+                    <th>Room Number</th>
+                    {% if perms.subject.add_subject %}
+                      <th>Action</th>
+                    {% endif %}
+                  </tr>
+                </thead>
+                <tbody class="text-center">
+                  {% for subject in subjects %}
+                    <tr>
+                      <td>{{ subject.subject_name }}</td>
+                      <td>{{ subject.subject_short_name }}</td>
+                      <td>{{ subject.subject_code }}</td>
+                      <td>{{ subject.assign_teacher.first_name }} {{ subject.assign_teacher.last_name }}</td>
+                      <td>{% if subject.substitute_teacher %}
+                        {{ subject.substitute_teacher.first_name }} {{ subject.substitute_teacher.last_name }}
+                      {% else %}
+                        --
+                      {% endif %}
+                    </td>
+                      <td>{{ subject.room_number|default:"--" }}</td>
+                      {% if perms.subject.add_subject %}
+                        <td>
+                          <div class="dropdown">
+                            <button class="btn btn-white btn-sm no-caret" type="button" id="dropdownMenuButton{{ subject.id }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button>
+                            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton{{ subject.id }}">
+                              <a class="dropdown-item" href="javascript:void(0);" onclick="openEditModal({{ subject.id }})"><i class="fas fa-edit"></i> Update</a>
+                              <a class="dropdown-item" href="javascript:void(0);" onclick="confirmDelete({{ subject.id }})"><i class="fas fa-trash"></i> Delete</a>
+                            </div>
+                          </div>
+                        </td>
+                      {% endif %}
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Add Subject Modal -->
+  {% include 'subject/createSubject.html' %}
+
+  <!-- Import Subjects Modal -->
+  <div id="importModal" class="custom-modal">
+    <div class="custom-modal-header">
+      <button class="close-btn" id="closeImportModalBtn"></button>
+      <h5>Import Subjects</h5>
+    </div>
+    <div class="custom-modal-body">
+      <form method="post" enctype="multipart/form-data" action="{% url 'import_subjects_and_schedules' %}">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="importFile">Choose CSV File:</label>
+          <input type="file" name="import_file" id="importFile" class="form-control" required />
+        </div>
+        <button type="submit" class="btn btn-primary">Upload</button>
+      </form>
+      <div class="mt-2">
+        <a href="{{ MEDIA_URL|add:'template/Import Subject Template.csv' }}" class="btn btn-sm btn-secondary" download>
+          Download Template here.
+        </a>        
+        <br>
+              <small>(Download the template above for guidance.)</small>     
+      </div>      
+    </div>
+  </div>
+  <div id="importModalBackdrop" class="custom-modal-backdrop"></div>
+
+  <!-- Edit Subject Modal -->
+  <div id="editModal" class="custom-modal">
+    <div class="custom-modal-header">
+      <button class="close-btn" id="closeEditModalBtn"></button>
+      <h5>Edit Subject</h5>
+    </div>
+    <div class="custom-modal-body" id="editModalBody">
+      <!-- The content will be loaded dynamically here -->
+    </div>
+  </div>
+  <div id="editModalBackdrop" class="custom-modal-backdrop"></div>
+
+  <!-- Custom Scripts for Modal and SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    // Script to open the Add Subject modal
+    document.getElementById('openAddModalBtn').addEventListener('click', function () {
+      document.getElementById('customModal').classList.add('show')
+      document.getElementById('customModalBackdrop').classList.add('show')
+    })
+    
+    document.getElementById('openImportModalBtn').addEventListener('click', function () {
+      document.getElementById('importModal').classList.add('show')
+      document.getElementById('importModalBackdrop').classList.add('show')
+    })
+    
+    document.getElementById('closeImportModalBtn').addEventListener('click', function () {
+      document.getElementById('importModal').classList.remove('show')
+      document.getElementById('importModalBackdrop').classList.remove('show')
+    })
+    
+    // Script to close the Add Subject modal
+    document.getElementById('closeModalBtn').addEventListener('click', function () {
+      document.getElementById('customModal').classList.remove('show')
+      document.getElementById('customModalBackdrop').classList.remove('show')
+    })
+    
+    // Function to open the Edit Subject modal and load the content dynamically
+    function openEditModal(subjectId) {
+      fetch(`/updateSubject/${subjectId}/`)
+        .then((response) => response.text())
+        .then((html) => {
+          document.getElementById('editModalBody').innerHTML = html
+          document.getElementById('editModal').classList.add('show')
+          document.getElementById('editModalBackdrop').classList.add('show')
+    
+          // Initialize or refresh selectpicker after loading the modal content
+          $('.selectpicker').selectpicker('refresh')
+        })
+    }
+    
+    // Script to close the Edit Subject modal
+    document.getElementById('closeEditModalBtn').addEventListener('click', function () {
+      document.getElementById('editModal').classList.remove('show')
+      document.getElementById('editModalBackdrop').classList.remove('show')
+    })
+	function getCSRFToken() {
+      return document.querySelector('[name=csrfmiddlewaretoken]').value;
+  }      
+    // SweetAlert2 confirmation before deleting a subject
+    function confirmDelete(subjectId) {
+      Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          const formData = new FormData()
+          formData.append('csrfmiddlewaretoken', '{{ csrf_token }}')
+    
+          fetch(`/deleteSubject/${subjectId}/`, {
+            method: 'POST',
+headers: {
+              'X-CSRFToken': getCSRFToken(),  // Ensure CSRF token is sent in headers
+            },
+            body: formData
+          })
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error('Network response was not ok.')
+              }
+              return response.json()
+            })
+            .then((data) => {
+              if (data.status === 'success') {
+                Swal.fire('Deleted!', 'The subject has been deleted.', 'success').then(() => {
+                  location.reload() // Reload the page to reflect changes
+                })
+              } else if (data.status === 'error' && data.error_type === 'ProtectedError') {
+                // Catching the ProtectedError and showing it in SweetAlert2
+                Swal.fire({
+                  title: 'Error',
+                  text: data.message,
+                  icon: 'error',
+                  confirmButtonText: 'OK'
+                })
+              } else {
+                Swal.fire('Error', 'There was an error deleting the subject.', 'error')
+              }
+            })
+            .catch((error) => {
+              console.error('Error:', error) // Log the error details to the console
+              Swal.fire('Error', 'There was an error processing your request.', 'error')
+            })
+        }
+      })
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      const assignTeacherSelect = document.getElementById("id_assign_teacher");
+      const substituteTeacherSelect = document.getElementById("id_substitute_teacher");
+    
+      // Function to dynamically update substitute teachers
+      function updateSubstituteTeachers(selectedTeacherId) {
+        fetch(`/filter_substitute_teacher/${selectedTeacherId}/`)
+            .then((response) => response.json())
+            .then((data) => {
+                console.log(data); // Log response for debugging
+                substituteTeacherSelect.innerHTML = ""; // Clear dropdown
+    
+                // Add a placeholder option
+                const emptyOption = document.createElement("option");
+                emptyOption.value = "";
+                emptyOption.textContent = "Select Substitute Teacher";
+                substituteTeacherSelect.appendChild(emptyOption);
+    
+                // Populate new options
+                data.teachers.forEach((teacher) => {
+                    const option = document.createElement("option");
+                    option.value = teacher.id;
+                    option.textContent = teacher.name;
+                    substituteTeacherSelect.appendChild(option);
+                });
+    
+                // Refresh Bootstrap SelectPicker if used
+                if ($('.selectpicker').length) {
+                    $('.selectpicker').selectpicker('refresh');
+                }
+            })
+            .catch((error) => console.error("Error fetching substitute teachers:", error));
+    }
+    
+      // Event listener for assign_teacher selection
+      assignTeacherSelect.addEventListener("change", function () {
+        const selectedTeacherId = this.value;
+        if (selectedTeacherId) {
+          updateSubstituteTeachers(selectedTeacherId);
+        } else {
+          substituteTeacherSelect.innerHTML = "";
+        }
+      });
+    });
+    
+  </script>
+
+{% endblock %}

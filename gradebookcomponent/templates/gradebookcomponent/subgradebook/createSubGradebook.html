@@ -1,0 +1,10 @@
+<form method="post" action="{% url 'createSubGradeBook' %}">
+  {% csrf_token %}
+  <div class="form-group">{{ sub_gradebook.gradebook.label_tag }}
+    {{ sub_gradebook.gradebook }}</div>
+  <div class="form-group">{{ sub_gradebook.category_name.label_tag }}
+    {{ sub_gradebook.category_name }}</div>
+  <div class="form-group">{{ sub_gradebook.percentage.label_tag }}
+    {{ sub_gradebook.percentage }}</div>
+  <button type="submit" class="btn btn-primary">Submit</button>
+</form>

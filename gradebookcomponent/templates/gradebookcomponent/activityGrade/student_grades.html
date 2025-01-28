@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+
+{% block title %} Student Grade {% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <!-- Content Header -->
+  <div class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <h1 class="fw-bold ">Student Grade</h1>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <section class="content">
+    <!-- Filter Grades Card -->
+    <div class="card shadow-sm border-0">
+      <div class="card-header bg-primary text-white">
+        <h5 class="m-0"><i class="fas fa-filter"></i> Filter Grades</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4">
+            <label for="semester" class="fw-bold">Select Semester:</label>
+            <select id="semester" name="semester" class="form-control">
+              <option value="">--Select Semester--</option>
+              {% for semester in semesters %}
+              <option value="{{ semester.id }}" 
+                      {% if current_semester and semester.id == current_semester.id %}selected{% endif %}>
+                {{ semester.semester_name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div class="col-md-4">
+            <label for="subject" class="fw-bold">Select Subject:</label>
+            <select id="subject" name="subject" class="form-control">
+              <option value="">--Select Subject--</option>
+            </select>
+          </div>
+
+          <div class="col-md-4 d-flex align-items-end">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="enable-transmutation">
+              <label class="form-check-label fw-bold" for="enable-transmutation">
+                Enable Transmutation
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <input type="hidden" id="user-role" value="{{ user_role }}">
+    <input type="hidden" id="user-id" value="{{ user_id }}">
+
+    <!-- Grades Table Card -->
+    <div class="card mt-4 shadow-sm border-0">
+      <div class="card-header bg-secondary text-white d-flex align-items-center">
+        <h5 class="m-0"><i class="fas fa-table me-2 text-light"></i> <span class="text-light">Grades</span> </h5>
+        <div class="ms-auto d-flex gap-2 ml-2">
+          <button id="download-excel" class="btn btn-success btn-sm mr-2">
+            <i class="fas fa-file-excel"></i> Export to Excel
+          </button>
+          <button id="download-pdf" class="btn btn-danger btn-sm mr-2">
+            <i class="fas fa-file-pdf"></i> Download PDF
+          </button>
+        </div>
+      </div>          
+      <div class="card-body table-responsive p-3">
+        <table id="grades-table" class="table table-hover table-bordered text-center shadow-sm" style="display: none;">
+          <thead class="bg-success">
+
+            <tr>
+              <th>Student Name</th>
+              <!-- Dynamic Term Headers -->
+              <th>Final Grade</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+  <script>
+    $(document).ready(function () {
+        let transmutationRules = [];
+        let selectedSemester = $('#semester option:selected').text();
+        let selectedSubject = '';
+
+        // Fetch transmutation rules
+        $.ajax({
+            url: '/api/transmutation_rules/',
+            method: 'GET',
+            success: function (data) {
+                transmutationRules = data.rules;
+            },
+            error: function () {
+                alert('Failed to fetch transmutation rules.');
+            }
+        });
+
+        // Apply transmutation rule to a grade
+        function applyTransmutation(grade) {
+            for (let rule of transmutationRules) {
+                if (grade >= rule.min_grade && grade <= rule.max_grade) {
+                    return rule.transmuted_value;
+                }
+            }
+            return grade; // Return original grade if no rule matches
+        }
+
+        // Fetch grades and toggle transmutation
+      function fetchGrades(enableTransmutation) {
+        let semesterId = $('#semester').val();
+        let subjectId = $('#subject').val();
+        let userRole = $('#user-role').val().toLowerCase();
+        let userId = $('#user-id').val();
+
+        if (semesterId && subjectId) {
+          selectedSemester = $('#semester option:selected').text();
+          selectedSubject = $('#subject option:selected').text();
+          $.ajax({
+            url: '/student_score_viewsets/',
+            data: { semester: semesterId, subject: subjectId },
+            success: function (data) {
+              $('#grades-table').show();
+              let thead = $('#grades-table thead');
+              let tbody = $('#grades-table tbody');
+              thead.empty();
+              tbody.empty();
+
+              // Add dynamic table headers
+              let termHeaders = data.terms.map(term => `<th>${term}</th>`).join('');
+              thead.append(`
+                <tr>
+                  <th>Student Name</th>
+                  ${termHeaders}
+                  <th>Final Grade</th>
+                </tr>
+              `);
+
+              let filteredResults = data.results;
+                if (userRole === "student") {
+                    filteredResults = data.results.filter(result => result.student_id == userId);
+                }
+
+              // Add rows for each student
+              filteredResults.forEach(result => {
+                let termGrades = result.terms.map(term => `<td>${term.term_score || '--'}</td>`).join('');
+                let finalGrade = enableTransmutation ? applyTransmutation(result.final_grade) : result.final_grade;
+                tbody.append(`
+                  <tr>
+                    <td>
+                      <a href="/studentTotalScore/${result.student_id}/${subjectId}/" class="text-primary">
+                        ${result.student_full_name}
+                      </a>
+                    </td>
+                    ${termGrades}
+                    <td>${finalGrade}</td>
+                  </tr>
+                `);
+              });
+            },
+            error: function () {
+              alert('Failed to fetch student grades.');
+            }
+          });
+        }
+      }
+
+    // Fetch subjects based on semester
+    function fetchSubjects(semesterId) {
+      if (semesterId) {
+          $.ajax({
+              url: '/api/subjects/',
+              data: { semester: semesterId },
+              success: function (data) {
+                  $('#subject').html('<option value="">--Select Subject--</option>');
+                  if (data.subjects && data.subjects.length > 0) {
+                      data.subjects.forEach(subject => {
+                          $('#subject').append(`<option value="${subject.id}">${subject.name}</option>`);
+                      });
+                  } else {
+                      $('#subject').append('<option value="">No subjects available</option>');
+                  }
+              },
+              error: function () {
+                  alert('Failed to fetch subjects.');
+              }
+          });
+      } else {
+          $('#subject').html('<option value="">--Select Subject--</option>');
+      }
+  }
+
+
+        // Fetch subjects based on semester
+        $('#semester').change(function () {
+          let semesterId = $(this).val();
+          fetchSubjects(semesterId);
+      });
+  
+      // Fetch subjects for the default semester on page load
+      let defaultSemesterId = $('#semester').val();
+      if (defaultSemesterId) {
+          fetchSubjects(defaultSemesterId);
+      }
+
+        // Fetch grades when subject changes
+        $('#subject').change(function () {
+            fetchGrades($('#enable-transmutation').is(':checked'));
+        });
+
+        // Toggle transmutation when checkbox changes
+        $('#enable-transmutation').change(function () {
+            fetchGrades($(this).is(':checked'));
+        });
+
+        // Export to PDF
+        $('#download-pdf').click(function () {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape');
+            doc.text('Student Grades', 14, 10);
+            doc.text(`Semester: ${selectedSemester}`, 14, 20);
+            doc.text(`Subject: ${selectedSubject}`, 14, 30);
+
+            // Prepare table data for PDF
+            const table = document.querySelector('#grades-table');
+            const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent);
+            const rows = Array.from(table.querySelectorAll('tbody tr')).map(row =>
+                Array.from(row.querySelectorAll('td')).map(td => td.textContent)
+            );
+
+            doc.autoTable({
+                head: [headers],
+                body: rows,
+                startY: 40,
+                headStyles: { fillColor: [0, 123, 255] },
+                styles: { fontSize: 8, cellWidth: 'wrap' },
+                columnStyles: { 0: { cellWidth: 30 } },
+            });
+
+            doc.save('Student_Grades.pdf');
+        });
+
+        // Export to Excel
+        $('#download-excel').click(function () {
+            const table = document.querySelector('#grades-table');
+            const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent);
+            const rows = Array.from(table.querySelectorAll('tbody tr')).map(row =>
+                Array.from(row.querySelectorAll('td')).map(td => td.textContent)
+            );
+
+            const worksheetData = [
+                [`Semester: ${selectedSemester}`, `Subject: ${selectedSubject}`],
+                [],
+                headers,
+                ...rows,
+            ];
+            const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Grades');
+
+            XLSX.writeFile(workbook, 'Student_Grades.xlsx');
+        });
+    });
+  </script>
+</div>
+
+{% endblock %}

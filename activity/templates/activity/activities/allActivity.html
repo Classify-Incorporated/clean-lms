@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Student Activities
+{% endblock %}
+
+{% block content %}
+<h1>Student Activities</h1>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Activity Name</th>
+            <th>Category</th>
+            <th>Subject</th>
+            <th>Student</th>
+            <th>Score</th>
+            <th>Max Score</th> <!-- Added Max Score column -->
+        </tr>
+    </thead>
+    <tbody>
+        {% for detail in activity_details %}
+            <tr>
+                <td>{{ detail.activity.activity_name }}</td>
+                <td>{{ detail.activity.activity_type.name }}</td>
+                <td>{{ detail.subject }}</td>
+                <td>{{ detail.student.first_name }} {{ detail.student.last_name }}</td>
+                <td>{{ detail.score }}</td>
+                <td>{{ detail.max_score }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

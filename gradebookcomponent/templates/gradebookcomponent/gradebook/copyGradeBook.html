@@ -1,0 +1,68 @@
+<form method="post" action="{% url 'copyGradeBookComponents' %}">
+  {% csrf_token %}
+  
+  <div class="form-group">
+    <label for="{{ form.source_semester.id_for_label }}" class="form-label">{{ form.source_semester.label }}</label>
+    <select id="{{ form.source_semester.id_for_label }}" name="{{ form.source_semester.html_name }}" class="form-control selectpicker" data-live-search="true" data-style="btn-outline-secondary">
+        <option value="">Select a semester</option>
+        {% for semester in form.fields.source_semester.queryset %}
+          {% with start_year=semester.start_date|date:"Y" end_year=semester.end_date|date:"Y" %}
+            <option value="{{ semester.id }}">
+              {{ semester.semester_name }} 
+              ({{ start_year }}{% if start_year != end_year %}-{{ end_year }}{% endif %})
+            </option>
+          {% endwith %}
+        {% endfor %}
+    </select>
+</div>
+
+  <!-- Term Field -->
+  <div class="form-group">
+    <label for="{{ form.term.id_for_label }}" class="form-label">{{ form.term.label }}</label>
+    {{ form.term }}
+  </div>
+
+  <!-- Current Term Field -->
+  <div class="form-group">
+    <label for="{{ form.current_term.id_for_label }}" class="form-label">{{ form.current_term.label }}</label>
+    <select id="id_current_term" name="{{ form.current_term.html_name }}" class="form-control selectpicker" data-live-search="true" data-style="btn-outline-secondary">
+        <option value="">Select Current Term</option>
+        {% for term in form.fields.current_term.queryset %}
+            <option value="{{ term.id }}">{{ term.term_name }}</option>
+        {% endfor %}
+    </select>
+  </div>
+  
+  <!-- Copy From Subject Field -->
+  <div class="form-group">
+    <label for="{{ form.copy_from_subject.id_for_label }}" class="form-label">{{ form.copy_from_subject.label }}</label>
+    {{ form.copy_from_subject }}
+  </div>
+
+  <!-- Copy to Subject Field -->
+  <div class="form-group">
+    <label for="{{ form.subject.id_for_label }}" class="form-label">{{ form.subject.label }}</label>
+    {{ form.subject }}
+  </div>
+  
+  <!-- Submit Button -->
+  <button type="submit" class="btn btn-primary">Copy GradeBook</button>
+</form>
+
+<script>
+  document.getElementById("id_source_semester").addEventListener("change", function() {
+    const semesterId = this.value;
+
+    fetch(`/get-terms/${semesterId}/`)
+      .then(response => response.json())
+      .then(data => {
+        const termSelect = document.getElementById("id_term");
+        termSelect.innerHTML = data.terms.map(term => `<option value="${term.id}">${term.term_name}</option>`).join("");
+
+        const subjectSelect = document.getElementById("id_copy_from_subject");
+        subjectSelect.innerHTML = data.subjects.map(subject => `<option value="${subject.id}">${subject.name}</option>`).join("");
+      })
+      .catch(error => console.error("Error fetching terms and subjects:", error));
+});
+
+</script>

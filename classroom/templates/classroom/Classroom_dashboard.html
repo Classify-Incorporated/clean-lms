@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+  <!-- Page Heading with LMS Icon -->
+  <div class="content-wrapper">
+    <div class="content-header">
+      <div class="container-fluid">
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container my-4">
+        <h1>Classroom Sessions</h1>
+        <table class="table table-bordered table-striped" id="dataTable" width="100%" cellspacing="0">
+          <thead>
+            <tr>
+              <th>Subject</th>
+              <th>Teacher</th>
+              <th>Date</th>
+              <th>Total Time</th>
+            </tr>
+          </thead>
+          <tbody id="classroomTableBody">
+            <!-- Rows will be populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+
+      <script>
+        const tableBody = document.getElementById('classroomTableBody');
+
+        // Fetch data from the API
+        fetch('/classroom_mode/')
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.json();
+          })
+          .then(data => {
+            // Populate the table with aggregated data
+            data.forEach(session => {
+              const row = document.createElement('tr');
+
+              row.innerHTML = `
+                <td>${session.subject}</td>
+                <td>${session.teacher}</td>
+                <td>${session.date}</td>
+                <td>${session.total_time}</td>
+              `;
+
+              tableBody.appendChild(row);
+            });
+          })
+          .catch(error => {
+            console.error('There was a problem with the fetch operation:', error);
+            const row = document.createElement('tr');
+            row.innerHTML = `<td colspan="4" class="text-center text-danger">Failed to load data</td>`;
+            tableBody.appendChild(row);
+          });
+      </script>
+    </section>
+  </div>
+{% endblock %}

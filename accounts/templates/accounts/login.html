@@ -1,0 +1,170 @@
+{% load static %}
+{% load socialaccount %}
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <title>Holy Child Central Colleges, Inc.</title>
+    <link rel="icon" type="image/png" href="{% static 'favicon.ico' %}">
+    <!-- Custom fonts for this template -->
+    <link href="{% static 'vendor/fontawesome-free/css/all.min.css' %}" rel="stylesheet" type="text/css" />
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet" />
+    <!-- Custom styles for this template -->
+    <link href="{% static 'assets/dist/css/sb-admin-2.min.css' %}" rel="stylesheet" />
+    <link href="{% static 'assets/dist/css/settings.css' %}" rel="stylesheet" />
+    <link href="{% static 'assets/dist/css/custom-sidebar.css' %}" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
+    <!-- Custom styles for Microsoft button -->
+    <style>
+      .btn-microsoft {
+        background-color: #f3f3f3;
+        border: 1px solid #ddd;
+        color: #333;
+        padding: 8px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .btn-microsoft:hover {
+        background-color: #e6e6e6;
+      }
+      
+      .microsoft-icon {
+        display: grid;
+        grid-template-columns: repeat(2, 10px);
+        grid-template-rows: repeat(2, 10px);
+        gap: 1.5px;
+        margin-right: 8px;
+      }
+      
+      .square {
+        width: 10px;
+        height: 10px;
+      }
+      
+      .red {
+        background-color: #f35325;
+      }
+      .green {
+        background-color: #81bc06;
+      }
+      .blue {
+        background-color: #05a6f0;
+      }
+      .yellow {
+        background-color: #ffba08;
+      }
+      .bg-login-image {
+        background: url('https://images.pexels.com/photos/4260477/pexels-photo-4260477.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1');
+        background-position: center;
+        background-size: cover;
+      }
+      
+      .bg-login {
+        background-color: #171f29; /* Matching the sidebar color */
+      }
+    </style>
+  </head>
+
+  <body class="bg-login">
+    <div class="container">
+      <!-- Outer Row -->
+      <div class="row justify-content-center">
+        <div class="col-xl-10 col-lg-12 col-md-9">
+          <div class="card o-hidden border-0 shadow-lg my-5">
+            <div class="card-body p-0">
+              <!-- Nested Row within Card Body -->
+              <div class="row">
+                <div class="col-lg-6 d-none d-lg-block bg-login-image"></div>
+                <div class="col-lg-6">
+                  <div class="p-5">
+                    <div class="text-center">
+                      <h1 class="h4 text-gray-900 mb-4">Welcome Back!</h1>
+                    </div>
+                    <form class="user" method="POST" action="{% url 'admin_login_view' %}">
+                      {% csrf_token %}
+                      {{ form.as_p }}
+                      <div class="form-group">
+                        <div class="custom-control custom-checkbox small">
+                          <input type="checkbox" name="remember" class="custom-control-input" id="customCheck" />
+                          <a href="{% url 'setup_password' %}" class="small">Setup Password</a>
+                        </div>
+                      </div>
+                      <button type="submit" class="btn btn-primary btn-user btn-block">Login</button>
+                      <hr />
+                      <a href="{% provider_login_url 'microsoft' %}" class="btn btn-microsoft btn-user btn-block">
+                        <div class="microsoft-icon">
+                          <div class="square red"></div>
+                          <div class="square green"></div>
+                          <div class="square blue"></div>
+                          <div class="square yellow"></div>
+                        </div>Login with Office 365
+                      </a>
+                    </form>
+                    <hr />
+                    {% comment %} <div class="text-center">
+                      <a class="small" href="{% url 'account_reset_password' %}">Forgot Password?</a>
+                    </div>
+                    <div class="text-center">
+                      <a class="small" href="{% url 'account_signup' %}">Create an Account!</a>
+                    </div> {% endcomment %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap core JavaScript -->
+    <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <!-- Core plugin JavaScript -->
+    <script src="{% static 'vendor/jquery-easing/jquery.easing.min.js' %}"></script>
+    <!-- Custom scripts for all pages -->
+    <script src="{% static 'js/sb-admin-2.min.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script>
+      function displayToast(message, icon) {
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: icon,
+          title: message,
+          showConfirmButton: false,
+          timer: 5000,
+          timerProgressBar: true,
+        });
+      }
+
+      // Check for form errors and display them with error icon
+      {% if form.errors %}
+        {% for field in form %}
+          {% for error in field.errors %}
+            displayToast("{{ error }}", 'error');  // Display form errors with 'error' icon
+          {% endfor %}
+        {% endfor %}
+      {% endif %}
+
+      // Check for Django messages and handle their type
+      {% if messages %}
+        {% for message in messages %}
+          {% if message.tags == 'error' %}
+            displayToast("{{ message }}", 'error');  // Display error messages
+          {% else %}
+            displayToast("{{ message }}", 'success');  // Display success or other messages
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    </script>
+  </body>
+</html>

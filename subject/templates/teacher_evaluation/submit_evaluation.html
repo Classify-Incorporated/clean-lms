@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="content-wrapper">
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">Answer Evaluation</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <!-- Card for form -->
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title">Evaluate {{ assignment.teacher.get_full_name }} for {{ assignment.subject.subject_name }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        {% for field in form %}
+                            {% if field.name != 'general_feedback' %}
+                                <div class="form-group">
+                                    <label>{{ field.label }}</label>
+                                    
+                                    <!-- Star rating container -->
+                                    <div class="star-rating" data-field-name="{{ field.name }}">
+                                        {% for i in "12345" %}
+                                            <span class="star" data-value="{{ forloop.counter }}">&#9733;</span>
+                                        {% endfor %}
+                                    </div>
+
+                                    <!-- Hidden input field for the rating value -->
+                                    {{ field }}
+
+                                    {% if field.errors %}
+                                        <div class="text-danger">{{ field.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+
+                        <!-- General feedback field at the end -->
+                        <div class="form-group">
+                            <label>{{ form.general_feedback.label }}</label>
+                            {{ form.general_feedback }}
+                            {% if form.general_feedback.errors %}
+                                <div class="text-danger">{{ form.general_feedback.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <button type="submit" class="btn btn-success">Submit</button>
+                        <a href="javascript:history.back()" class="btn btn-secondary">Back</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- JavaScript for star rating interaction -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        document.querySelectorAll(".star-rating").forEach(function(starRatingContainer) {
+            const fieldName = starRatingContainer.getAttribute("data-field-name");
+            const hiddenInput = document.getElementsByName(fieldName)[0];
+            
+            starRatingContainer.querySelectorAll(".star").forEach(function(star) {
+                star.addEventListener("click", function() {
+                    const ratingValue = star.getAttribute("data-value");
+                    hiddenInput.value = ratingValue;
+
+                    // Highlight selected stars
+                    starRatingContainer.querySelectorAll(".star").forEach(function(s) {
+                        s.classList.toggle("selected", s.getAttribute("data-value") <= ratingValue);
+                    });
+                });
+            });
+        });
+    });
+</script>
+
+<!-- CSS for styling stars and card enhancements -->
+<style>
+    .star-rating {
+        display: inline-block;
+        padding: 5px 0;
+    }
+    .star {
+        font-size: 24px;
+        cursor: pointer;
+        color: #ddd;
+    }
+    .star.selected {
+        color: #f5b301;  /* Highlight color for selected stars */
+    }
+    .card-header h5 {
+        margin: 0;
+    }
+</style>
+
+{% endblock %}

@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Activities for {{ subject.subject_name }}
+{% endblock %}
+
+{% block content %}
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0">Activity Details</h1>
+          </div>
+          <!-- /.col -->
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                <a href="#">Home</a>
+              </li>
+              <li class="breadcrumb-item active">{{ subject.subject_name }}</li>
+            </ol>
+          </div>
+          <!-- /.col -->
+        </div>
+        <!-- /.row -->
+      </div>
+      <!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="d-flex justify-content-center align-items-center">
+          <div class="w-100" style="max-width: 600px;">
+            <!-- Activity Card -->
+            <div class="card shadow border-0 rounded mb-5">
+              <div class="card-header bg-success text-white text-center">
+                <h3 class="mb-0">{{ activity.activity_name }}</h3>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <p>
+                      <strong>Activity Type:</strong> {{ activity.activity_type.name }}
+                    </p>
+                    <p>
+                      <strong>Subject:</strong> {{ activity.subject.subject_name }}
+                    </p>
+                    <p>
+                      <strong>Term:</strong> {{ activity.term.term_name }}
+                    </p>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <p>
+                      <strong>Start Time:</strong> {{ activity.start_time|date:"d M Y, h:i A" }}
+                    </p>
+                    <p>
+                      <strong>End Time:</strong> {{ activity.end_time|date:"d M Y, h:i A" }}
+                    </p>
+                  </div>
+                  <div class="col-12 text-center">
+                    <a href="{% url 'viewModule' activity.module.id %}" class="btn btn-primary btn-lg shadow-sm"><i class="fas fa-book"></i> View Lesson</a>
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer text-center">
+                {% if is_teacher %}
+                 {% if activity_ended %}
+                      <a href="{% url 'display_question' activity.id %}" class="btn btn-lg btn-warning shadow-sm mx-2"><i class="fas fa-eye"></i> View Result</a>
+                    {% else %}
+                      <a href="{% url 'display_question' activity.id %}" class="btn btn-lg btn-warning shadow-sm mx-2"><i class="fas fa-eye"></i> View Activity</a>
+                  {% endif %}
+                {% endif %}
+                {% if is_student %}
+                  {% if is_absent %}
+                    <p class="text-danger">You were marked as absent and cannot participate in this activity.</p>
+                  {% elif is_present %}
+                    <p class="text-warning">You are marked as present. Please wait for further instructions.</p>
+                  {% else %}
+                    {% if activity_ended %}
+                      <a href="{% url 'display_question' activity.id %}" class="btn btn-info btn-lg mx-2"><i class="fas fa-eye"></i> View Result</a>
+                    {% else %}
+                      <a href="{% url 'display_question' activity.id %}" class="btn btn-success btn-lg mx-2" onclick="return confirmActivityStart();"><i class="fas fa-pencil-alt"></i> Answer Activity</a>
+                    {% endif %}
+                  {% endif %}
+                {% endif %}
+              </div>
+            </div>
+            <!-- End of Activity Card -->
+
+            <!-- Back Button -->
+            <div class="text-center">
+              <a href="{% url 'subjectDetail' activity.subject.id %}" class="btn btn-lg btn-outline-secondary shadow-sm"><i class="fas fa-arrow-left"></i> Back to Subject</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- /.content -->
+  </div>
+{% endblock %}

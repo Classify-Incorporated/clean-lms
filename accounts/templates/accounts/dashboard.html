@@ -1,0 +1,907 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+  Dashboard
+{% endblock %}
+{% block content %}
+  <style>
+    .custom-card .card {
+      border: none;
+      border-radius: 15px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .custom-card .text-dark {
+      color: #3a5634; /* Dark green for the title */
+      font-weight: 600;
+    }
+    
+    .custom-card .h5 {
+      font-size: 1.5rem;
+      color: #2e7d32; /* Dark green for number */
+    }
+    
+    .custom-card .wave {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+    }
+    
+    .custom-card svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .custom-card {
+      display: flex;
+      flex-wrap: wrap;
+    }
+    
+    .custom-card .card {
+      display: flex;
+      flex-direction: column;
+      height: 100%; /* Ensures all cards are the same height */
+    }
+    .event-list .list-group-item {
+      background-color: #155724; /* Light success green background */
+      color: #155724; /* Dark success text color */
+      border: 1px solid #155724; /* Success-themed border */
+      border-radius: 5px;
+      margin-bottom: 10px; /* Space between items */
+    }
+    
+    .event-list .list-group-item:hover {
+      background-color: #155724; /* Slightly darker success green on hover */
+    }
+    
+    .event-list .list-group-item strong {
+      color: #155724; /* Strong text for event title in dark success green */
+    }
+    
+    .event-list .list-group-item small {
+      color: #000 !important; /* Muted color for the date text */
+    }
+
+  
+  canvas {
+      width: 100% !important;
+      height: 100% !important;
+  }
+  
+  </style>
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 style="font-family: 'Playfair Display', serif; font-size: 2.5rem; font-weight: 700; color: #555555;">{{ greeting }}, {{ user_name }}!</h1>
+            <p style="font-family: 'Roboto', sans-serif; font-size: 1.2rem; color: #777777;">Welcome to the HCCCI Learning Management System</p>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <h3 class="mb-4">
+          {% if current_semester %}
+            {{ current_semester.semester_name }} - School Year 
+            {% if current_semester.start_date.year == current_semester.end_date.year %}
+              {{ current_semester.start_date|date:"Y" }}
+            {% else %}
+              {{ current_semester.start_date|date:"Y" }} - {{ current_semester.end_date|date:"Y" }}
+            {% endif %}
+          {% else %}
+            No Active Semester
+          {% endif %}
+        </h3>
+        
+
+        <div class="row custom-card">
+          <!-- Students Enrolled Card -->
+          <div class="col-xl-3 col-md-6 mb-4">
+            {% if perms.subject.view_subjectenrollment %}
+            <a href="{% url 'subjectEnrollmentList' %}" style="text-decoration: none;">
+              {% endif %}
+              <div class="card shadow h-100 py-2 position-relative" style="background-color: #98B48D;">
+                <div class="card-body">
+                  <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                      <div class="text-sm text-uppercase mb-1 text-white" style="text-shadow: 1px 1px #565858;">
+                        {% if not is_student %}
+                         Students Enrolled Per Course
+                        {% endif %}
+                        {% if is_student %} Unfinished Activities {% endif %}
+                      </div>
+                      <div class="h5 mb-0 font-weight-bold text-white" style="text-shadow: 1px 1px #565858;"> {% if not is_student %} {{ course_count }}  {% endif %}</div>
+                    </div>
+                    <div class="col-auto">
+                      <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:50px; height: 50px; background: linear-gradient(135deg, #89AD80, #6A8E6B);">
+                        <i class="fas fa-users text-white"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Wave effect at the bottom of the card -->
+                <svg class="wave" height="40px" width="100%" viewBox="0 0 100 20" preserveAspectRatio="none">
+                  <path d="M0 20 Q 50 0 100 20 Z" fill="#6A8E6B" />
+                </svg>
+              </div>
+            </a>
+          </div>
+
+          <!-- Subjects For This Semester Card -->
+          <div class="col-xl-3 col-md-6 mb-4">
+            <a href="{% url 'SubjectList' %}" style="text-decoration: none;">
+              <div class="card shadow h-100 py-2 position-relative" style="background-color: #F2C77F;">
+                <div class="card-body">
+                  <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                      <div class="text-sm text-uppercase text-white mb-1" style="text-shadow: 1px 1px #565858;">
+                        {% if is_teacher %}
+                              Subject For this Semester
+                          {% elif is_registrar %}
+                              Students Enrolled Per Subject
+                          {% elif is_student %}
+                              Your Subjects for 
+                              {% if current_semester %}
+                                  {{ current_semester.semester_name }} - School Year 
+                                  {% if current_semester.start_date.year == current_semester.end_date.year %}
+                                      {{ current_semester.start_date|date:"Y" }}
+                                  {% else %}
+                                      {{ current_semester.start_date|date:"Y" }} - {{ current_semester.end_date|date:"Y" }}
+                                  {% endif %}
+                              {% else %}
+                                  No Active Semester
+                              {% endif %}
+                          {% endif %}
+                      </div>
+                      <div class="h5 mb-0 font-weight-bold text-white" style="text-shadow: 1px 1px #565858;">{{ subject_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                      <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:50px; height: 50px; background: linear-gradient(135deg, #E7B572, #C89A58);">
+                        <i class="fas fa-book text-white"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <svg class="wave" height="40px" width="100%" viewBox="0 0 100 20" preserveAspectRatio="none">
+                  <path d="M0 20 Q 50 0 100 20 Z" fill="#C89A58" />
+                </svg>
+              </div>
+            </a>
+          </div>
+
+          <!-- Failing Students Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
+              <a href="#" style="text-decoration: none;">
+                  <div class="card shadow h-100 py-2 position-relative" style="background-color: #D68D8D;">
+                      <div class="card-body">
+                          <div class="row no-gutters align-items-center">
+                              <div class="col mr-2">
+                                  <div class="text-sm text-uppercase text-white mb-1" style="text-shadow: 1px 1px #565858;">
+                                    Financials
+                                  </div>
+                                  <div class="h5 mb-0 font-weight-bold text-white" style="text-shadow: 1px 1px #565858;">
+                                      {% comment %} {{ failing_students_count }} {% endcomment %}
+                                  </div>
+                              </div>
+                              <div class="col-auto">
+                                  <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:50px; height: 50px; background: linear-gradient(135deg, #AF8585, #8F6464);">
+                                      <i class="fas fa-user-times text-white"></i>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                      <svg class="wave" height="40px" width="100%" viewBox="0 0 100 20" preserveAspectRatio="none">
+                          <path d="M0 20 Q 50 0 100 20 Z" fill="#8F6464" />
+                      </svg>
+                  </div>
+              </a>
+            </div>
+
+          <!-- Excelling Students Card -->
+          <div class="col-xl-3 col-md-6 mb-4">
+            <a href="{% url 'calendars' %}" style="text-decoration: none;">
+                <div class="card shadow h-100 py-2 position-relative" style="background-color: #A793B4;">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-sm text-uppercase text-white mb-1" style="text-shadow: 1px 1px #565858;">
+                                      Important Announcements
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-white" style="text-shadow: 1px 1px #565858;">
+                                    {{ announcement_count }}
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:50px; height: 50px; background: linear-gradient(135deg, #A788AF, #84628E);">
+                                    <i class="fas fa-user-check text-white"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <svg class="wave" height="40px" width="100%" viewBox="0 0 100 20" preserveAspectRatio="none">
+                        <path d="M0 20 Q 50 0 100 20 Z" fill="#84628E" />
+                    </svg>
+                </div>
+            </a>
+          </div>
+        </div>
+
+        <div class="row align-items-stretch mb-3">
+          <!-- Campus News -->
+          <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4 h-100" style="overflow: hidden; border-radius: 10px;">
+              <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between bg-success">
+                <h6 class="m-0 text-gray-800">Campus News</h6>
+              </div>
+              <div class="card-body p-0 m-3">
+                <div id="newsCarousel" class="carousel slide" data-ride="carousel">
+                  <div class="carousel-inner">
+                    {% for article in articles %}
+                    <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                      <a href="{{ article.permalink_url }}" target="_blank" style="text-decoration: none; color: inherit;">
+                        <div class="row no-gutters">
+                          <div class="col-md-12 position-relative">
+                            {% if article.image_url %}
+                            <img src="{{ article.image_url }}" class="d-block w-100" alt="Post Image" style="height: 400px; object-fit: cover; opacity: 0.9; border-radius: 10px;" />
+                            {% else %}
+                            <img src="{% static 'images/gsu_logo.png' %}" class="d-block w-100" alt="Default Image" style="height: 380px; object-fit: cover; opacity: 0.9; border-radius: 5px;" />
+                            {% endif %}
+                            <div style="position: absolute; bottom: 0; width: 100%; height: 220px; background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0)); border-radius: 0 0 15px 15px;"></div>
+                            <div class="carousel-caption d-block text-white p-3" style="border-radius: 0 0 15px 15px;">
+                              <div class="d-flex align-items-center mb-2">
+                                {% if article.profile_picture_url %}
+                                <img src="{{ article.profile_picture_url }}" alt="Profile Picture" class="img-fluid" style="width: 30px; height: 30px; border-radius: 50%; margin-right: 10px;" />
+                                {% endif %}
+                                <div>
+                                  <small class="font-weight-bold" style="text-shadow: 2px 2px 4px rgba(0, 0, 0, 1.9);">{{ article.posted_by }}</small>
+                                  <small class="text-muted d-none d-sm-inline">&bull; {{ article.created_time }}</small>
+                                </div>
+                              </div>
+                              <h4 class="font-weight-bold text-light" style="font-size: 1.2rem; text-shadow: 2px 2px 4px rgba(0, 0, 0, 1.9);">{{ article.message }}</h4>
+                            </div>
+                          </div>
+                        </div>
+                      </a>
+                    </div>
+                    {% endfor %}
+                  </div>
+                  <a class="carousel-control-prev" href="#newsCarousel" role="button" data-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Previous</span>
+                  </a>
+                  <a class="carousel-control-next" href="#newsCarousel" role="button" data-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Next</span>
+                  </a>
+                  <ol class="carousel-indicators">
+                    {% for i in articles %}
+                    <li data-target="#newsCarousel" data-slide-to="{{ forloop.counter0 }}" class="{% if forloop.first %}active{% endif %}"></li>
+                    {% endfor %}
+                  </ol>
+                </div>
+              </div>
+            </div>
+          </div>
+        
+          <!-- Incoming School Events -->
+          <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4 h-100">
+              <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between bg-success">
+                <h6 class="m-0 text-gray-800">Incoming School Events</h6>
+              </div>
+              <div class="card-body card-pie">
+                <ul class="list-group list-group-flush event-list">
+                  <!-- Events will be dynamically added here -->
+                  {% for event in events %}
+                  <li class="list-group-item">
+                    <strong>{{ event.title }}</strong>: {{ event.description }}
+                    <small class="text-muted">({{ event.date }})</small>
+                  </li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+
+        <div class="row align-items-stretch">
+    <!-- Feedback Score Per Subject -->
+    <div class="col-lg-6 mb-2 d-flex">
+        <div class="card shadow w-100 d-flex flex-column h-100">
+            <div class="card-header py-3 bg-success">
+                <h6 class="m-0 text-gray-800">
+                    {% if not is_student %} Feedback Score per Subject {% endif %}
+                    {% if is_student %} Semestral Grades Per Subject {% endif %}
+                </h6>
+            </div>
+            <div class="card-body d-flex flex-grow-1 align-items-center justify-content-center">
+                <div class="chart-container w-100" style="height: 300px;">
+                    {% if is_student %}
+                        <canvas id="gradesBarChart"></canvas>
+                    {% endif %}
+                    {% if not is_student %}
+                        <canvas id="teachersAverageRatingsChart"></canvas>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Population Per Course -->
+    <div class="col-lg-6 mb-2 d-flex">
+        <div class="card shadow w-100 d-flex flex-column h-100">
+            <div class="card-header py-3 bg-success">
+                <h6 class="m-0 text-gray-800">Student Population Per Course</h6>
+            </div>
+            <div class="card-body d-flex flex-grow-1 align-items-center justify-content-center">
+                <div class="chart-container w-100" style="height: 300px;">
+                    <canvas id="studentPerCourseChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row align-items-stretch">
+    <!-- Active Students in the Last 7 Days -->
+    <div class="col-lg-6 mb-2 d-flex">
+        <div class="card shadow w-100 d-flex flex-column h-100">
+            <div class="card-header py-3 bg-success">
+                <h6 class="m-0 text-gray-800">
+                    {% if not is_student %} Active Students in the Last 7 Days {% endif %}
+                    {% if is_student %} Incomplete Teacher Evaluation {% endif %}
+                </h6>
+            </div>
+            <div class="card-body d-flex flex-grow-1 align-items-center justify-content-center">
+                <div class="chart-container w-100" style="height: 300px;">
+                    <canvas id="activeStudentsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Population Per Subject -->
+    <div class="col-lg-6 mb-2 d-flex">
+        <div class="card shadow w-100 d-flex flex-column h-100">
+            <div class="card-header py-3 bg-success">
+                <h6 class="m-0 text-gray-800">Student Population per Subject</h6>
+            </div>
+            <div class="card-body d-flex flex-grow-1 align-items-center justify-content-center">
+                <div class="chart-container w-100" style="height: 300px;">
+                    <canvas id="studentPerSubjectChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      fetch("{% url 'studentPerSubject' %}") // Fetch student population data per subject
+          .then((response) => response.json())
+          .then((data) => {
+              const isMobile = window.innerWidth <= 768; // Detect mobile screen
+              
+              // Use `subject_short_name` for mobile, `subject_name` for larger screens
+              const subjects = data.map((item) => (isMobile ? item.subject_short_name : item.subject_name) || "Unknown Subject");
+              const studentCounts = data.map((item) => item.student_count);
+  
+              // Define colors from CSS variables
+              const cssRoot = getComputedStyle(document.documentElement);
+              const chartColors = [
+                  cssRoot.getPropertyValue("--success").trim(),  // Fresh green
+                  cssRoot.getPropertyValue("--info").trim(),     // Calm teal
+                  cssRoot.getPropertyValue("--warning").trim(),  // Bright orange
+                  cssRoot.getPropertyValue("--danger").trim(),   // Bold red
+                  cssRoot.getPropertyValue("--primary").trim(),  // Vibrant blue
+              ];
+  
+              // Assign colors to bars in a cyclic pattern
+              const barColors = subjects.map((_, index) => chartColors[index % chartColors.length]);
+  
+              const ctx = document.getElementById("studentPerSubjectChart").getContext("2d");
+              new Chart(ctx, {
+                  type: "bar",
+                  data: {
+                      labels: subjects,
+                      datasets: [{
+                          label: "Student Population",
+                          data: studentCounts,
+                          backgroundColor: barColors,
+                          borderColor: barColors.map(color => color.replace(")", ", 1)").replace("rgb", "rgba")), // Ensure full opacity
+                          borderWidth: 2,
+                      }]
+                  },
+                  options: {
+                      maintainAspectRatio: false,
+                      responsive: true,
+                      scales: {
+                          x: {
+                              grid: { display: false },
+                              ticks: {
+                                  font: { size: isMobile ? 10 : 12 }, // Smaller font for mobile
+                              },
+                          },
+                          y: {
+                              beginAtZero: true,
+                              grid: {
+                                  borderDash: [3, 3],
+                                  color: "#d6d6d6",
+                              },
+                              ticks: {
+                                  font: { size: 12 },
+                              },
+                          },
+                      },
+                      plugins: {
+                          legend: {
+                              display: true,
+                              position: "top",
+                              labels: {
+                                  font: { size: 12 },
+                              },
+                          },
+                          tooltip: {
+                              backgroundColor: "rgba(0, 0, 0, 0.8)",
+                              bodyFont: { size: 12 },
+                              caretPadding: 5,
+                          },
+                      },
+                  },
+              });
+          })
+          .catch((error) => console.error("Error fetching student per subject data:", error));
+  });  
+    </script>
+
+    <script>
+      const ctx = document.getElementById('activeStudentsChart').getContext('2d');
+      const activeStudentsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: [
+            {% for day in active_users_count %}
+              "{{ day.date|date:'M d' }}",
+            {% endfor %}
+          ],
+          datasets: [{
+            label: 'Active Students',
+            data: [
+              {% for day in active_users_count %}
+                {{ day.count }},
+              {% endfor %}
+            ],
+            backgroundColor: 'rgba(78, 115, 223, 0.5)',
+            borderColor: '#ffffff',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          },
+          maintainAspectRatio: false,
+        }
+      });
+    </script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // Fetch student population data
+        fetch("{% url 'studentPerCourse' %}") // Replace with your actual endpoint
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Network response was not ok");
+            }
+            return response.json();
+          })
+          .then((data) => {
+            // Check if the screen width is mobile-sized
+            const isMobile = window.innerWidth <= 768;
+      
+            // Use short name on mobile, full name on larger screens
+            const courses = data.map((item) => (isMobile ? item.course_short_name : item.course_name) || "Unknown Course");
+            const studentCounts = data.map((item) => item.student_count); // Extract student counts per course
+      
+            // Generate random colors for each bar
+            const generateRandomColor = () => {
+              const r = Math.floor(Math.random() * 256);
+              const g = Math.floor(Math.random() * 256);
+              const b = Math.floor(Math.random() * 256);
+              return `rgba(${r}, ${g}, ${b}, 0.5)`;
+            };
+      
+            const barColors = courses.map(() => generateRandomColor());
+      
+            // Create the bar chart using Chart.js
+            const ctx = document.getElementById("studentPerCourseChart").getContext("2d");
+            new Chart(ctx, {
+              type: "bar",
+              data: {
+                labels: courses,
+                datasets: [
+                  {
+                    label: "Student Population",
+                    data: studentCounts,
+                    backgroundColor: barColors,
+                    borderColor: barColors.map((color) => color.replace("0.5", "1")), // Adjust opacity for borders
+                    borderWidth: 2,
+                  },
+                ],
+              },
+              options: {
+                maintainAspectRatio: false,
+                responsive: true,
+                scales: {
+                  x: {
+                    grid: {
+                      display: false,
+                    },
+                    ticks: {
+                      font: {
+                        size: isMobile ? 10 : 12, // Reduce font size for mobile
+                      },
+                    },
+                  },
+                  y: {
+                    beginAtZero: true,
+                    grid: {
+                      borderDash: [3, 3],
+                      color: "#d6d6d6",
+                    },
+                    ticks: {
+                      font: {
+                        size: 12,
+                      },
+                    },
+                  },
+                },
+                plugins: {
+                  legend: {
+                    display: true,
+                    position: "top",
+                    labels: {
+                      font: {
+                        size: 12,
+                      },
+                    },
+                  },
+                  tooltip: {
+                    backgroundColor: "rgba(0, 0, 0, 0.8)",
+                    bodyFont: {
+                      size: 12,
+                    },
+                    caretPadding: 5,
+                  },
+                },
+              },
+            });
+          })
+          .catch((error) => console.error("Error fetching student per course data:", error));
+      });
+    </script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+          fetch('/api_event_list/')  // Fetch data from Django API
+              .then(response => response.json())
+              .then(events => {
+                  const listContainer = document.querySelector('.event-list');
+                  listContainer.innerHTML = '';  // Clear any existing data
+    
+                  if (events.length === 0) {
+                      listContainer.innerHTML = '<li class="list-group-item text-success bg-success">No upcoming events.</li>';
+                  } else {
+                      events.forEach(event => {
+                          const listItem = document.createElement('li');
+                          listItem.className = 'list-group-item';
+                          listItem.style.backgroundColor = '#A1C099'; // Light success green
+                          listItem.style.color = '#357623'; // Dark success text
+                          listItem.style.borderColor = '#c3e6cb'; // Border matching success theme
+
+                          const eventTime = event.event_time ? new Date(`1970-01-01T${event.event_time}Z`) : null;
+                          const formattedTime = eventTime
+                              ? `${eventTime.getUTCHours() % 12 || 12}:${String(eventTime.getUTCMinutes()).padStart(2, '0')} ${eventTime.getUTCHours() >= 12 ? 'PM' : 'AM'}`
+                              : '';
+                          
+                          listItem.innerHTML = `
+                            <strong style="color: #A1C099;">${event.title}</strong><br>
+                            <span>${event.location ? `Location: ${event.location}` : ''}</span><br>
+                            <small class="text-muted" style="color: #357623;">Date: ${event.date} ${formattedTime}</small>
+                          `;
+    
+                          listContainer.appendChild(listItem);
+                      });
+                  }
+              })
+              .catch(error => {
+                  console.error('Error fetching event data:', error);
+              });
+      });  
+    </script>
+    
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const events = [
+            { title: "Science Fair", description: "A fun day filled with science projects.", date: "2025-01-20" },
+            { title: "Sports Day", description: "A day of athletic events and team activities.", date: "2025-01-25" },
+            { title: "Art Exhibition", description: "Showcasing student artwork.", date: "2025-01-30" },
+            { title: "Math Olympiad", description: "Compete in challenging math problems.", date: "2025-02-05" },
+            { title: "Graduation Day", description: "Celebrate student achievements.", date: "2025-02-15" },
+        ];
+    
+        const listContainer = document.querySelector('.event-list');
+    
+        if (listContainer) {
+            events.forEach(event => {
+                const listItem = document.createElement('li');
+                listItem.className = 'list-group-item';
+                listItem.style.backgroundColor = '#d4edda'; // Light success green
+                listItem.style.color = '#155724'; // Dark success text
+                listItem.style.borderColor = '#c3e6cb'; // Border matching success theme
+                listItem.innerHTML = `
+                    <strong style="color: #155724;">${event.title}:</strong> 
+                    ${event.description} 
+                    <small class="text-muted" style="color: #d4edda;">(${event.date})</small>
+                `;
+                listContainer.appendChild(listItem);
+            });
+        } else {
+            console.error('Event list container not found!');
+        }
+    });  
+  </script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+      // Get the current semester ID
+      const semesterId = {{ current_semester.id|default:0 }};
+      
+      // Validate Semester ID
+      if (!semesterId) {
+          console.error("No active semester found.");
+          return;
+      }
+  
+      // API URL
+      const apiUrl = `/dashboard_student_grade/?semester=${semesterId}`;
+  
+      // Fetch Data from API
+      $.ajax({
+          url: apiUrl,
+          method: 'GET',
+          success: function (response) {
+              console.log("API Response:", response); // Debugging
+              
+              const results = response.results;
+              const terms = response.terms; // Get terms from API
+              
+              // ✅ Extract unique subjects & students
+              const subjects = [...new Set(results.map(r => r.subject_name))];
+              const students = [...new Set(results.map(r => r.student_full_name))];
+  
+              // ✅ Generate consistent colors for each subject
+              const colorMap = {};
+              subjects.forEach(subject => {
+                  const randomColor = `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 0.6)`;
+                  colorMap[subject] = randomColor;
+              });
+  
+              // ✅ Create datasets for each subject's term grades
+              const datasets = [];
+              subjects.forEach(subject => {
+                  terms.forEach(term => {
+                      datasets.push({
+                          label: `${subject} - ${term}`, // Display as "Subject - Term"
+                          data: students.map(student => {
+                              // Find term data for this student & subject
+                              const termData = results.find(r => 
+                                  r.student_full_name === student && 
+                                  r.subject_name === subject
+                              );
+  
+                              // Find the specific term score
+                              const termScore = termData 
+                                  ? termData.terms.find(t => t.term_name === term)?.term_score || 0 
+                                  : 0;
+  
+                              return termScore;
+                          }),
+                          backgroundColor: colorMap[subject], // Use the same color per subject
+                          borderColor: colorMap[subject].replace('0.6', '1'), // Darker border
+                          borderWidth: 1
+                      });
+                  });
+              });
+  
+              // ✅ Render Chart with Separate Bars for Each Term & Subject
+              const ctx1 = document.getElementById('gradesBarChart').getContext('2d');
+              const gradesBarChart = new Chart(ctx1, {
+                  type: 'bar',
+                  data: {
+                      labels: students, // Student names
+                      datasets: datasets // Grades per term
+                  },
+                  options: {
+                      responsive: true,
+                      plugins: {
+                          title: {
+                              display: true,
+                          },
+                          tooltip: {
+                              callbacks: {
+                                  label: function (context) {
+                                      return `${context.dataset.label}: ${context.raw.toFixed(2)}`;
+                                  }
+                              }
+                          }
+                      },
+                      scales: {
+                          x: {
+                              stacked: false // ❌ No stacking; bars displayed side-by-side
+                          },
+                          y: {
+                              beginAtZero: true
+                          }
+                      }
+                  }
+              });
+          },
+          error: function () {
+              alert('Failed to fetch data from the API.');
+          }
+      });
+  });
+  </script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+      // API endpoint
+      const apiUrl = '/all_teachers_average_ratings/';
+
+      // Fetch data
+      fetch(apiUrl)
+          .then(response => response.json())
+          .then(data => {
+              const ratings = data.ratings;
+
+              // Extract unique subjects
+              const subjects = [...new Set(ratings.map(item => item.subject_name))];
+
+              // Calculate average ratings per subject
+              const averageRatings = subjects.map(subject => {
+                  const subjectRatings = ratings.filter(r => r.subject_name === subject);
+                  const totalRatings = subjectRatings.reduce((sum, item) => sum + item.average_rating, 0);
+                  return (totalRatings / subjectRatings.length).toFixed(2); // Average rating
+              });
+        // Fetch data
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                const ratings = data.ratings;
+
+                // Extract unique subjects
+                const subjects = [...new Set(ratings.map(item => item.subject_name))];
+
+                // Calculate average ratings per subject
+                const averageRatings = subjects.map(subject => {
+                    const subjectRatings = ratings.filter(r => r.subject_name === subject);
+                    const totalRatings = subjectRatings.reduce((sum, item) => sum + item.average_rating, 0);
+                    return (totalRatings / subjectRatings.length).toFixed(2); // Average rating
+                });
+
+                // Generate random colors for each bar
+                const generateRandomColor = () => {
+                    const r = Math.floor(Math.random() * 256);
+                    const g = Math.floor(Math.random() * 256);
+                    const b = Math.floor(Math.random() * 256);
+                    return `rgba(${r}, ${g}, ${b}, 0.5)`; // Random RGBA color with 50% opacity
+                };
+
+                const barColors = subjects.map(() => generateRandomColor()); // Generate random colors for each subject
+
+                // Create the bar chart
+                  const ctx = document.getElementById('teachersAverageRatingsChart').getContext('2d');
+                  new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                      labels: subjects, // Subjects on the X-axis
+                      datasets: [{
+                        label: 'Student Feedback', // Label for the bars
+                        data: averageRatings, // Average ratings per subject
+                        backgroundColor: 'rgba(78, 115, 223, 0.5)', // Matching the bar color style
+                        borderColor: '#ffffff', // White border for bars
+                        borderWidth: 2 // Bar border width
+                      }]
+                    },
+                    options: {
+                      scales: {
+                        x: {
+                          grid: {
+                            display: false // Removes grid lines for the X-axis
+                          },
+                          ticks: {
+                            font: {
+                              size: 12 // Adjusts font size for labels
+                            }
+                          },
+                          title: {
+                            display: true,
+                            color: '#858796',
+                            font: {
+                              family: 'Roboto',
+                              size: 12,
+                              weight: 'bold'
+                            }
+                          }
+                        },
+                        y: {
+                          beginAtZero: true,
+                          grid: {
+                            borderDash: [3, 3], // Adds dashed grid lines for Y-axis
+                            color: '#d6d6d6' // Matches grid line color
+                          },
+                          ticks: {
+                            font: {
+                              size: 12 // Adjusts font size for Y-axis labels
+                            }
+                          },
+                          title: {
+                            display: true,
+                            color: '#858796',
+                            font: {
+                              family: 'Roboto',
+                              size: 12,
+                              weight: 'bold'
+                            }
+                          }
+                        }
+                      },
+                      maintainAspectRatio: false, // Responsive chart
+                      plugins: {
+                        legend: {
+                          display: true,
+                          position: 'top', // Matches the legend position with the left chart
+                          labels: {
+                            fontColor: '#5a5c69',
+                            font: {
+                              size: 12 // Adjusts font size for legend
+                            }
+                          }
+                        },
+                        tooltip: {
+                          backgroundColor: 'rgba(0, 0, 0, 0.8)', // Dark background for tooltips
+                          bodyFont: {
+                            size: 12 // Adjusts tooltip font size
+                          },
+                          caretPadding: 5
+                        }
+                      }
+                    }
+                  });
+
+            })
+            .catch(error => console.error('Error fetching ratings:', error));
+    });
+  </script>
+  
+{% endblock %}

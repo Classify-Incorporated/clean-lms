@@ -1,0 +1,387 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+  Calendar
+{% endblock %}
+{% block content %}
+  <div class="content-wrapper">
+    <!-- Content Header -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0">Calendar</h1>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <section class="content">
+      <div class="container-fluid">
+        <!-- Calendar Card -->
+        <div class="card">
+          <div class="card-body">
+            <div id="calendar"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  {% if user_role == 'time keeper' %}
+  <!-- Modal for Adding/Editing Holidays -->
+  <!-- Modal for Adding/Editing Holidays -->
+<div class="modal fade" id="addEventModal" tabindex="-1" role="dialog" aria-labelledby="addEventModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addEventModalLabel">Add/Edit Holiday</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="eventForm">
+          <input type="hidden" id="holidayId" name="id" />
+          <div class="mb-3">
+            <label for="eventTitle" class="form-label">Holiday Title</label>
+            <input type="text" class="form-control" id="eventTitle" name="title" required />
+          </div>
+          <div class="mb-3">
+            <label for="eventDate" class="form-label">Holiday Date</label>
+            <input type="date" class="form-control" id="eventDate" name="date" required />
+          </div>
+          <div class="mb-3">
+            <label for="holidayType" class="form-label">Holiday Type</label>
+            <select class="form-control" id="holidayType" name="holiday_type" required>
+              <option value="Regular Holiday">Regular Holiday</option>
+              <option value="Special Holiday">Special Holiday</option>
+              <option value="Restday Regular Holiday">Restday Regular Holiday</option>
+              <option value="Restday Special Holiday">Restday Special Holiday</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="eventColor" class="form-label">Color</label>
+            <input type="color" class="form-control form-control-color" id="eventColor" name="color" value="#ff0000" title="Choose a color" />
+          </div>
+          <button type="submit" class="btn btn-success">Save</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+  {% endif %}
+  
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const csrfToken = getCSRFToken();
+
+    function getCSRFToken() {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+            const cookies = document.cookie.split(";");
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.startsWith("csrftoken=")) {
+                    cookieValue = decodeURIComponent(cookie.substring(10));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Handle form submission for adding/updating holidays
+    document.getElementById("eventForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        Swal.fire({
+            title: "Confirm Submission",
+            text: "Do you want to save this holiday?",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonText: "Yes, Save",
+            cancelButtonText: "Cancel",
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const id = document.getElementById("holidayId").value;
+                const title = document.getElementById("eventTitle").value;
+                const date = document.getElementById("eventDate").value;
+                const holidayType = document.getElementById("holidayType").value;
+                const color = document.getElementById("eventColor").value;
+
+                const method = id ? "PUT" : "POST";
+                const url = "/api/holidays/";
+
+                fetch(url, {
+                    method: method,
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": csrfToken,
+                    },
+                    body: JSON.stringify({
+                        id: id,
+                        title: title,
+                        date: date,
+                        holiday_type: holidayType,
+                        color: color,
+                    }),
+                })
+                .then((response) => response.json())
+                .then((data) => {
+                    Swal.fire({
+                        title: "Success!",
+                        text: "Holiday saved successfully.",
+                        icon: "success",
+                        timer: 2000,
+                        showConfirmButton: false,
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                })
+                .catch((error) => {
+                    Swal.fire({
+                        title: "Error!",
+                        text: "Failed to save holiday.",
+                        icon: "error",
+                    });
+                });
+            }
+        });
+    });
+
+    function closeModal() {
+        const modal = document.getElementById("addEventModal");
+        modal.style.display = "none";
+        modal.classList.remove("show");
+        document.body.classList.remove("modal-open");
+        const backdrop = document.querySelector(".modal-backdrop");
+        if (backdrop) {
+            backdrop.parentNode.removeChild(backdrop);
+        }
+    }
+});
+
+</script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const userRole = "{{ user_role }}";
+    const calendarEl = document.getElementById("calendar");
+
+    // Fetch calendar data from API
+    fetch("/calendar_api/")
+        .then((response) => response.json())
+        .then((calendarData) => {
+            const now = new Date();
+
+            // Define colors for different event types
+            const eventColors = {
+                "activity": { background: "#007bff", border: "#0056b3" },  // Blue
+                "holiday": { background: "#28a745", border: "#1e7e34" },  // Green
+                "event": { background: "#ffc107", border: "#d39e00" },  // Yellow
+                "announcement": { background: "#dc3545", border: "#bd2130" }  // Red
+            };
+
+            // Map calendar data based on type
+            const events = calendarData.map((item) => {
+                let classNames = [];
+                if (item.type === "activity") {
+                    const start = new Date(item.start);
+                    const end = item.end ? new Date(item.end) : null;
+                    if (end && now > end) {
+                        classNames = ["fc-event-finished"];
+                    } else if (start > now) {
+                        classNames = ["fc-event-upcoming"];
+                    } else if (start <= now && (!end || now <= end)) {
+                        classNames = item.answered ? ["fc-event-answered"] : ["fc-event-ongoing"];
+                    }
+                }
+
+                let formattedStart = item.start;
+                let formattedEnd = item.end || null;
+
+                if (item.type === "event" && item.event_time) {
+                    formattedStart = `${item.date}T${item.event_time}`;
+                    formattedEnd = `${item.date}T${item.event_time}`;
+                }
+
+                return {
+                    id: item.id,
+                    title: item.title,
+                    start: formattedStart,
+                    end: formattedEnd,
+                    allDay: item.allDay || false,
+                    display: item.type === "announcement" ? "list-item" : "auto",
+                    classNames: classNames,
+                    backgroundColor: eventColors[item.type]?.background || "#6c757d",
+                    borderColor: eventColors[item.type]?.border || "#495057",
+                    textColor: "#ffffff",
+                    extendedProps: { type: item.type }
+                };
+            });
+
+            // Initialize FullCalendar
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: "dayGridMonth",
+                headerToolbar: {
+                    left: "prev,next today",
+                    center: "title",
+                    right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek",
+                },
+                selectable: true,
+                events: events,
+                eventTimeFormat: { // Ensure proper time formatting
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    meridiem: 'short' // This ensures AM/PM is displayed correctly
+                },
+                eventContent: function (arg) {
+                    // Custom rendering for announcements
+                    if (arg.event.extendedProps.type === "announcement") {
+                        return { html: `<span style="color: ${arg.event.backgroundColor}; font-weight: bold;">${arg.event.title}</span>` };
+                    } else {
+                        return { html: `<span>${arg.timeText} ${arg.event.title}</span>` };
+                    }
+                },
+                select: function (info) {
+                    if (userRole === "time keeper") {
+                        document.getElementById("eventDate").value = info.startStr;
+                        const addEventModal = new bootstrap.Modal(document.getElementById("addEventModal"));
+                        addEventModal.show();
+                    } else {
+                        Swal.fire({
+                            title: "Access Denied!",
+                            text: "You do not have permission to add or edit holidays.",
+                            icon: "warning",
+                        });
+                    }
+                },
+                eventClick: function (info) {
+                    const eventId = info.event.id ? info.event.id.split("-")[1] : null;
+                    if (!eventId) {
+                        console.error("Invalid event ID:", info.event.id);
+                        return;
+                    }
+
+                    if (info.event.id.startsWith("activity-")) {
+                        // Only redirect for activities
+                        window.location.href = `/studentActivityView/${eventId}/`;
+                    }
+                },
+            });
+
+            calendar.render();
+        })
+        .catch((error) => console.error("Error fetching calendar data:", error));
+});
+</script>
+
+  <style>
+    #calendar {
+      width: 100%;
+      max-width: none;
+      margin: 0 auto;
+    }
+    
+    /* Adjust card size */
+    .card {
+      max-width: 100%; /* Set a smaller max width */
+      margin: 0 auto; /* Center the card */
+    }
+    
+    .card-body {
+      padding: 15px; /* Adjust padding for a smaller, compact card */
+    }
+    
+    /* Override header text color */
+    .fc-col-header-cell-cushion {
+      color: var(--dark) !important; /* Black text color */
+      font-weight: 900; /* Light font weight */
+    }
+    
+    .dark-mode .fc-col-header-cell-cushion {
+      color: white !important; /* Black text color */
+      font-weight: normal; /* Light font weight */
+    }
+    
+    .fc-event-finished {
+      background-color: var(--danger) !important;
+      color: white !important;
+      border-color: #757575 !important;
+    }
+    
+    .fc-event-upcoming {
+      background-color: var(--info) !important;
+      color: white !important;
+      border-color: #757575 !important;
+    }
+    
+    .fc-event-ongoing {
+      background-color: var(--warning) !important;
+      color: white !important;
+      border-color: #757575 !important;
+    }
+    
+    .fc-event-missed {
+      background-color: #c09999 !important;
+      color: white !important;
+      border-color: #757575 !important;
+    }
+    
+    .fc-event-answered {
+      background-color: var(--success) !important;
+      color: white !important;
+      border-color: #757575 !important;
+    }
+    
+    .fc .fc-event .fc-event-main {
+      outline: none !important;
+    }
+    
+    .fc-event-dot {
+      display: none !important;
+    }
+    
+    /* Add spacing and subtle border styling */
+    .fc-daygrid-day-top {
+      padding: 5px !important;
+    }
+    
+    /* Custom styling for FullCalendar buttons */
+    .fc-toolbar button {
+      background-color: var(--success) !important; /* Bootstrap success color */
+      border: none;
+      color: var(--success-text) !important;
+      padding: 5px 10px;
+      margin: 0 5px;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    
+    .fc-daygrid-day-number {
+      color: var(--dark-text) !important;
+      font-weight: 500;
+    }
+    
+    .fc-toolbar button.fc-prev-button,
+    .fc-toolbar button.fc-next-button,
+    .fc-toolbar button.fc-today-button {
+      background-color: #218838;
+      color: white;
+    }
+    
+    .fc-toolbar button:hover {
+      background-color: #218838;
+    }
+    
+    .fc-toolbar .fc-button-active {
+      background-color: #218838;
+      border-color: #218838;
+    }
+
+    
+  </style>
+{% endblock %}

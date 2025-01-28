@@ -1,0 +1,14 @@
+<form method="post" action="{% url 'createTermGradeBookComponent' %}">
+  {% csrf_token %}
+  <div class="form-group">{{ form.term.label_tag }}
+    {{ form.term }}</div>
+  <div class="form-group">{{ form.subjects.label_tag }}
+    {{ form.subjects }}</div>
+  <div class="form-group">{{ form.base_Grade.label_tag }}
+    {{ form.base_Grade }}</div>
+  <div class="form-group">{{ form.passing_grade.label_tag }}
+    {{ form.passing_grade }}</div>
+  <div class="form-group">{{ form.percentage.label_tag }}
+    {{ form.percentage }}</div>
+  <button type="submit" class="btn btn-primary">Submit</button>
+</form>

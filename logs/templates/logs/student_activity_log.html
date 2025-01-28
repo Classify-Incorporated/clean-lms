@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Student Activity Logs
+{% endblock %}
+
+{% block content %}
+  <div class="content-wrapper">
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0">Student Activity Logs</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                <a href="#">Home</a>
+              </li>
+              <li class="breadcrumb-item active">Student Activity Logs</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container mt-5">
+        <div class="accordion" id="logAccordion">
+          {% for subject_name, logs in grouped_logs.items %}
+            <div class="card mb-3 shadow-sm">
+              <div class="card-header" id="heading{{ forloop.counter }}">
+                <h2 class="mb-0"><button class="btn btn-link text-dark" type="button" data-toggle="collapse" data-target="#collapse{{ forloop.counter }}" aria-expanded="true" aria-controls="collapse{{ forloop.counter }}">{{ subject_name }} <i class="fas fa-chevron-down float-sm-right"></i></button></h2>
+              </div>
+
+              <div id="collapse{{ forloop.counter }}" class="collapse" aria-labelledby="heading{{ forloop.counter }}" data-parent="#logAccordion">
+                <div class="card-body">
+                  <ul class="list-group">
+                    {% for log in logs %}
+                      <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                          <p>
+                            A student named <strong>{{ log.student.first_name }} {{ log.student.last_name }}</strong>
+                            submitted an activity named <em>{{ log.activity.activity_name }}</em>.
+                          </p>
+                        </div>
+                        <small class="text-muted">{{ log.submission_time|date:'M d, Y H:i A' }}</small>
+                      </li>
+                    {% empty %}
+                      <li class="list-group-item text-muted">No logs available for this subject.</li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  </div>
+{% endblock %}
+
+{% block extra_css %}
+  <style>
+    body {
+      background-color: #f0f2f5;
+    }
+    
+    .container {
+      max-width: 100%;
+      padding: 0 15px;
+    }
+    
+    .card {
+      border: none;
+      border-radius: 8px;
+    }
+    
+    .log-content p {
+      font-size: 15px;
+      color: #333;
+    }
+    
+    .card-header button {
+      text-decoration: none;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    
+    .list-group-item {
+      border: none;
+      background-color: #f8f9fa;
+    }
+    
+    .btn-link i {
+      transition: transform 0.2s ease;
+    }
+    
+    .btn-link[aria-expanded='true'] i {
+      transform: rotate(180deg);
+    }
+  </style>
+{% endblock %}

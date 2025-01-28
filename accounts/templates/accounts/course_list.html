@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+  Course List
+{% endblock %}
+{% block content %}
+  <div class="content-wrapper">
+    <!-- Content Header -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0">Course List</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right"></ol>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <section class="content">
+      <div class="container-fluid">
+
+        <!-- Add Course Button -->
+        <div class="mb-3">
+          <button class="btn btn-success" onclick="openAddModal()">Add Course</button>
+        </div>
+
+        <!-- Table Layout -->
+        <div class="table-responsive">
+          <table class="table table-bordered table-striped" id="dataTable" width="100%" cellspacing="0">
+            <thead class="text-center bg-primary">
+              <tr>
+                <th>#</th>
+                <th>Course Name</th>
+                <th>Short Name</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if course %}
+                {% for course in course %}
+                  <tr>
+                    <!-- Numbering -->
+                    <td>{{ forloop.counter }}</td>
+
+                    <!-- Name -->
+                    <td>{{ course.name }}</td>
+
+                    <!-- Short Name -->
+                    <td>{{ course.short_name }}</td>
+
+                    <!-- Action Buttons -->
+                    <td>
+                      <div class="dropdown">
+                        <button class="btn btn-white btn-sm no-caret" type="button" id="dropdownMenuButton{{ course.id }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                          <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton{{ course.id }}">
+                          <a href="javascript:void(0);" class="dropdown-item" onclick="openEditModal({{ course.id }})">
+                            <i class="fas fa-edit"></i> Update
+                          </a>
+                        </div>
+                      </div>
+                    </td>                    
+                  </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="4" class="text-center">No courses found.</td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Add Course Modal -->
+        <div id="addModal" class="custom-modal">
+          <div class="custom-modal-header">
+            <button class="close-btn" id="closeAddModalBtn"></button>
+            <h5>Add Course</h5>
+          </div>
+          <div class="custom-modal-body" id="addModalBody">
+            <!-- The content will be loaded dynamically here -->
+          </div>
+        </div>
+        <div id="addModalBackdrop" class="custom-modal-backdrop"></div>
+
+        <!-- Edit Course Modal -->
+        <div id="editModal" class="custom-modal">
+          <div class="custom-modal-header">
+            <button class="close-btn" id="closeEditModalBtn"></button>
+            <h5>Edit Course</h5>
+          </div>
+          <div class="custom-modal-body" id="editModalBody">
+            <!-- The content will be loaded dynamically here -->
+          </div>
+        </div>
+        <div id="editModalBackdrop" class="custom-modal-backdrop"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- JavaScript for Modal -->
+  <script>
+    function openAddModal() {
+      const fetchUrl = `/create_course/`;
+
+      fetch(fetchUrl)
+        .then((response) => response.text())
+        .then((html) => {
+          document.getElementById('addModalBody').innerHTML = html;
+          document.getElementById('addModal').classList.add('show');
+          document.getElementById('addModalBackdrop').classList.add('show');
+        });
+    }
+
+    function openEditModal(courseId) {
+      const fetchUrl = `/update_course/${courseId}/`;
+
+      fetch(fetchUrl)
+        .then((response) => response.text())
+        .then((html) => {
+          document.getElementById('editModalBody').innerHTML = html;
+          document.getElementById('editModal').classList.add('show');
+          document.getElementById('editModalBackdrop').classList.add('show');
+        });
+    }
+
+    // Close button functionality for modals
+    document.getElementById('closeAddModalBtn').addEventListener('click', function () {
+      document.getElementById('addModal').classList.remove('show');
+      document.getElementById('addModalBackdrop').classList.remove('show');
+    });
+
+    document.getElementById('closeEditModalBtn').addEventListener('click', function () {
+      document.getElementById('editModal').classList.remove('show');
+      document.getElementById('editModalBackdrop').classList.remove('show');
+    });
+  </script>
+{% endblock %}

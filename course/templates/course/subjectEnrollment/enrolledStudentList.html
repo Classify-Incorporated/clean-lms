@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Enrolled Students by Subject
+{% endblock %}
+
+{% block content %}
+  <div class="content-wrapper">
+    <!-- Content Header -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-3">
+          <div class="col-sm-6">
+            <h1 class="display-4">Enrolled Students by Subject</h1>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <!-- Semester and Subject Filters -->
+        <form method="get" class="form-inline mb-4">
+          <div class="form-group mr-3">
+            <label for="semester" class="mr-2">Semester:</label>
+            <select id="semester" name="semester" class="form-control" onchange="this.form.submit()">
+              <option value="">All Semesters</option>
+              {% for semester in semesters %}
+                <option value="{{ semester.id }}" {% if selected_semester and selected_semester.id == semester.id %}selected{% endif %}>
+                  {{ semester.semester_name }} - {{ semester.school_year }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+    
+          <div class="form-group">
+            <label for="subject" class="mr-2">Subject:</label>
+            <select id="subject" name="subject" class="form-control" onchange="this.form.submit()">
+              <option value="">All Subjects</option>
+              {% for subject in available_subjects %}
+                <option value="{{ subject.id }}" {% if selected_subject and selected_subject.id == subject.id %}selected{% endif %}>
+                  {{ subject.subject_name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </form>
+
+        {% if user.profile.role.name.lower != 'teacher' and user.profile.role.name.lower != 'student' %}
+          {% if selected_semester.id == current_semester.id %}
+            <div class="mb-2 d-flex justify-content-start align-items-center">
+              <a href="{% url 'enrollStudent' %}" class="btn btn-primary mr-2">
+                <i class="fas fa-user-plus"></i>  Manual Enrollment
+              </a>
+              <a type="button" class="btn btn-info" id="openImportModalBtn">
+                <i class="fas fa-users"></i> Import 
+              </a>
+            </div>
+          {% endif %}
+        {% endif %}
+
+
+        <!-- Accordion for Subjects -->
+        <div class="accordion" id="subjectsAccordion">
+          {% for subject, enrollments in subjects.items %}
+            <div class="card shadow-sm mb-3">
+              <div class="card-header bg-success" id="heading{{ forloop.counter }}">
+                <h5 class="mb-0">
+                  <button class="btn text-light" type="button" data-toggle="collapse" data-target="#collapse{{ forloop.counter }}" aria-expanded="true" aria-controls="collapse{{ forloop.counter }}">
+                    {{ subject.subject_name }}
+                    <small class="badge badge-warning ml-3">{{ enrollments|length }} Students</small>
+                    <small class="ml-2 text-muted">(Click to expand)</small>                 
+                  </button>
+                </h5>
+              </div>
+
+              <div id="collapse{{ forloop.counter }}" class="collapse" aria-labelledby="heading{{ forloop.counter }}" data-parent="#subjectsAccordion">
+                <div class="card-body">
+                  <!-- Add unique ID to each table -->
+                  <table class="table table-hover table-bordered" id="dataTable{{ forloop.counter }}">
+                    <thead class="thead bg-primary text-center">
+                      <tr>
+                        <th>#</th>
+                        <th>Student Name</th>
+                        <th>Semester</th>
+                        <th>Enrollment Date</th>
+                        <th>Status</th>
+                        <th>Date Dropped</th>
+                        {% if selected_semester.id == current_semester.id %}
+                         {% if user.profile.role.name.lower != 'student' %}
+                            <th>Actions</th>
+                          {% endif %}
+                        {% endif %}
+                      </tr>
+                    </thead>
+                    <tbody class="text-center">
+                      {% for enrollment in enrollments %}
+                        <tr>
+                          <th scope="row">{{ forloop.counter }}</th>
+                          <td>{{ enrollment.student.get_full_name }}</td>
+                          <td>{{ enrollment.semester.semester_name }} - {{ enrollment.semester.school_year }}</td>
+                          <td>{{ enrollment.enrollment_date }}</td>
+                          <td>
+                            {% if enrollment.status == 'dropped' %}
+                              <span class="badge badge-warning"><i class="fas fa-times-circle"></i> Dropped</span>
+                            {% elif enrollment.status == 'enrolled' %}
+                              <span class="badge badge-success"><i class="fas fa-check-circle"></i> Enrolled</span>
+                            {% elif enrollment.status == 'completed' %}
+                              <span class="badge badge-primary"><i class="fas fa-graduation-cap"></i> Completed</span>
+                            {% endif %}
+                          </td>
+                          <td>{{ enrollment.drop_date|default:"--" }}</td>
+                          {% if selected_semester.id == current_semester.id %}
+                            {% if user.profile.role.name.lower != 'student' %}
+                              <td>
+                              
+                                {% if enrollment.status != 'dropped' %}
+                                  <button class="btn btn-warning btn-sm" onclick="confirmDrop('{{ enrollment.student.get_full_name }}', '{% url 'dropStudentFromSubject' enrollment.id %}')">
+                                    <i class="fas fa-user-minus"></i> Drop
+                                  </button>
+                                {% endif %}
+                                {% if enrollment.status == 'dropped' %}
+                                  <button class="btn btn-info btn-sm" onclick="confirmRestore('{{ enrollment.student.get_full_name }}', '{% url 'restoreStudentFromSubject' enrollment.id %}')">
+                                    <i class="fas fa-user-check"></i> Restore
+                                  </button>
+                                {% endif %}
+                                <button class="btn btn-danger btn-sm" onclick="confirmRemove('{{ enrollment.student.get_full_name }}', '{% url 'deleteStudentFromSubject' enrollment.id %}')">
+                                  <i class="fas fa-trash"></i> Remove
+                                </button>
+                              </td>
+                            {% endif %}
+                          {% endif %}
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Import Students Modal -->
+  <div id="importModal" class="custom-modal">
+    <div class="custom-modal-header">
+      <button class="close-btn" id="closeImportModalBtn"></button>
+      <h5>Import Student to be Enrolled</h5>
+    </div>
+    <div class="custom-modal-body">
+      <form method="post" enctype="multipart/form-data" action="{% url 'import_students_and_enroll' %}">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="importFile">Choose CSV File:</label>
+          <input type="file" name="import_file" id="importFile" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Upload</button>
+      </form>
+      <div class="mt-2">
+        <a href="{{ MEDIA_URL|add:'template/Import Enrolled Student Template.csv' }}" class="btn btn-sm btn-secondary" download>
+          Download Template here.
+        </a>
+        <br>
+        <small>(Download the template above for guidance.)</small>        
+      </div>  
+    </div>
+  </div>
+  <div id="importModalBackdrop" class="custom-modal-backdrop"></div>
+
+
+  <!-- Include SweetAlert CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+
+  <script>
+
+    document.getElementById('openImportModalBtn').addEventListener('click', function () {
+      document.getElementById('importModal').classList.add('show');
+      document.getElementById('importModalBackdrop').classList.add('show');
+    });
+
+    document.getElementById('closeImportModalBtn').addEventListener('click', function () {
+      document.getElementById('importModal').classList.remove('show');
+      document.getElementById('importModalBackdrop').classList.remove('show');
+    });
+
+    // Custom SweetAlert Confirmation Script
+    function confirmDrop(studentName, url) {
+      Swal.fire({
+        title: 'Are you sure?',
+        text: `You are about to drop ${studentName}.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, drop!',
+        cancelButtonText: 'Cancel'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = url;
+        }
+      });
+    }
+
+    function confirmRestore(studentName, url) {
+      Swal.fire({
+        title: 'Are you sure?',
+        text: `You are about to restore ${studentName}.`,
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, restore!',
+        cancelButtonText: 'Cancel'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = url;
+        }
+      });
+    }
+
+    function confirmRemove(studentName, url) {
+      Swal.fire({
+        title: 'Are you sure?',
+        text: `You are about to remove ${studentName}.`,
+        icon: 'error',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, remove!',
+        cancelButtonText: 'Cancel'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = url;
+        }
+      });
+    }
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // DataTables options
+    const dataTableOptions = {
+      paging: true,
+      searching: true,
+      ordering: true,
+      info: true,
+      autoWidth: false,
+      responsive: true,
+      lengthMenu: [5, 10, 25, 50]
+    };
+
+    // Initialize DataTable for the first visible table when the page loads
+    $('#dataTable1').DataTable(dataTableOptions);
+
+    // Re-initialize DataTables for other accordions when they are shown
+    $('#subjectsAccordion .collapse').on('shown.bs.collapse', function (e) {
+      const tableId = $(this).find('table').attr('id');
+      if (!$.fn.DataTable.isDataTable('#' + tableId)) {
+        // Reinitialize the DataTable after the collapse animation is complete
+        setTimeout(function() {
+          $('#' + tableId).DataTable(dataTableOptions);
+        }, 300); // Give some time for the collapse to fully expand
+      }
+    });
+  });
+</script>
+
+{% endblock %}

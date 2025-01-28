@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {% load static %}
+    <title>Classroom Mode - {{ subject.subject_name }}</title>
+    <link rel="icon" type="image/png" href="{% static 'favicon.ico' %}">
+    <link rel="stylesheet" href="{% static 'assets/plugins/fontawesome-free/css/all.min.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/dist/css/adminlte.min.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/dist/css/settings.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/subject_details.css' %}" />
+    <link rel="icon" type="image/png" href="{% static 'favicon.ico' %}">
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+      }
+      
+      .student-roster-container {
+        padding: 20px;
+      }
+      
+      .student-card-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+      }
+      
+      .student-card {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 15px;
+      }
+      
+      .student-card:hover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      }
+      
+      .student-photo {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid var(--primary);
+        margin-bottom: 5px;
+      }
+      
+      .student-info {
+        padding: 10px 0;
+      }
+      
+      .student-name {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #333;
+      }
+      
+      .student-email {
+        font-size: 0.9rem;
+        color: #666;
+        margin-top: 5px;
+      }
+      
+      .action-btn {
+        margin-top: 10px;
+        padding: 8px 15px;
+        border-radius: 5px;
+        border: none;
+        background: linear-gradient(to right, #007bff, #0056b3);
+        color: #fff;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: background 0.3s ease;
+      }
+      
+      .action-btn:hover {
+        background: linear-gradient(to right, #0056b3, #003d80);
+      }
+      
+      @media (max-width: 768px) {
+        .student-card {
+          width: auto;
+        }
+      
+        .student-name {
+          font-size: 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Classroom Header -->
+    <div class="classroom-header fade-in">
+      <div class="header-content">
+        <h1>Classroom Mode: {{ subject.subject_name }}</h1>
+        <a href="{% url 'subjectDetail' subject.id %}" class="btn btn-light">Exit Classroom Mode</a>
+      </div>
+    </div>
+
+    <div class="classroom-container fade-in">
+      <!-- Content Header -->
+      <div class="content-header">
+        <div class="container-fluid">
+          <h1 class="h3 mb-4 text-center text-gray-800">
+            Student Roster for {{ subject.subject_name }}
+            <br />
+            <small>
+              {% if selected_semester %}
+                {{ selected_semester.semester_name }} -{% if selected_semester.start_date.year == selected_semester.end_date.year %}
+                  {{ selected_semester.start_date|date:'Y' }}
+                {% else %}
+                  {{ selected_semester.start_date|date:'Y' }} - {{ selected_semester.end_date|date:'Y' }}
+                {% endif %}
+              {% else %}
+                No Active Semester
+              {% endif %}
+            </small>
+          </h1>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="student-roster-container">
+        <div class="student-card-container">
+          {% for student in students %}
+            <div class="student-card">
+              {% if student.profile.student_photo %}
+                <img src="{{ student.profile.student_photo.url }}" class="student-photo" alt="Student Photo" />
+              {% else %}
+                <img src="{% static 'assets/dist/images/def_user.jpg' %}" class="student-photo" alt="Default Profile Picture" />
+              {% endif %}
+              <div class="student-info">
+                <p class="student-name">{{ student.profile.first_name }} {{ student.profile.last_name }}</p>
+                <p class="student-email">{{ student.email }}</p>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        <div class="text-left mt-4">
+          <a href="{% url 'classroom_mode' subject.id %}" class="btn btn-secondary mb-2">Back</a>
+        </div>
+      </div>
+    </div>
+
+    <script src="{% static 'assets/plugins/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'assets/plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'assets/plugins/chart.js/Chart.min.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    {% comment %}classroom_mode code{% endcomment %}
+    <script src="{% static 'js/classroom-mode.js' %}"></script>
+    <script src="{% static 'js/classroom-mode-full-screen.js' %}"></script>
+    <script src="{% static 'js/file-validation.js' %}"></script>
+    <script src="{% static 'js/modal.js' %}"></script>
+  </body>
+</html>

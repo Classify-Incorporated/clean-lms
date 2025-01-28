@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+  Event List
+{% endblock %}
+{% block content %}
+{% load static %}
+  <div class="content-wrapper">
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0">Event List</h1>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="content">
+      <div class="container-fluid">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <button class="btn btn-success" id="openAddModalBtn">Add Event</button>
+            </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-bordered table-striped" id="dataTable">
+                <thead class="text-center bg-primary">
+                  <tr>
+                    <th>#</th>
+                    <th>Title</th>
+                    <th>Description</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Location</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody class="text-center">
+                  <!-- Data will be inserted dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Event Modal -->
+        <div id="addModal" class="custom-modal">
+          <div class="custom-modal-header">
+            <button class="close-btn" id="closeAddModalBtn"></button>
+            <h5>Add Event</h5>
+          </div>
+          <div class="custom-modal-body">
+            <form id="addEventForm" method="POST">
+              {% csrf_token %}
+              <div class="form-group">
+                <label for="newEventTitle">Title</label>
+                <input type="text" class="form-control" id="newEventTitle" name="title" required>
+              </div>
+  
+              <div class="form-group">
+                <label for="newEventDescription">Description</label>
+                <textarea class="form-control" id="newEventDescription" name="description" required></textarea>
+              </div>
+  
+              <div class="form-group">
+                <label for="newEventDate">Date</label>
+                <input type="date" class="form-control" id="newEventDate" name="date" required>
+              </div>
+
+              <div class="form-group">
+                <label for="newEventTime">Time</label>
+                <input type="time" class="form-control" id="newEventTime" name="time">
+              </div>
+
+              <div class="form-group">
+                <label for="newEventLocation">Location</label>
+                <input type="text" class="form-control" id="newEventLocation" name="location">
+              </div>
+
+              <button type="submit" class="btn btn-success">Create</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Update Event Modal -->
+        <div id="editModal" class="custom-modal">
+          <div class="custom-modal-header">
+            <button class="close-btn" id="close_update_modal"></button>
+            <h5>Update Event</h5>
+          </div>
+          <div class="custom-modal-body">
+            <form id="updateEventForm" method="POST">
+              {% csrf_token %}
+              <input type="hidden" id="eventId" name="id">
+
+              <div class="form-group">
+                <label for="eventTitle">Title</label>
+                <input type="text" class="form-control" id="eventTitle" name="title" required>
+              </div>
+
+              <div class="form-group">
+                <label for="eventDescription">Description</label>
+                <textarea class="form-control" id="eventDescription" name="description" required></textarea>
+              </div>
+
+              <div class="form-group">
+                <label for="eventDate">Date</label>
+                <input type="date" class="form-control" id="eventDate" name="date" required>
+              </div>
+
+              <div class="form-group">
+                <label for="eventTime">Time</label>
+                <input type="time" class="form-control" id="eventTime" name="time">
+              </div>
+
+              <div class="form-group">
+                <label for="eventLocation">Location</label>
+                <input type="text" class="form-control" id="eventLocation" name="location">
+              </div>
+
+              <button type="submit" class="btn btn-primary">Update</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script src="{% static 'js/event_and_announcement/event.js' %}"></script>
+{% endblock %}

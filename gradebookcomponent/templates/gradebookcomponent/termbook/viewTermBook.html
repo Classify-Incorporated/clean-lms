@@ -1,0 +1,35 @@
+<div>
+  {% if termbook %}
+    <h5 class="font-weight-bold">Details for {{ termbook.term.term_name }}</h5>
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <p>
+          <strong>Teacher:</strong> {{ termbook.teacher.get_full_name }}
+        </p>
+      </div>
+      <div class="col-md-6">
+        <p>
+          <strong>Percentage:</strong> {{ termbook.percentage }}%
+        </p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <p>
+          <strong>Assigned Subjects:</strong>
+        </p>
+        <ul>
+          {% if termbook.subjects.exists %}
+            {% for subject in termbook.subjects.all %}
+              <li>{{ subject.subject_name }}</li>
+            {% endfor %}
+          {% else %}
+            <li>No subjects assigned.</li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  {% else %}
+    <p>No termbook selected.</p>
+  {% endif %}
+</div>

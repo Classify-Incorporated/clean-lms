@@ -1,0 +1,56 @@
+<!-- updateSemester.html -->
+<form method="post" action="{% url 'updateSemester' semester.id %}">
+  {% csrf_token %}
+  <div class="form-group">
+      <label for="id_semester_name">Semester Name</label>
+      {{ form.semester_name }}
+      {% if form.semester_name.errors %}
+        <div class="text-danger">{{ form.semester_name.errors }}</div>
+      {% endif %}
+  </div>
+      <!-- Base Grade -->
+      <div class="form-group">
+        <label for="id_base_grade">Base Grade</label>
+        {{ form.base_grade }}
+        {% if form.base_grade.errors %}
+          <div class="text-danger">{{ form.test.errors }}</div>
+        {% endif %}
+    </div>
+    <div class="form-group">
+      <label for="id_passing_grade">Passing Grade</label>
+      {{ form.passing_grade }}
+      {% if form.passing_grade.errors %}
+          <div class="text-danger">{{ form.passing_grade.errors }}</div>
+      {% endif %}
+  </div>
+  
+  <div class="form-group">
+    <label for="id_grade_calculation_method">Grade Calculation Method</label>
+    {{ form.grade_calculation_method }}
+    {% if form.grade_calculation_method.errors %}
+        <div class="text-danger">{{ form.grade_calculation_method.errors }}</div>
+    {% endif %}
+</div>
+  <div class="form-group">
+      <label for="id_start_date">Start Date</label>
+      {{ form.start_date }}
+      {% if form.start_date.errors %}
+        <div class="text-danger">{{ form.start_date.errors }}</div>
+      {% endif %}
+  </div>
+  <div class="form-group">
+      <label for="id_end_date">End Date</label>
+      {{ form.end_date }}
+      {% if form.end_date.errors %}
+        <div class="text-danger">{{ form.end_date.errors }}</div>
+      {% endif %}
+  </div>
+  <button type="submit" class="btn btn-primary">Submit</button>
+  <a href="{% url 'semesterList' %}" class="btn btn-secondary">Back</a>
+</form>
+<script>
+      // Initialize selectpicker after loading the modal
+document.addEventListener("DOMContentLoaded", function () {
+  $('.selectpicker').selectpicker('refresh');
+});
+</script>

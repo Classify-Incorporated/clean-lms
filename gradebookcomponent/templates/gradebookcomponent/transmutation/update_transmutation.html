@@ -1,0 +1,13 @@
+<form method="post" action="{% url 'update_transmutation' transmutation.id %}">
+    {% csrf_token %}
+    <div class="form-group">{{ form.transmutation_table_name.label_tag }}
+      {{ form.transmutation_table_name }}</div>
+    <div class="form-group">{{ form.max_grade.label_tag }}
+      {{ form.max_grade }}</div>
+    <div class="form-group">{{ form.min_grade.label_tag }}
+        {{ form.min_grade }}</div>
+    <div class="form-group">{{ form.transmuted_value.label_tag }}
+        {{ form.transmuted_value }}</div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+  

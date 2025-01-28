@@ -1,0 +1,248 @@
+{% block content %}
+
+<style>
+  /* Custom Modal Styles */
+  .custom-modal {
+    position: fixed;
+    z-index: 1050;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 100%; /* Full width for mobile */
+    max-width: 340px; /* Adjust max-width for larger screens like iPad */
+    background-color: white;
+    box-shadow: -2px 0 5px rgba(0,0,0,0.5);
+    transform: translateX(100%);
+    opacity: 0;
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+  }
+
+  @media (min-width: 1024px) {
+    /* Adjust modal width for larger tablets and desktop screens */
+    .custom-modal {
+      width: calc(100% - 400px); /* Adjust according to your sidebar width */
+      max-width: 800px; /* Max width for tablet and desktop view */
+    }
+  }
+
+  @media (min-width: 1280px) {
+    /* For very large screens (desktop or large tablets like iPad Pro) */
+    .custom-modal {
+      width: calc(100% - 300px); /* Adjust further based on sidebar width */
+      max-width: 1000px; /* Larger max width for big screens */
+    }
+  }
+
+  .custom-modal.show {
+    display: block;
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  /* Custom Backdrop */
+  .custom-modal-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1040;
+    opacity: 0;
+    transition: opacity 0.8s ease-out;
+  }
+
+  .custom-modal-backdrop.show {
+    display: block;
+    opacity: 1;
+  }
+
+  /* Header, Footer, and Body */
+  .custom-modal-header, .custom-modal-footer {
+    padding: 15px;
+    background-color: #f1f1f1;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .custom-modal-body {
+    padding: 15px;
+    overflow-y: auto;
+    height: calc(100% - 120px); /* Adjust based on header and footer height */
+  }
+
+  .close-btn {
+    position: absolute;
+    left: -17px;
+    top: 20px;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    background: #e74c3c;
+    color: white;
+    border: none;
+    width: 34px;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transform: translateX(-50%);
+  }
+
+  .close-btn:before {
+    content: "\2715";
+  }
+
+  /* Modal Right Positioning */
+  .modal.right .modal-dialog {
+      position: absolute;
+      top: 0;
+      right: 0;
+      margin: 0;
+  }
+
+  .modal.right .modal-content {
+      min-height: 100vh;
+      border: 0;
+  }
+
+  .modal-header .close {
+      margin: -1rem -1rem -1rem auto;
+  }
+
+  .modal.right .modal-body {
+      overflow-y: auto;
+  }
+
+  .modal-backdrop.show {
+      opacity: 0.5;
+  }
+</style>
+
+<div id="customRoleModal" class="custom-modal">
+    <div class="custom-modal-header">
+      <button class="close-btn" id="closeRoleModal"></button>
+      <h5>Add Role</h5>
+    </div>
+    <div class="custom-modal-body">
+      <form method="POST" action="{% url 'createRole' %}">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="role">Role Name:</label>
+            {{ form.name }}
+        </div>
+        
+        <div class="form-group">
+            <label for="source_role_id">Copy Permissions From</label>
+            <select name="source_role_id" id="source_role_id" class="form-control">
+                <option value="">--- Select Role to Copy Permissions From ---</option>
+                {% for role in roles %}
+                    <option value="{{ role.id }}">{{ role.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="permissions">Permissions:</label>
+            <div>
+                <input type="checkbox" id="checkAll"> Check All
+            </div>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Module</th>
+                        <th>Add</th>
+                        <th>View</th>
+                        <th>Update</th>
+                        <th>Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for module, actions in structured_permissions.items %}
+                        <tr>
+                            <td>{{ module|capfirst }}</td>
+                            <td>
+                                {% if actions.add %}
+                                    <input type="checkbox" name="permissions" class="permission-checkbox" value="{{ actions.add.id }}" 
+                                    {% if actions.add in form.instance.permissions.all %}checked{% endif %}>
+                                    {{ actions.add.name }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if actions.view %}
+                                    <input type="checkbox" name="permissions" class="permission-checkbox" value="{{ actions.view.id }}" 
+                                    {% if actions.view in form.instance.permissions.all %}checked{% endif %}>
+                                    {{ actions.view.name }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if actions.change %}
+                                    <input type="checkbox" name="permissions" class="permission-checkbox" value="{{ actions.change.id }}" 
+                                    {% if actions.change in form.instance.permissions.all %}checked{% endif %}>
+                                    {{ actions.change.name }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if actions.delete %}
+                                    <input type="checkbox" name="permissions" class="permission-checkbox" value="{{ actions.delete.id }}" 
+                                    {% if actions.delete in form.instance.permissions.all %}checked{% endif %}>
+                                    {{ actions.delete.name }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>       
+        <button type="submit" class="btn btn-primary">Save</button>
+      </form>
+    </div>
+</div>
+
+<!-- Custom Modal Backdrop -->
+<div id="customRoleModalBackdrop" class="custom-modal-backdrop"></div>
+
+<!-- Add this script for "Check All" functionality -->
+<script>
+    document.getElementById('checkAll').addEventListener('change', function() {
+        let checkboxes = document.querySelectorAll('.permission-checkbox');
+        for (let checkbox of checkboxes) {
+            checkbox.checked = this.checked;
+        }
+    });
+</script>
+
+<script>
+    document.getElementById('source_role_id').addEventListener('change', function () {
+        const roleId = this.value;
+
+        // If no role is selected, uncheck all permissions
+        if (!roleId) {
+            document.querySelectorAll('.permission-checkbox').forEach(checkbox => checkbox.checked = false);
+            return;
+        }
+
+        // Fetch the permissions for the selected role
+        fetch(`/get_role_permissions/${roleId}/`)
+            .then(response => response.json())
+            .then(data => {
+                // Uncheck all permissions first
+                document.querySelectorAll('.permission-checkbox').forEach(checkbox => checkbox.checked = false);
+
+                // Check the permissions that are in the selected role
+                data.permissions.forEach(permission => {
+                    const checkbox = document.querySelector(`input[value="${permission.id}"]`);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching permissions:', error);
+            });
+    });
+</script>
+{% endblock %}

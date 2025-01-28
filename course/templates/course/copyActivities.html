@@ -1,0 +1,32 @@
+<form method="post" action="{% url 'copy_activities' subject.id %}" class="needs-validation" novalidate>
+  {% csrf_token %}
+
+  <div class="form-group">
+    <label for="from_semester">Copy From Semester</label>
+    <select name="from_semester" id="from_semester" class="form-control" required>
+      <option value="" disabled selected>Select Semester</option>
+      {% for semester in semesters %}
+        <option value="{{ semester.id }}">{{ semester.semester_name }} ({{ semester.start_date|date:"Y" }}{% if semester.start_date|date:"Y" != semester.end_date|date:"Y" %} - {{ semester.end_date|date:"Y" }}{% endif %})</option>
+      {% endfor %}
+    </select>
+    <div class="invalid-feedback">Please select the semester to copy from.</div>
+  </div>
+
+  <div class="form-group">
+    <label for="activityList">Select Activities in Selected Semester:</label>
+    <div id="activityList">
+      <p>Please select a semester to view activities.</p>
+    </div>
+  </div>
+
+  <!-- Readonly field for Copy To Semester (current semester) -->
+  <div class="form-group">
+    <label for="to_semester">Copy To Semester (Current Semester)</label>
+    <input type="text" name="to_semester_display" id="to_semester_display" class="form-control" value="{{ current_semester.semester_name }} ({{ current_semester.start_date|date:"Y" }}{% if current_semester.start_date|date:"Y" != current_semester.end_date|date:"Y" %} - {{ current_semester.end_date|date:"Y" }}{% endif %})" readonly>
+    <input type="hidden" name="to_semester" value="{{ current_semester.id }}">
+  </div>
+
+  <div class="text-right">
+    <button type="submit" class="btn btn-primary">Copy Activities</button>
+  </div>
+</form>

@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+  GradeBook - Excelling Students
+{% endblock %}
+{% block content %}
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-3 align-items-center">
+          <div class="col-sm-6">
+            <h1 class="m-0 text-dark">
+              <i class="fas fa-star"></i> List of Excelling Students for the Current Semester
+            </h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right bg-light p-2 rounded">
+              <li class="breadcrumb-item">
+                <a href="" class="text-primary">Home</a>
+              </li>
+              <li class="breadcrumb-item active">Excelling Students</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <a href="javascript:history.back()" class="btn btn-outline-secondary mb-4 shadow-sm">
+          <i class="fas fa-arrow-left"></i> Back
+        </a>
+        
+        <!-- Filter and Search Form -->
+        <form id="filter-form" class="mb-4">
+          <div class="row">
+            <div class="col-md-4">
+              <label for="subject-filter">Filter by Subject:</label>
+              <select id="subject-filter" name="subject_id" class="form-control">
+                <option value="">All Subjects</option>
+                {% for subject in subjects %}
+                  <option value="{{ subject.id }}">{{ subject.subject_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="search">Search by Student Name:</label>
+              <input type="text" id="search" name="search" class="form-control" placeholder="Enter student name">
+            </div>
+            <div class="col-md-4 align-self-end">
+              <button type="submit" class="btn btn-primary">Apply Filters</button>
+            </div>
+          </div>
+        </form>
+
+        <!-- Placeholder for excelling students count -->
+        <div id="excelling-count-info" class="alert alert-primary">
+          <strong>Total Excelling Students:</strong> <span id="excelling-count"></span>
+        </div>
+
+        <!-- Placeholder for the excelling students list -->
+        <div id="excelling-students-list" class="row"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- JavaScript to handle filtering and search -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const form = document.getElementById('filter-form');
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        fetchExcellingStudents();
+      });
+
+      function fetchExcellingStudents() {
+        const subjectFilter = document.getElementById('subject-filter').value;
+        const searchQuery = document.getElementById('search').value;
+
+        const url = new URL('{% url "getExcellingStudents" %}', window.location.origin);
+        if (subjectFilter) {
+          url.searchParams.append('subject_id', subjectFilter);
+        }
+        if (searchQuery) {
+          url.searchParams.append('search', searchQuery);
+        }
+
+        fetch(url)
+          .then(response => response.json())
+          .then(data => {
+            document.getElementById('excelling-count').textContent = data.excelling_count;
+
+            const excellingStudentsListElement = document.getElementById('excelling-students-list');
+            excellingStudentsListElement.innerHTML = ''; // Clear previous results
+            const excellingStudents = data.excelling_students;
+
+            if (Object.keys(excellingStudents).length === 0) {
+              excellingStudentsListElement.innerHTML = `
+                <div class="col-12">
+                  <div class="alert alert-warning text-center">
+                    <i class="fas fa-info-circle"></i> No excelling students found.
+                  </div>
+                </div>`;
+            } else {
+              for (const studentId in excellingStudents) {
+                const student = excellingStudents[studentId];
+                const termsHtml = student.terms.map(term => `
+                  <div class="term-info">
+                    <p><strong>Term:</strong> ${term.term_name}</p>
+                    <p><strong>Subject:</strong> ${term.subject_name}</p>
+                    <p><strong>Final Grade:</strong> <span class="badge badge-success">${term.final_grade.toFixed(2)}</span></p>
+                  </div>
+                  <hr>
+                `).join('');
+
+                const studentCard = `
+                  <div class="col-lg-6 mb-4">
+                    <div class="card border-light shadow-lg h-100">
+                      <div class="card-header bg-primary text-white">
+                        <h3 class="h5"><i class="fas fa-user"></i> ${student.student_name}</h3>
+                      </div>
+                      <div class="card-body">
+                        <p><strong>Email:</strong> ${student.student_email}</p>
+                        ${termsHtml}
+                      </div>
+                    </div>
+                  </div>`;
+                excellingStudentsListElement.innerHTML += studentCard;
+              }
+            }
+          })
+          .catch(error => {
+            console.error('Error fetching excelling students:', error);
+          });
+      }
+
+      fetchExcellingStudents();
+    });
+  </script>
+{% endblock %}

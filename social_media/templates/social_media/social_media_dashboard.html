@@ -1,0 +1,498 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Social Media Dashboard
+{% endblock %}
+
+{% block content %}
+{% load static %}
+<div class="content-wrapper">
+  <!-- Content Header -->
+  <div class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1 class="m-0">Social Media Dashboard</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="#">Home</a></li>
+            <li class="breadcrumb-item active">Dashboard</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <section class="content">
+    <div class="container-fluid">
+
+      <!-- Tabs Navigation -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <ul class="nav nav-tabs card-header-tabs" id="mainTabs" role="tablist">
+            <li class="nav-item">
+              <a class="nav-link active" id="main-content-tab" data-toggle="tab" href="#main-content" role="tab" aria-controls="main-content" aria-selected="true">
+                <i class="fas fa-home"></i> Home
+              </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="friend-suggestions-tab" data-toggle="tab" href="#friend-suggestions" role="tab" aria-controls="friend-suggestions" aria-selected="false">
+                    <i class="fas fa-user-plus"></i> Friend Suggestions
+                </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="friend-requests-tab" data-toggle="tab" href="#friend-requests" role="tab" aria-controls="friend-requests" aria-selected="false">
+                <i class="fas fa-user-friends"></i> Friend Requests
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="chat-tab" data-toggle="tab" href="#chat" role="tab" aria-controls="chat" aria-selected="false">
+                <i class="fas fa-comments"></i> Chat
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div class="card-body">
+          <div class="tab-content" id="mainTabsContent">
+            <!-- Main Content Tab -->
+            <div class="tab-pane fade show active" id="main-content" role="tabpanel" aria-labelledby="main-content-tab">
+              <!-- My Day Section -->
+
+              <!-- Create a Post Section -->
+              <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                  <h3 class="card-title">Create a Post</h3>
+                </div>
+                <div class="card-body">
+                  <form method="POST" enctype="multipart/form-data">
+                    <div class="form-group">
+                      <div class="d-flex justify-content-between align-items-center mb-3">
+                        <textarea class="form-control" rows="3" placeholder="What's on your mind?" name="content"></textarea>
+                        <div class="dropdown ml-3">
+                          <button class="btn btn-light dropdown-toggle" type="button" id="visibilityDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-globe"></i> Public
+                          </button>
+                          <div class="dropdown-menu" aria-labelledby="visibilityDropdown">
+                            <a class="dropdown-item" href="#" data-value="public">
+                              <i class="fas fa-globe"></i> Public
+                            </a>
+                            <a class="dropdown-item" href="#" data-value="friends">
+                              <i class="fas fa-user-friends"></i> Friends
+                            </a>
+                            <a class="dropdown-item" href="#" data-value="private">
+                              <i class="fas fa-lock"></i> Private
+                            </a>
+                          </div>
+                          <input type="hidden" name="privacy" id="privacyInput" value="public">
+                        </div>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="postImage" class="file-upload-icon">
+                          <i class="fas fa-image fa-2x text-primary"></i>
+                        </label>
+                        <input type="file" class="form-control-file d-none" name="image" id="postImage">
+                    </div>                      
+                    <button type="submit" class="btn btn-primary btn-block">Post</button>
+                  </form>
+                </div>
+              </div>
+              
+
+              <!-- Feed Section -->
+              <div class="feed">
+                <h3 class="mb-3">Your Feed</h3>
+                <div class="feed-scroll">
+                  <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                      <div>
+                        <strong>Mary Jane</strong>
+                        <small class="text-muted">Jan 15, 2025, 3:45 PM</small>
+                      </div>
+                      <button class="btn btn-outline-danger btn-sm">Report</button>
+                    </div>
+                    <div class="card-body">
+                      <p>Had an amazing day at the park!</p>
+                      <img src="https://via.placeholder.com/500x300" class="img-fluid" alt="Post Image">
+                    </div>
+                    <div class="card-footer d-flex justify-content-between">
+                      <button class="btn btn-outline-primary btn-sm">Like (5)</button>
+                      <button class="btn btn-outline-secondary btn-sm">Comment</button>
+                      <button class="btn btn-outline-info btn-sm">Share</button>
+                    </div>
+                  </div>
+                  <!-- Additional static posts here -->
+                  <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                      <div>
+                        <strong>Mary Jane</strong>
+                        <small class="text-muted">Jan 15, 2025, 3:45 PM</small>
+                      </div>
+                      <button class="btn btn-outline-danger btn-sm">Report</button>
+                    </div>
+                    <div class="card-body">
+                      <p>Had an amazing day at the park!</p>
+                      <img src="https://via.placeholder.com/500x300" class="img-fluid" alt="Post Image">
+                    </div>
+                    <div class="card-footer d-flex justify-content-between">
+                      <button class="btn btn-outline-primary btn-sm">Like (5)</button>
+                      <button class="btn btn-outline-secondary btn-sm">Comment</button>
+                      <button class="btn btn-outline-info btn-sm">Share</button>
+                    </div>
+                  </div>
+                  <!-- Additional static posts here -->
+                  <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                      <div>
+                        <strong>Mary Jane</strong>
+                        <small class="text-muted">Jan 15, 2025, 3:45 PM</small>
+                      </div>
+                      <button class="btn btn-outline-danger btn-sm">Report</button>
+                    </div>
+                    <div class="card-body">
+                      <p>Had an amazing day at the park!</p>
+                      <img src="https://via.placeholder.com/500x300" class="img-fluid" alt="Post Image">
+                    </div>
+                    <div class="card-footer d-flex justify-content-between">
+                      <button class="btn btn-outline-primary btn-sm">Like (5)</button>
+                      <button class="btn btn-outline-secondary btn-sm">Comment</button>
+                      <button class="btn btn-outline-info btn-sm">Share</button>
+                    </div>
+                  </div>
+                  <!-- Additional static posts here -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Friend Suggestions Tab -->
+            <div class="tab-pane fade" id="friend-suggestions" role="tabpanel" aria-labelledby="friend-suggestions-tab">
+                <div class="list-group" id="suggested-friends-list">
+                <p>Loading friend suggestions...</p>
+                </div>
+            </div>
+
+            <!-- Friend Requests Tab -->
+            <div class="tab-pane fade" id="friend-requests" role="tabpanel" aria-labelledby="friend-requests-tab">
+                <div class="list-group" id="friend-requests-list">
+                    <p>Loading friend requests...</p>
+                </div>
+            </div>
+            
+            <div class="tab-pane fade" id="chat" role="tabpanel" aria-labelledby="chat-tab">
+              <div class="list-group" id="chat-list">
+                <p>Loading chat...</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Modal (Initially hidden) -->
+        <div class="chat-modal" id="chatModal">
+            <div class="chat-modal-header">
+                <span id="chatUserName">Chat with...</span>
+                <button id="closeChatBtn">&times;</button>
+            </div>
+            <div class="chat-modal-body" id="chatMessages">
+                <!-- Messages will appear here -->
+            </div>
+            <div class="chat-modal-footer">
+                <textarea id="chatInput" placeholder="Type a message..."></textarea>
+                <button id="sendMessageBtn">Send</button>
+            </div>
+        </div>
+
+    </div>
+  </section>
+</div>
+
+<script>
+  document.querySelectorAll('.dropdown-item').forEach((item) => {
+    item.addEventListener('click', (e) => {
+      e.preventDefault();
+      const value = item.getAttribute('data-value');
+      const text = item.innerHTML;
+      document.getElementById('visibilityDropdown').innerHTML = text;
+      document.getElementById('privacyInput').value = value;
+    });
+  });
+</script>
+<style>
+  .card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: none;
+    margin-bottom: 20px;
+  }
+
+  .card-header-tabs .nav-link {
+    font-size: 14px;
+  }
+
+  .rounded-circle {
+    border: 2px solid #007bff;
+    width: 60px;
+    height: 60px;
+  }
+
+  .feed .card-footer .btn {
+    margin-right: 5px;
+  }
+
+  .feed-scroll {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  textarea {
+    resize: none;
+  }
+   .file-upload-icon {
+    cursor: pointer;
+    display: inline-block;
+    padding: 5px;
+    border: 2px dashed #4a4a4a;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+  }
+
+  .file-upload-icon:hover {
+    background-color: #ccc;
+  }
+
+  .file-upload-icon i {
+    display: block;
+  }
+
+  #postImage {
+    display: none; /* Hide the actual file input */
+  }
+  .list-group-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 5px;
+  }
+  .list-group-item img {
+    border-radius: 50%;
+  }
+
+  /* CSS for the sliding effect */
+ @keyframes slideInFromRight {
+    0% {
+        right: -350px;
+    }
+    100% {
+        right: 10px;
+    }
+}
+  
+  
+  /* Style for the chat modal */
+  .chat-modal {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    width: 320px;
+    height: 400px;
+    background-color: #f1f1f1;
+    display: none;
+    flex-direction: column;
+    box-shadow: 0px -4px 10px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
+    border-radius: 10px 10px 0 0;
+    animation: slideInFromRight 0.5s forwards;
+}
+  
+  /* Chat Modal Header */
+  .chat-modal-header {
+      display: flex;
+      align-items: center;
+      background-color: #007bff;
+      color: white;
+      padding: 10px;
+      border-radius: 10px 10px 0 0;
+      position: relative;
+  }
+
+  /* User Image */
+  .chat-modal-user-photo {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      margin-right: 8px;
+      object-fit: cover;
+      border: 2px solid #fff;
+  }
+
+  /* Chat User Name */
+  .chat-user-name {
+      font-weight: bold;
+      font-size: 14px;
+      flex-grow: 1;
+  }
+
+  /* Close Chat Button */
+  .close-chat-btn {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s ease-in-out, color 0.2s ease-in-out;
+      position: absolute;
+      right: 10px;
+  }
+
+  /* Close Button Hover Effect */
+  .close-chat-btn:hover {
+      color: #ff4d4d;
+      transform: scale(1.2);
+  }
+  .chat-modal-body {
+      overflow-y: auto;
+      flex-grow: 1;
+      padding: 10px;
+      background-color: white;
+      height: calc(100% - 80px); /* Subtract the header and footer height */
+  }
+  
+  .chat-modal-footer {
+      display: flex;
+      align-items: center;
+      padding: 8px;
+      background-color: #f9f9f9;
+      border-top: 1px solid #ddd;
+  }
+
+  /* Chat Textarea */
+  .chat-textarea {
+      flex-grow: 1;
+      resize: none;
+      border: 1px solid #ccc;
+      border-radius: 20px;
+      padding: 10px;
+      font-size: 14px;
+      outline: none;
+      height: 40px;
+      overflow: hidden;
+      transition: all 0.2s ease-in-out;
+  }
+
+  /* Chat Textarea Focus */
+  .chat-textarea:focus {
+      border-color: #007bff;
+      box-shadow: 0px 0px 5px rgba(0, 123, 255, 0.3);
+  }
+
+  /* Send Button */
+  .send-message-btn {
+      background-color: #007bff;
+      border: none;
+      color: white;
+      font-size: 16px;
+      padding: 8px 14px;
+      margin-left: 8px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: background 0.3s ease;
+  }
+
+  /* Send Button Hover */
+  .send-message-btn:hover {
+      background-color: #0056b3;
+  }
+
+  /* Send Button Icon */
+  .send-message-btn i {
+      font-size: 18px;
+  }
+  
+  #chatInput {
+      width: 80%;
+      padding: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+  }
+  
+  #sendMessageBtn {
+      padding: 5px 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+  }
+  
+  #closeChatBtn {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 25px;
+      cursor: pointer;
+  }
+  
+  #closeChatBtn:hover {
+      color: red;
+  }
+
+  /* Chat message container */
+  .chat-message {
+      display: flex;
+      margin: 5px 0;
+      align-items: center;
+  }
+  
+  /* Align messages */
+  .sent {
+    justify-content: flex-end; /* Sent messages on the right */
+}
+
+.received {
+    justify-content: flex-start; /* Received messages on the left */
+}
+
+/* Styling for received messages (other user) */
+.received-message {
+    background-color: #f1f1f1;
+    color: #000;
+    border-radius: 15px 15px 15px 0;
+    padding: 8px 12px;
+    max-width: 70%;
+    display: flex;
+    align-items: center;
+}
+
+/* Styling for sent messages (logged-in user) */
+.sent-message {
+    background-color: #007bff;
+    color: #fff;
+    border-radius: 15px 15px 0 15px;
+    padding: 8px 12px;
+    max-width: 70%;
+    display: flex;
+    align-items: center;
+}
+
+/* Profile image for chat messages */
+.chat-message-photo {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #ddd;
+    margin: 0 10px;
+}
+</style>
+
+<script src="{% static 'js/social_media/friend/friends_suggestion.js' %}"></script>
+<script src="{% static 'js/social_media/friend/add_friend.js' %}"></script>
+<script src="{% static 'js/social_media/friend/accept_or_reject_friend_request.js' %}"></script>
+<script src="{% static 'js/social_media/friend/pending_friend_request.js' %}"></script>
+<script src="{% static 'js/social_media/friend/friend_list.js' %}"></script>
+
+{% endblock %}

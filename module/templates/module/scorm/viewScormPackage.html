@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  View {{ scorm_package.file_name }}
+{% endblock %}
+
+{% block content %}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+
+  <div class="container" style="padding-top: 20px;">
+    <h1>{{ scorm_package.file_name }}</h1>
+
+    {% if is_pdf %}
+      <div id="pdf-container" style="min-height: 500px; position: relative;">
+        <canvas id="pdf-canvas" style="width: 100%;"></canvas>
+
+        <!-- Fullscreen Button -->
+        <button id="fullscreen-btn" class="btn btn-secondary" style="position: absolute; top: 10px; right: 10px;">
+          <i class="fas fa-expand"></i>
+        </button>
+
+        <!-- Previous Button -->
+        <button id="prev-page" class="btn btn-secondary" style="position: absolute; bottom: 20px; left: 20px;">
+          <i class="fas fa-caret-left"></i>
+        </button>
+
+        <!-- Next Button -->
+        <button id="next-page" class="btn btn-secondary" style="position: absolute; bottom: 20px; right: 20px;">
+          <i class="fas fa-caret-right"></i>
+        </button>
+
+        <!-- Page Info -->
+        <div class="page-info" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); color: white;">
+          Page: <span id="page-num"></span> / <span id="page-count"></span>
+        </div>
+      </div>
+    {% endif %}
+
+    {% if is_image %}
+      <div>
+        <img src="{{ scorm_package.file.url }}" class="img-fluid" alt="Image" style="width: 100%;" />
+      </div>
+    {% endif %}
+
+    {% if is_video %}
+      <div>
+        <video controls style="width: 100%;">
+          <source src="{{ scorm_package.file.url }}" type="video/mp4" />Your browser does not support the video tag.
+        </video>
+      </div>
+    {% endif %}
+
+    {% if is_unknown %}
+      <p>Unsupported file format. Unable to display the content.</p>
+    {% endif %}
+
+    <div class="text-right mt-3">
+      <a href="{% url 'subjectDetail' scorm_package.subject.id %}" class="btn btn-secondary">Back</a>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var url = '{{ scorm_package.file.url }}';
+      var pdfDoc = null;
+      var pageNum = {{ last_page }};
+      var canvas = document.getElementById('pdf-canvas');
+      var ctx = canvas.getContext('2d');
+      var fullscreenBtn = document.getElementById('fullscreen-btn');
+      var pdfContainer = document.getElementById('pdf-container');
+
+      function renderPage(num) {
+          pdfDoc.getPage(num).then(function (page) {
+              var viewport = page.getViewport({ scale: 1.5 });
+              canvas.height = viewport.height;
+              canvas.width = viewport.width;
+
+              var renderContext = {
+                  canvasContext: ctx,
+                  viewport: viewport
+              };
+
+              var renderTask = page.render(renderContext);
+              renderTask.promise.then(function () {
+                  document.getElementById('page-num').textContent = num;
+                  updateProgress(num, pdfDoc.numPages);  // Update progress when page is rendered
+              });
+          });
+      }
+
+      pdfjsLib.getDocument(url).promise.then(function (pdfDoc_) {
+          pdfDoc = pdfDoc_;
+          document.getElementById('page-count').textContent = pdfDoc.numPages;
+          renderPage(pageNum);
+      });
+
+      document.getElementById('prev-page').addEventListener('click', function () {
+          if (pageNum <= 1) {
+              return;
+          }
+          pageNum--;
+          renderPage(pageNum);
+      });
+
+      document.getElementById('next-page').addEventListener('click', function () {
+          if (pageNum >= pdfDoc.numPages) {
+              return;
+          }
+          pageNum++;
+          renderPage(pageNum);
+      });
+
+      // Fullscreen functionality
+      fullscreenBtn.addEventListener('click', function () {
+          if (!document.fullscreenElement) {
+          if (pdfContainer.requestFullscreen) {
+          pdfContainer.requestFullscreen();
+          } else if (pdfContainer.mozRequestFullScreen) { /* Firefox */
+          pdfContainer.mozRequestFullScreen();
+          } else if (pdfContainer.webkitRequestFullscreen) { /* Chrome, Safari & Opera */
+          pdfContainer.webkitRequestFullscreen();
+          } else if (pdfContainer.msRequestFullscreen) { /* IE/Edge */
+          pdfContainer.msRequestFullscreen();
+          }
+          fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
+          } else {
+          if (document.exitFullscreen) {
+          document.exitFullscreen();
+          } else if (document.mozCancelFullScreen) { /* Firefox */
+          document.mozCancelFullScreen();
+          } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+          document.webkitExitFullscreen();
+          } else if (document.msExitFullscreen) { /* IE/Edge */
+          document.msExitFullscreen();
+          }
+          fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+          }
+      });
+
+      // Function to send progress updates to the server
+      function updateProgress(currentPage, totalPages) {
+        var progress = (currentPage / totalPages) * 100;
+    
+        fetch("{% url 'update_progress' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify({
+                "scorm_package_id": "{{ scorm_package.id }}",
+                "progress": progress,
+                "last_page": currentPage  // Send the current page as last_page
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("Progress updated successfully:", data);
+        })
+        .catch(error => {
+            console.error("Error updating progress:", error);
+        });
+    }
+    });
+  </script>
+
+{% endblock %}

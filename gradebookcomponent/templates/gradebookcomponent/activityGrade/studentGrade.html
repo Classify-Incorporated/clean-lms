@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Total Scores for {{ student.get_full_name }} in {{ current_semester.semester_name }} - {{ current_semester.school_year }}
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <!-- Content Header (Page header) -->
+  <div class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1 class="m-0">Student Grade</h1>
+        </div>
+        <!-- /.col -->
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+          </ol>
+        </div>
+        <!-- /.col -->
+      </div>
+      <!-- /.row -->
+    </div>
+    <!-- /.container-fluid -->
+  </div>
+  <!-- /.content-header -->
+
+  <!-- Main content -->
+  <section class="content">
+    <div class="container-fluid">
+    <h3 class="mb-2">Scores Breakdown for {{ student.get_full_name }}</h3>
+    <p class="text-muted mb-4">{{ current_semester.semester_name }} - {{ current_semester.school_year }}</p>
+
+    <!-- Filter Form -->
+    <form method="get" class="mb-4 form-inline">
+      <input type="hidden" name="semester" value="{{ selected_semester_id }}">  
+      <div class="form-group mr-2">
+          <label for="term" class="mr-2">Select Term:</label>
+          <select id="term" name="term" class="form-control" onchange="this.form.submit()" style="min-width: 200px;">
+              <option value="all" {% if selected_term_id == 'all' %}selected{% endif %}>All Terms</option>
+              {% for term in terms %}
+                  <option value="{{ term.id }}" {% if selected_term_id == term.id|stringformat:"s" %}selected{% endif %}>
+                      {{ term.term_name }}
+                  </option>
+              {% endfor %}
+          </select>
+      </div>
+    </form>
+
+    {% if term_scores_data %}
+      {% for term_data in term_scores_data %}
+        <div class="card mb-4">
+          <div class="card-header bg-success">
+            <h4 class="mb-0">{{ term_data.term.term_name }} - {{ term_data.subject.subject_name }}</h4>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-bordered table-striped">
+                <thead class="text-center bg-primary">
+                  <tr>
+                    <th>Activity Name</th>
+                    <th>Activity Type</th>
+                    <th>Total Score</th>
+                    <th>Is Remedial</th>
+                    <th>Max Score</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody class="text-center">
+                  {% for data in term_data.student_scores_data %}
+                      <tr>
+                        <td>{{ data.activity_name }}</td>
+                        <td>{{ data.activity_type }}</td>
+                        <td>{{ data.total_score|floatformat:1 }}</td>
+                        <td>
+                          {% if data.is_remedial %}
+                            Yes
+                          {% else %}
+                            No
+                          {% endif %}
+                        </td>                        
+                        <td>{{ data.max_score|floatformat:1}}</td>
+                        <td>
+                          {% if data.status == 'Completed' %}
+                                <span class="badge bg-success">
+                                  <i class="fas fa-check-circle" ></i> Completed
+                                </span>
+                              {% elif data.status == 'Missed' %}
+                                <span class="badge bg-danger">
+                                  <i class="fas fa-times-circle"></i> Missed
+                                </span>
+                              {% endif %}
+                        </td>
+                      </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              <div class="mt-3">
+                <strong>Total Score for {{ term_data.term.term_name }}:</strong>
+                {{ term_data.term_total_score|floatformat:1 }} / {{ term_data.term_max_score|floatformat:1 }} 
+            </div>            
+            </div>
+          </div>
+        </div>
+        
+      {% endfor %}
+    {% else %}
+      <p class="text-center">No data available for the current semester.</p>
+    {% endif %}
+
+    <a href="{% url 'student_grades' %}" class="btn btn-secondary mb-4">Back</a>
+
+  </div>
+ 
+  </section>
+</div>
+
+{% endblock %}

@@ -1,0 +1,31 @@
+<div id="sendMessageModal" class="custom-modal">
+  <div class="custom-modal-header">
+    <button class="close-btn" id="closeSendMessageModalBtn"></button>
+    <h5>Send Message</h5>
+  </div>
+  <div class="custom-modal-body">
+    <form method="post" action="{% url 'send_message' %}" class="needs-validation" novalidate>
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="recipient_id">To:</label>
+        <select id="recipient_id" name="recipient_id" class="form-control selectpicker" data-style="btn-outline-secondary" data-live-search="true" title="Select Friend" required multiple data-actions-box="true">
+          {% for friend in friends %}
+            <option value="{{ friend.id }}">{{ friend.name }}</option>
+          {% endfor %}
+        </select>
+        <div class="invalid-feedback">Please select a recipient.</div>
+      </div>
+      <div class="form-group">
+        <label for="subject">Subject:</label>
+        <input type="text" id="subject" name="subject" class="form-control" required />
+        <div class="invalid-feedback">Please provide a subject.</div>
+      </div>
+      <div class="form-group">
+        <label for="body">Body:</label>
+        <textarea id="body" name="body" class="form-control summernote" required></textarea>
+        <div class="invalid-feedback">Please provide a message body.</div>
+      </div>
+      <button type="submit" class="btn btn-primary">Send</button>
+    </form>
+  </div>
+</div>

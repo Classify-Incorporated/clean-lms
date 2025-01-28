@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+  <!-- Page Heading with LMS Icon -->
+  <div class="content-wrapper">
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="d-flex align-items-center mb-3">
+          <i class="fas fa-book text-success" style="font-size: 2.0rem; margin-right: 10px;"></i>
+          <h2 class="text-left mb-0 display-10">
+            {% if selected_semester %}
+              {% if selected_semester.start_date.year == selected_semester.end_date.year %}
+                <h1 class="font-weight-bold text-dark">
+                  {{ selected_semester.semester_name }} - {{ selected_semester.start_date|date:"Y" }} Subjects
+                </h1>
+              {% else %}
+                <h1 class="font-weight-bold text-dark">
+                  {{ selected_semester.semester_name }} - {{ selected_semester.start_date|date:"Y" }} - {{ selected_semester.end_date|date:"Y" }} Subjects
+                </h1>
+              {% endif %}
+            {% else %}
+              {% now 'Y' as current_year %}
+              <h1 class="font-weight-bold text-dark">Subjects ({{ current_year }} - {{ current_year|add:'1' }})</h1>
+            {% endif %}
+          </h2>          
+        </div>
+        <h5 class="text-dark"><i class="far fa-bookmark"></i> My Subjects</h5>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <!-- Subjects Cards Grid -->
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4">
+          {% if subjects %}
+            {% for subject in subjects %}
+              <div class="col mb-4">
+                <a
+                    {% if subject.is_classroom_mode and user.profile.role.name.lower == 'student' %}
+                      href="{% url 'classroom_mode' subject.id %}?semester={{ selected_semester_id }}"
+                    {% elif user.profile.role.name.lower != 'time keeper' %}
+                      href="{% url 'subjectDetail' subject.id %}?semester={{ selected_semester_id }}"
+                    {% endif %}
+                    class="text-decoration-none"
+                    style="{% if user.profile.role.name.lower == 'time keeper' %}pointer-events: none; cursor: default;{% endif %}"
+                  >
+                  <div class="card subject-card shadow h-100 border-0">
+                    {% if subject.subject_photo %}
+                      <div class="subject-image-wrapper">
+                        <img src="{{ subject.subject_photo.url }}" class="card-img-top" alt="{{ subject.subject_name }}" />
+                      </div>
+                    {% else %}
+                      <div class="subject-image-wrapper">
+                        <img src="{% static 'assets/dist/images/upload.png' %}" class="card-img-top" alt="Default image" />
+                      </div>
+                    {% endif %}
+                    <div class="card-body d-flex flex-column justify-content-between">
+                      <h5 class="card-title mb-2 font-weight-bold text-dark">{{ subject.subject_name }}</h5>
+                      <p class="card-text mb-0">
+                        {% if subject.assign_teacher %}
+                          <small class="teacher-name"><strong class="mr-1">Teacher:</strong> <span class="font-italic">{{ subject.assign_teacher.get_full_name }}</span></small><br />
+                          <small class="teacher-name"><strong class="mr-1">Room:</strong> <span class="font-italic">{{ subject.room_number }}</span></small><br />
+                        {% else %}
+                          <small class="teacher-name">No teacher assigned</small>
+                        {% endif %}
+                        <!-- Display all schedules for the current subject -->
+                        {% if subject.schedules.all %}
+                          <small class="schedule-details"><strong>Schedule:</strong></small><br />
+                          {% for schedule in subject.schedules.all %}
+                            <small class="schedule-entry">{{ schedule.days_of_week|join:'-' }} - {{ schedule.schedule_start_time|time:'g:i A' }} to {{ schedule.schedule_end_time|time:'g:i A' }}</small><br />
+                          {% endfor %}
+                        {% else %}
+                          <small class="schedule-details">No schedules available</small><br />
+                        {% endif %}
+                        <small class="student-count"><strong class="mr-1">Enrolled Students:</strong> {{ subject.student_count }}</small><br />
+                        <small class="student-count"><strong class="mr-1">Subject Unit:</strong> {{ subject.unit }}</small><br />
+                        {% if can_view_teacher_attendance %}
+                            {% if subject.is_online %}
+                            <small class="student-count"><strong class="mr-1">Present Student/s:</strong> {{ subject.present_student_count }}</small><br />
+                              {% if subject.is_classroom_mode %}
+                                  <span class="badge badge-success">Online/Smart Classroom Mode</span>
+                              {% else %}
+                                  <span class="badge badge-success">Online</span>
+                              {% endif %}
+                              
+                            {% else %}
+                              <span class="badge badge-secondary">Offline</span>
+                            {% endif %}
+                        {% endif %}
+                      </p>
+                      {% if user.profile.role.name.lower == 'student' %}
+                        <div class="progress mt-3" style="height: 20px; border-radius: 10px; background-color: rgba(0, 0, 0, 0.1); overflow: hidden;">
+                          <div class="progress-bar bg-success" role="progressbar" style="width: {{ subject.overall_avg_progress|floatformat:2 }}%; border-radius: 10px; transition: width 0.6s ease;" aria-valuenow="{{ subject.overall_avg_progress|floatformat:2 }}" aria-valuemin="0" aria-valuemax="100">
+                            <span class="progress-label" style="color: white; font-weight: bold;">{{ subject.overall_avg_progress|floatformat:2 }}%</span>
+                          </div>
+                        </div>
+                      {% endif %}
+                    </div>
+                  </div>
+                </a>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="col-12 text-center">
+              <p class="text-muted">You have no subjects assigned or enrolled.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Custom CSS for engaging LMS Design with maintained text colors -->
+  <style>
+    /* Styling for LMS subject cards */
+    .subject-card {
+      transition: transform 0.3s ease, background-color 0.3s ease;
+      border-radius: 15px;
+      background-color: #ffffff;
+      padding: 0.5rem;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    
+    .subject-card:hover {
+      transform: translateY(-10px) scale(1.02);
+      background-color: #f9f9f9;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .subject-image-wrapper {
+      height: 180px;
+      overflow: hidden;
+      border-top-left-radius: 15px;
+      border-top-right-radius: 15px;
+      position: relative;
+      background: #f4f4f4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .subject-image-wrapper img {
+      height: 100%;
+      width: 100%;
+      object-fit: cover;
+      transition: transform 0.5s ease-in-out;
+    }
+    
+    .subject-image-wrapper img:hover {
+      transform: scale(1.1);
+    }
+    
+    /* Ensure text remains visible on hover */
+    .subject-card:hover .card-title,
+    .subject-card:hover .card-body p,
+    .subject-card:hover .teacher-name {
+      color: #343a40 !important;
+      opacity: 1 !important;
+    }
+    
+    /* Optional: Maintain background contrast for better readability */
+    .subject-card:hover {
+      background-color: #f1f3f5;
+    }
+    
+    /* Ensure margin-bottom on mobile */
+    .col {
+      margin-bottom: 1rem;
+    }
+    
+    /* Header Styling */
+    .display-10 {
+      font-size: 25px;
+    }
+    
+    /* Card Title */
+    .card-title {
+      font-size: 1.3rem;
+      color: #007bff;
+      transition: color 0.3s;
+    }
+    
+    .card-title:hover {
+      color: #0056b3;
+    }
+    
+    /* Card Body */
+    .card-body p {
+      font-size: 0.95rem;
+      color: #6c757d;
+    }
+    
+    /* Responsive adjustments for larger screens */
+    @media (min-width: 768px) {
+      .subject-card {
+        transition: transform 0.3s ease;
+      }
+    
+      .display-5 {
+        font-size: 2.7rem;
+      }
+    
+      .card-title {
+        font-size: 1.3rem;
+      }
+    }
+    
+    /* Larger font sizes and padding for larger desktop screens */
+    @media (min-width: 1200px) {
+      .form-control {
+        font-size: 1.1rem;
+        padding: 0.85rem;
+      }
+    
+      .card-title {
+        font-size: 1.35rem;
+      }
+    }
+  </style>
+{% endblock %}

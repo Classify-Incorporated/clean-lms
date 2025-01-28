@@ -1,0 +1,183 @@
+<form method="post" action="{% url 'createModule' subject.id %}" enctype="multipart/form-data">
+  {% csrf_token %}
+
+  <!-- File name input -->
+  <div class="form-group">
+    <label for="file_name">Name:</label>
+    {{ form.file_name }}
+  </div>
+
+  <div class="form-group" id="fileInputDiv">
+    <label for="customFile">File:</label>
+    <div id="dropzone" class="custom-dropzone">
+      <div id="filePreview" class="file-preview">
+        <p id="dropzone-text" class="text-dark">Drag and drop a file here or click to select</p>
+      </div>
+      <input type="file" id="fileInput" name="file" class="text-dark" />
+
+    </div>
+    <small class="form-text text-muted">Allowed file types: PDF, JPG, JPEG, PNG, MP4, AVI, MOV, WMV (Max size: 25MB)</small>
+    <div class="invalid-feedback" id="file-error" style="display: none;"></div>
+  </div>
+
+  <!-- URL input -->
+  <div class="form-group" id="urlInputDiv">
+    <label for="url">Url:</label>
+    {{ form.url }}
+  </div>
+
+  <!-- Iframe Embed Code input -->
+  <div class="form-group" id="embedInputDiv">
+    <label for="iframe_code">Embed Code:</label>
+    {{ form.iframe_code }}
+    <small class="form-text text-muted">Paste the full iframe embed code (e.g., from Microsoft Sway).</small>
+  </div>
+  
+
+  <!-- Term input -->
+  <div class="form-group">
+    <label for="term">Term:</label>
+    {{ form.term }}
+  </div>
+
+  <!-- Select multiple users -->
+  <div class="form-group">
+    <label for="display_lesson_for_selected_users">Display lesson for selected users:</label>
+    {{ form.display_lesson_for_selected_users }}
+  </div>
+
+  <!-- Select start_date -->
+  <div class="form-group">
+    <label for="start_date">Start Date:</label>
+    {{ form.start_date }}
+  </div>
+
+  <!-- Select end_date -->
+  <div class="form-group">
+    <label for="end_date">End Date:</label>
+    {{ form.end_date }}
+  </div>
+
+  <!-- Select end_date -->
+  <div class="form-group">
+    <label for="description">Description:</label>
+    {{ form.description }}
+  </div>
+
+  <!-- Checkbox field -->
+  <div class="form-check">
+    {{ form.allow_download }}
+    <label for="allow_download" class="form-check-label">Allow download:</label>
+  </div>
+
+  <!-- Submit button -->
+  <button type="submit" class="btn btn-primary mt-3">Save</button>
+</form>
+<style>
+  /* Custom Dropzone Styling */
+  .custom-dropzone {
+    position: relative;
+    border: 2px dashed #007bff;
+    border-radius: 8px;
+    padding: 25px;
+    text-align: center;
+    background-color: #f9f9f9;
+    transition: all 0.3s ease-in-out;
+    cursor: pointer;
+  }
+  
+  .dark-mode .custom-dropzone {
+    position: relative;
+    border: 2px dashed #007bff;
+    border-radius: 8px;
+    padding: 25px;
+    text-align: center;
+    background-color: #2e3238;
+    transition: all 0.3s ease-in-out;
+    cursor: pointer;
+  }
+  
+  .custom-dropzone.dragover {
+    background-color: #e0f7ff;
+    border-color: #0056b3;
+  }
+  
+  /* Dropzone Text and Icon */
+  #dropzone-text {
+    font-size: 16px;
+    color: #6c757d;
+    font-weight: 500;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  #dropzone-text .upload-icon {
+    font-size: 36px;
+    color: #007bff;
+  }
+  
+  #dropzone-text .click-to-select {
+    color: #007bff;
+    font-weight: bold;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  
+  /* File Preview Styling */
+  #filePreview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 15px;
+  }
+  
+  .file-preview-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 10px;
+    max-width: 100%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s, box-shadow 0.3s ease;
+  }
+  
+  .file-preview-item:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  .file-icon {
+    font-size: 36px;
+    color: #007bff;
+  }
+  
+  .file-details {
+    display: flex;
+    flex-direction: column;
+    word-break: break-word;
+  }
+  
+  .file-name {
+    font-size: 16px;
+    color: #333;
+    font-weight: bold;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .file-type {
+    font-size: 14px;
+    color: #6c757d;
+  }
+</style>
+

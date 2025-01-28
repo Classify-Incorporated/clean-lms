@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="content-wrapper">
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0">Enrolled Students by Subject</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                <a href="#">Home</a>
+              </li>
+              <li class="breadcrumb-item active">Enrolled Students by Subject</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="content">
+      <div class="container-fluid col-sm-6">
+        <div class="card shadow-sm">
+          <div class="card-header bg-primary text-white">
+            <h3 class="card-title mb-0">Student Enrollment Form</h3>
+          </div>
+          <div class="card-body">
+            <form method="post" action="{% url 'enrollStudentView' %}">
+              {% csrf_token %}
+
+              <!-- Course Selection Dropdown -->
+              <div class="form-group">
+                <label for="course_select" class="text-dark font-weight-bold">Select Course:</label>
+                <select id="course_select" class="form-control selectpicker" title="Select Course" data-style="btn-outline-secondary">
+                  <option value="">Select a course</option>
+                  {% for course, students in students_by_course.items %}
+                    <option value="{{ course }}">{{ course }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Year Level Dropdown -->
+              <div class="form-group">
+                <label for="year_level_select" class="text-dark font-weight-bold">Select Year Level:</label>
+                <select id="year_level_select" class="form-control selectpicker" title="Select Year Level" data-style="btn-outline-secondary">
+                  <option value="">Select a Year Level</option>
+                  {% for year_level in year_levels %}
+                    <option value="{{ year_level }}">{{ year_level }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Student Selection Dropdown -->
+              <div class="form-group">
+                <label for="student_profile" class="text-dark font-weight-bold">Select Students:</label>
+                <select name="student_profile" id="student_profile" class="form-control selectpicker" data-live-search="true" data-actions-box="true" data-style="btn-outline-secondary" title="Select student" multiple required>
+                  {% for course, students in students_by_course.items %}
+                    <optgroup label="{{ course }}">
+                      {% for student in students %}
+                        <option value="{{ student.id }}">{{ student.first_name }} {{ student.last_name }}</option>
+                      {% endfor %}
+                    </optgroup>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Subjects Dropdown -->
+              <div class="form-group">
+                <label for="subject_ids" class="text-dark font-weight-bold">Select Subjects:</label>
+                <select name="subject_ids" id="subject_ids" class="form-control selectpicker" data-actions-box="true" data-style="btn-outline-secondary" data-none-selected-text="Select a subject" multiple required>
+                  {% for subject in subjects %}
+                    <option value="{{ subject.id }}">{{ subject.subject_name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Semester Dropdown -->
+              <div class="form-group">
+                <label for="semester_id" class="text-dark font-weight-bold">Select Semester:</label>
+                <select name="semester_id" id="semester_id" class="form-control selectpicker" title="Select semester" data-style="btn-outline-secondary" required>
+                  {% for semester in semesters %}
+                    {% with start_year=semester.start_date|date:'Y' end_year=semester.end_date|date:'Y' %}
+                      <option value="{{ semester.id }}">
+                        {{ semester.semester_name }} ({{ start_year }}{% if start_year != end_year %}
+                          -{{ end_year }}
+                        {% endif %})
+                      </option>
+                    {% endwith %}
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="justify-content-between">
+                <button type="submit" class="btn btn-primary">Enroll</button>
+                <a href="javascript:history.back()" class="btn btn-secondary">Back</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  {{ students_by_course|json_script:'students_by_course_json' }}
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const studentSelect = document.getElementById('student_profile')
+      const courseSelect = document.getElementById('course_select')
+      const yearLevelSelect = document.getElementById('year_level_select')
+    
+      const studentsByCourse = JSON.parse(document.getElementById('students_by_course_json').textContent)
+    
+      function filterStudents() {
+        const selectedCourse = courseSelect.value
+        const selectedYearLevel = yearLevelSelect.value
+    
+        $(studentSelect).val([]).selectpicker('refresh')
+    
+        if (studentsByCourse[selectedCourse]) {
+          const filteredStudents = studentsByCourse[selectedCourse].filter((student) => selectedYearLevel === '' || student.grade_year_level === selectedYearLevel || student.grade_year_level === null)
+          const studentIds = filteredStudents.map((student) => student.id)
+    
+          $(studentSelect).val(studentIds).selectpicker('refresh')
+        }
+      }
+    
+      courseSelect.addEventListener('change', filterStudents)
+      yearLevelSelect.addEventListener('change', filterStudents)
+    })
+  </script>
+{% endblock %}

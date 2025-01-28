@@ -1,0 +1,427 @@
+{% load static %}
+{% load permissions %}
+<!-- Main Sidebar Container -->
+<aside class="main-sidebar custom-sidebar elevation-4 sidebar-no-expand sidebar-light-success">
+  <!-- Brand Logo -->
+  <a href="{% url 'dashboard' %}" class="brand-link text-dark" style="display: flex; align-items: center; flex-direction: column; transition: background-color 0.3s;"  onmouseout="this.style.backgroundColor='transparent'">
+    <span class="brand-text font-weight-bold" style="font-size: 14px; line-height: 1.5; text-align: center;">HOLY CHILD CENTRAL COLLEGES, INC.</span>
+  </a>
+  <!-- Sidebar -->
+  <div class="sidebar mt-2">
+    <div class="form-inline mb-2" style="display: flex; flex-direction: column; align-items: center;">
+      <div class="input-group" data-widget="sidebar-search" style="display: flex; justify-content: center;">
+        <img src="{% static 'assets/dist/images/HCCCI.png' %}" alt="HOLY CHILD CENTRAL COLLEGES, INC. Logo" class="img-circle elevation-3 logo-img" />
+      </div>
+    </div>
+
+    <!-- Sidebar Search Form -->
+      <div class="form-inline">
+        <div class="input-group" data-widget="sidebar-search">
+          <input class="form-control form-control-sidebar bg-light" type="search" placeholder="Search" aria-label="Search">
+          <div class="input-group-append">
+            <button class="btn btn-sidebar bg-success">
+              <i class="bx bx-search"></i>
+            </button>
+          </div>
+        </div>
+        <div class="sidebar-search-results"></div> <!-- Search Results Container -->
+      </div>
+
+    <!-- Sidebar Menu -->
+    <nav class="mt-2">
+      <ul class="nav nav-pills nav-sidebar flex-column" id="sidebar-menu" data-widget="treeview" role="menu" data-accordion="false">
+        <!-- Dashboard -->
+        <li class="nav-item">
+          <a href="{% url 'dashboard' %}" class="nav-link d-flex align-items-center">
+            <i class="bx bx-home nav-icon mr-2"></i>
+            <p>Dashboard</p>
+          </a>
+        </li>
+
+        {% if not user.is_superuser and not user.is_staff %}
+          {% if not user.profile.role.name|lower == 'registrar' %}
+            <!-- Calendar -->
+            <li class="nav-item">
+              <a href="{% url 'calendars' %}" class="nav-link d-flex align-items-center">
+                <i class="bx bx-calendar nav-icon mr-2"></i>
+                <p>Calendar</p>
+              </a>
+            </li>
+
+            {% if user|has_perm:'logs.view_subjectlog' %}
+            <li class="nav-item">
+              <a class="nav-link d-flex align-items-center" href="{% url 'subjectLogDetails' %}">
+                <i class="bx bx-bar-chart-alt-2 nav-icon mr-2"></i>
+                <p>Activity Logs</p>
+              </a>
+            </li>
+            {% endif %}
+            
+            {% if user|has_perm:'logs.view_studentactivitylog' %}
+            <li class="nav-item">
+              <a class="nav-link d-flex align-items-center" href="{% url 'student_log' %}">
+                <i class="bx bx-bar-chart-alt-2 nav-icon mr-2"></i>
+                <p>Student Logs</p>
+              </a>
+            </li>
+            {% endif %}
+
+          {% endif %}
+        {% endif %}
+
+        {% if not user.is_superuser and not user.is_staff %}
+          <!-- Messages (Permission check) -->
+          {% if user|has_perm:'message.view_message' %}
+          <li class="nav-item">
+            <a href="{% url 'inbox' %}" class="nav-link d-flex align-items-center">
+              <i class="bx bx-chat nav-icon mr-2"></i>
+              <p>Messages</p>
+              
+              {% if unread_messages_count > 0 %}
+                <span class="badge badge-primary ml-2">{{ unread_messages_count }}</span>
+              {% endif %}
+          
+              {% if pending_friend_requests_count > 0 %}
+                <span class="badge badge-warning badge-pill ml-2" id="pendingFriendRequestsBadge">
+                  {{ pending_friend_requests_count }}
+                </span>
+              {% endif %}
+            </a>
+          </li>          
+          {% endif %}
+        {% endif %}
+
+        {% if not user.is_superuser and not user.is_staff %}
+          <!-- Teaching Section -->
+          <li class="nav-item">
+            <a href="#" class="nav-link d-flex align-items-center">
+              <i class="bx bx-book-open nav-icon mr-2"></i>
+              {% if user.profile.role.name|lower != 'student' %}
+                <p>
+                  Teaching <i class="bx bx-chevron-down right"></i>
+                </p>
+              {% endif %}
+
+              {% if user.profile.role.name|lower == 'student' %}
+                <p>
+                  Learning <i class="bx bx-chevron-down right"></i>
+                </p>
+              {% endif %}
+            </a>
+
+            <ul class="nav nav-treeview">
+              {% if user|has_perm:'subject.view_subject' %}
+                {% if not user.profile.role.name|lower == 'registrar' %}
+                  <li class="nav-item">
+                    <a href="{% url 'SubjectList' %}" class="nav-link d-flex align-items-center" style="padding-left: 20px;">
+                      <i class="bx bx-circle nav-icon mr-2"></i>
+                      <p>Subjects</p>
+                    </a>
+                  </li>
+                {% endif %}
+              {% endif %}
+
+              {% if user|has_perm:'gradebookcomponent.view_gradebookcomponents' %}
+                <li class="nav-item">
+                  <a href="{% url 'student_grades' %}" class="nav-link d-flex align-items-center" style="padding-left: 20px;">
+                    <i class="bx bx-circle nav-icon mr-2"></i>
+                    <p>Grades</p>
+                  </a>
+                </li>
+              {% endif %}
+
+              {% if user|has_perm:'subject.view_subject' %}
+                {% if not user.profile.role.name|lower == 'student' %}
+                  <li class="nav-item">
+                    <a href="{% url 'subject' %}" class="nav-link d-flex align-items-center" style="padding-left: 20px;">
+                      <i class="bx bx-circle nav-icon mr-2"></i>
+                      <p>
+                        {% if is_registrar %}
+                          Subject Management
+                        {% elif is_student %}
+                          Subject List
+                        {% else %}
+                          Subject List
+                        {% endif %}
+                      </p>
+                    </a>
+                  </li>
+                {% endif %}
+              {% endif %}
+
+              {% if user|has_perm:'subject.view_schedule' %}
+                  <li class="nav-item">
+                    <a href="{% url 'schedule' %}" class="nav-link d-flex align-items-center" style="padding-left: 20px;">
+                      <i class="bx bx-circle nav-icon mr-2"></i>
+                      <p>
+                        Schedule Management
+                      </p>
+                    </a>
+                  </li>
+              {% endif %}
+
+              {% if not is_student %}
+                {% if user|has_perm:'classroom.view_teacher_attendance' %}
+                  <li class="nav-item">
+                    <a href="{% url 'teacher_attendance_list' %}" class="nav-link d-flex align-items-center" style="padding-left: 20px;">
+                      <i class="bx bx-circle nav-icon mr-2"></i>
+                      <p>Teacher Attendance</p>
+                    </a>
+                  </li>
+                {% endif %}
+              {% endif %}
+
+              {% if user|has_perm:'studentprogress.view_studentprogress' %}
+                {% if not user.profile.role.name|lower == 'registrar' %}
+                  {% if not user.profile.role.name|lower == 'student' %}
+                    <li class="nav-item">
+                      <a href="{% url 'progressList' %}" class="nav-link d-flex align-items-center" style="padding-left: 20px;">
+                        <i class="bx bx-circle nav-icon mr-2"></i>
+                        <p>Activity Progress</p>
+                      </a>
+                    </li>
+                  {% endif %}
+                {% endif %}
+              {% endif %}
+            </ul>
+          </li>
+        {% endif %}
+
+        {% if user|has_perm:'course.view_subjectenrollment' %}
+          {% if not user.is_superuser and not user.is_staff %}
+            <li class="nav-item">
+              <a href="{% url 'subjectEnrollmentList' %}" class="nav-link d-flex align-items-center">
+                <i class="bx bx-user-plus nav-icon mr-2"></i>
+                <p>Student Management</p>
+              </a>
+            </li>
+          {% endif %}
+        {% endif %}
+
+        {% if user|has_perm:'accounts.view_profile' %}
+            {% if user.profile.role.name|lower == 'admin' or user.profile.role.name|lower == 'registrar' or user.is_superuser or user.is_staff %}
+            <li class="nav-item">
+              <a href="#" class="nav-link d-flex align-items-center">
+                  <i class="bx bx-user nav-icon mr-2"></i>
+                <p>
+                  User List <i class="bx bx-chevron-down right"></i>
+                </p>
+              </a>
+            {% endif %}
+
+            <ul class="nav nav-treeview">
+
+              {% if user|has_perm:'accounts.view_profile' %}
+                {% if user.profile.role.name|lower == 'admin' or user.profile.role.name|lower == 'registrar' or user.is_superuser or user.is_staff %}
+                  <li class="nav-item">
+                    <a href="{% url 'teacher_list' %}" class="nav-link d-flex align-items-center" style="padding-left: 20px;">
+                      <i class="bx bx-circle nav-icon mr-2"></i>
+                      <p>Teacher's Master Data</p>
+                    </a>
+                  </li>
+                {% endif %}
+              {% endif %}
+
+              {% if user|has_perm:'accounts.view_profile' %}
+                {% if user.profile.role.name|lower == 'admin' or user.profile.role.name|lower == 'registrar' or user.is_superuser or user.is_staff %}
+                  <li class="nav-item">
+                    <a href="{% url 'student_list' %} " class="nav-link d-flex align-items-center" style="padding-left: 20px;">
+                      <i class="bx bx-circle nav-icon mr-2"></i>
+                      <p>Student Master Data</p>
+                    </a>
+                  </li>
+                {% endif %}
+              {% endif %}
+
+              {% if user|has_perm:'accounts.view_profile' %}
+                {% if user.profile.role.name|lower == 'admin' or user.profile.role.name|lower == 'registrar' or user.is_superuser or user.is_staff %}
+                  <li class="nav-item">
+                    <a href="{% url 'admin_and_staff_list' %}" class="nav-link d-flex align-items-center" style="padding-left: 20px;">
+                      <i class="bx bx-circle nav-icon mr-2"></i>
+                      <p>Admin and Staff Master Data</p>
+                    </a>
+                  </li>
+                {% endif %}
+              {% endif %}
+
+              {% if user|has_perm:'accounts.view_profile' %}
+                {% if user.profile.role.name|lower == 'admin' or user.profile.role.name|lower == 'registrar' or user.is_superuser or user.is_staff %}
+                  <li class="nav-item">
+                    <a href="{% url 'program_head_list' %}" class="nav-link d-flex align-items-center" style="padding-left: 20px;">
+                      <i class="bx bx-circle nav-icon mr-2"></i>
+                      <p>Program Heads Master Data</p>
+                    </a>
+                  </li>
+                {% endif %}
+              {% endif %}
+
+            </ul>
+          </li>
+        {% endif %}
+
+
+        {% if user|has_perm:'roles.view_role' %}
+          <li class="nav-item">
+            <a href="#" class="nav-link d-flex align-items-center">
+                <i class="bx bxs-key nav-icon mr-2"></i>
+              <p>
+                Roles and Permissions <i class="bx bx-chevron-down right"></i>
+              </p>
+            </a>
+
+            <ul class="nav nav-treeview">
+              {% if user|has_perm:'roles.view_role' %}
+              <li class="nav-item">
+                <a href="{% url 'roleList' %}" class="nav-link d-flex align-items-center" style="padding-left: 20px;">
+                  <i class="bx bx-circle nav-icon mr-2"></i>
+                  <p>User Roles and Permissions</p>
+                </a>
+              </li>
+            {% endif %}
+            </ul>
+          </li>
+        {% endif %}
+        
+        {% if user|has_perm:'roles.view_role' %}
+        <li class="nav-item">
+          <a href="{% url 'active_and_inactive' %}" class="nav-link d-flex align-items-center">
+            <i class="bx bx-time-five nav-icon mr-2"></i>
+            <p>User Last Login</p>
+          </a>
+        </li>
+        {% endif %}
+
+
+        {% if user|has_perm:'roles.view_role' %}
+        <li class="nav-item">
+          <a href="#" class="nav-link d-flex align-items-center">
+              <i class="bx bxs-school nav-icon mr-2"></i>
+            <p>
+              School Profile <i class="bx bx-chevron-down right"></i>
+            </p>
+          </a>
+
+          <ul class="nav nav-treeview">
+
+            {% if user|has_perm:'roles.view_role' %}
+              <li class="nav-item">
+                <a href="#" class="nav-link d-flex align-items-center" style="padding-left: 20px;">
+                  <i class="bx bx-circle nav-icon mr-2"></i>
+                  <p>Update School Information</p>
+                </a>
+              </li>
+            {% endif %}
+
+          {% if user|has_perm:'roles.view_role' %}
+            <li class="nav-item">
+              <a href="{% url 'course_list' %}" class="nav-link d-flex align-items-center" style="padding-left: 20px;">
+                <i class="bx bx-circle nav-icon mr-2"></i>
+                <p>Course Management</p>
+              </a>
+            </li>
+          {% endif %} 
+
+          </ul>
+        </li>
+      {% endif %}
+
+        <!-- Settings Section -->
+        {% if not user.is_superuser and not user.is_staff %}
+        {% if not user.profile.role.name|lower == 'student' %}
+          <li class="nav-item">
+            <a href="#" class="nav-link d-flex align-items-center">
+              <i class="bx bx-cog nav-icon mr-2"></i>
+              <p>
+                Settings <i class="bx bx-chevron-down right"></i>
+              </p>
+            </a>
+
+            <ul class="nav nav-treeview">
+
+              {% if user|has_perm:'activity.view_activitytype' %}
+                {% if not user.is_superuser and not user.is_staff %}
+                  <li class="nav-item">
+                    <a href="{% url 'activityTypeList' %}" class="nav-link d-flex align-items-center" style="padding-left: 20px;">
+                      <i class="bx bx-circle nav-icon mr-2"></i>
+                      <p>Activity Type Settings</p>
+                    </a>
+                  </li>
+                {% endif %}
+              {% endif %}
+
+              {% if user|has_perm:'course.view_semester' %}
+                {% if not user.is_superuser and not user.is_staff %}
+                  <li class="nav-item">
+                    <a href="{% url 'semesterList' %}" class="nav-link d-flex align-items-center" style="padding-left: 20px;">
+                      <i class="bx bx-circle nav-icon mr-2"></i>
+                      <p>
+                        {% if is_registrar %}
+                          School Year Management
+                        {% elif is_student %}
+                          Semester Settings
+                        {% else %}
+                          Semester Settings
+                        {% endif %}
+                      </p>
+                    </a>
+                  </li>
+                {% endif %}
+              {% endif %}
+
+              {% if user|has_perm:'course.view_term' and not user.is_superuser %}
+              <li class="nav-item">
+                <a href="{% url 'termList' %}" class="nav-link d-flex align-items-center" style="padding-left: 20px;">
+                  <i class="bx bx-circle nav-icon mr-2"></i>
+                  <p>Term Settings</p>
+                </a>
+              </li>
+            {% endif %}
+
+              {% if user|has_perm:'subject.view_evaluationassignment' %}
+                {% if not user.is_superuser and not user.is_staff %}
+                  <li class="nav-item">
+                    <a href="{% url 'list_evaluation_assignments' %}" class="nav-link d-flex align-items-center" style="padding-left: 20px;">
+                      <i class="bx bx-circle nav-icon mr-2"></i>
+                      <p>Teacher Evaluation</p>
+                    </a>
+                  </li>
+                {% endif %}
+              {% endif %}
+
+              {% if user|has_perm:'subject.view_teacherevaluationresponse' %}
+                {% if not user.is_superuser and not user.is_staff %}
+                  <li class="nav-item">
+                    <a href="{% url 'list_evaluation_results' %}" class="nav-link d-flex align-items-center" style="padding-left: 20px;">
+                      <i class="bx bx-circle nav-icon mr-2"></i>
+                      <p>Evaluation Result</p>
+                    </a>
+                  </li>
+                {% endif %}
+              {% endif %}
+
+              <!-- Nested Dropdown for Gradebook Settings -->
+
+              {% if user|has_perm:'gradebookcomponent.view_gradebookcomponents' %}
+                {% if not user.is_superuser and not user.is_staff %}
+                  {% if user|has_perm:'gradebookcomponent.view_gradebookcomponents' %}
+                    <li class="nav-item">
+                      <a href="{% url 'viewGradeBookComponents' %}" class="nav-link d-flex align-items-center" style="padding-left: 20px;">
+                        <i class="bx bx-book-bookmark nav-icon mr-2"></i>
+                        <p>Gradebook</p>
+                      </a>
+                    </li>
+                  {% endif %}
+                {% endif %}
+              {% endif %}
+
+            </ul>
+          </li>
+          {% endif %}
+        {% endif %}
+      </ul>
+    </nav>
+    <!-- /.sidebar-menu -->
+  </div>
+  <!-- /.sidebar -->
+</aside>
+

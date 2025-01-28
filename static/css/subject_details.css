@@ -1,0 +1,254 @@
+  /* General Body Styling */
+  body {
+    background-color: #f3f4f6;
+    font-family: 'Poppins', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Header */
+.classroom-header {
+  background: var(--success) !important; /* Keep the success background */
+  color: white;
+  padding: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* Enhanced shadow for depth */
+}
+
+  
+  .classroom-header .header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem; /* Adds space between the text and button */
+  }
+  
+  .classroom-header h1 {
+    font-size: 2rem; /* Slightly larger for better readability */
+    margin: 0;
+    font-weight: 500; /* Semi-bold for a clean, professional look */
+    color: var(--dark) !important; /* A darker shade for improved contrast */
+    line-height: 1.5; /* Increased line height for better spacing */
+    letter-spacing: 0.5px; /* Subtle spacing for a refined feel */
+    text-transform: capitalize; /* Enhances visual hierarchy */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+}
+
+  
+  .classroom-header a {
+    margin: 0;
+    color: #a1c099;
+    background: #ffffff;
+    padding: 0.5rem 1rem;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+  }
+  
+  .classroom-header a:hover {
+    background: #f0f0f0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Classroom Container */
+  .classroom-container {
+    padding: 1rem;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+  
+  /* Cards Styling */
+  .classroom-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+    transition: 0.3s ease;
+    height: 250px;
+  }
+  
+  .classroom-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .card-header {
+    font-size: 1.2rem;
+    text-align: center;
+    font-weight: bold;
+    background-color: var(--success);
+    color: white;
+    border-radius: 5px 5px 0 0;
+    padding: 0.5rem;
+  }
+  
+  /* Responsive Media Queries */
+  @media (max-width: 992px) {
+    .classroom-header h1 {
+      font-size: 1.5rem;
+    }
+  
+    .classroom-container {
+      padding: 0.5rem;
+    }
+  
+    .classroom-card {
+      padding: 0.8rem;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .classroom-header {
+      flex-direction: column;
+      text-align: center;
+    }
+  
+    .classroom-header a {
+      margin-top: 0.5rem;
+    }
+  
+    .card-header {
+      font-size: 1rem;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .classroom-header h1 {
+      font-size: 1.2rem;
+    }
+  
+    .classroom-card {
+      padding: 0.5rem;
+    }
+  }
+  
+  /* Lesson item styling */
+  .lesson-item {
+    border: 1px solid #e0e0e0;
+    padding: 15px;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    color: #555;
+    cursor: pointer;
+  }
+  
+  /* Dark mode for lesson item */
+  .dark-mode .lesson-item {
+    background-color: #333;
+    color: #fff;
+  }
+  
+  /* Hover state for lesson item */
+  .lesson-item:hover {
+    background-color: #f1f1f1;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  /* Hover state for lesson item in dark mode */
+  .dark-mode .lesson-item:hover {
+    background-color: #444;
+    color: #fff;
+  }
+  
+  /* Chevron icon rotation when collapsed */
+  .collapse.show + .lesson-item i.fas.fa-chevron-down {
+    transform: rotate(180deg);
+  }
+  
+  /* Lesson name styling */
+  .lesson-name {
+    font-weight: 500;
+    font-size: 16px;
+    color: #333;
+  }
+  
+  /* Dark mode for lesson name */
+  .dark-mode .lesson-name {
+    font-weight: 500;
+    font-size: 16px;
+    color: #fff; /* Ensure text is visible in dark mode */
+  }
+  
+  /* Chevron icon rotation when collapsed */
+  .collapse.show + .lesson-item i.fas.fa-chevron-down {
+    transform: rotate(180deg);
+  }
+  
+  /* Lesson toggle styling */
+  .lesson-toggle {
+    text-decoration: none;
+    color: inherit;
+  }
+  
+  /* Collapsible content */
+  .collapse {
+    margin-top: 10px;
+  }
+  
+  /* Lesson name styling */
+  .lesson-name {
+    font-weight: 500;
+    font-size: 16px;
+  }
+  
+  /* Dark mode for lesson name */
+  .dark-mode .lesson-name {
+    color: #fff;
+  }
+  
+  /* Activity list styling */
+  .list-group-item {
+    background-color: #fff;
+    border-bottom: 2px solid #e0e0e0;
+    padding-left: 20px;
+    margin-bottom: 5px;
+  }
+  
+  /* Padding adjustment for activity list */
+  .list-group-item.pl-5 {
+    padding-left: 3rem;
+    border-radius: 8px;
+    background-color: var(--primary) !important;
+  }
+  
+  /* Lesson actions styling */
+  .lesson-actions {
+    display: flex;
+    justify-content: end;
+    margin-top: 15px;
+  }
+  
+  /* Card styling */
+  .card {
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  .modal-body {
+    padding: 20px;
+  }
+  
+  .btn-app {
+    width: 160px;
+    height: 100px;
+    margin: 10px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .btn-app i {
+    font-size: 24px;
+    margin-bottom: 5px;
+  }
+  
+  .btn-app span {
+    font-size: 14px;
+    font-weight: bold;
+  }

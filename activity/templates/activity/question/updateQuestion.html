@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Edit Question
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <!-- Content Header -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2 align-items-center">
+          <div class="col-sm-6">
+            <h1 class="display-5 mb-">Edit Question for {{ activity.activity_name }}</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="#">Home</a></li>
+              <li class="breadcrumb-item active">Edit Question</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="card shadow-lg border-0 mb-4">
+          <div class="card-header bg-success text-white py-3">
+            <h6 class="m-0 font-weight-bold text-uppercase">Edit Question Details</h6>
+          </div>
+
+          <div class="card-body px-5 py-4">
+            <form method="post">
+              {% csrf_token %}
+
+              <!-- Question Text -->
+              <div class="form-group">
+                <label for="question_text">Question:</label>
+                <textarea id="question_text" name="question_text" class="form-control shadow-sm" required>{{ question.question_text }}</textarea>
+              </div>
+
+              <!-- Score Input -->
+              <div class="form-group">
+                <label for="score">Score:</label>
+                <input type="number" id="score" name="score" class="form-control shadow-sm" value="{{ question.score }}" required />
+              </div>
+
+              {% if question.quiz_type == 'Multiple Choice' %}
+                <!-- Multiple Choice Section -->
+                <div id="choices">
+                  <label>Choices:</label>
+                  {% for choice in question.choices %}
+                    <div class="input-group mb-3 choice-container">
+                      <input type="radio" name="correct_answer" value="{{ forloop.counter0 }}" {% if forloop.counter0 == question.correct_answer %}checked{% endif %}>
+                      <input type="text" name="choices" class="form-control ml-2" value="{{ choice }}" required>
+                      <button type="button" class="btn btn-danger btn-sm ml-2 remove-choice">Remove</button>
+                    </div>
+                  {% endfor %}
+                </div>
+                <button type="button" class="btn btn-secondary mt-2" onclick="addChoice()">Add Another Choice</button>
+
+              {% elif question.quiz_type == 'Matching Type' %}
+                <!-- Matching Type Section -->
+                <div id="matching_pairs">
+                  {% for pair in question.matching_pairs %}
+                    <div class="input-group mb-3 pair-container">
+                      <input type="text" name="matching_left" class="form-control" value="{{ pair.left }}" required>
+                      <input type="text" name="matching_right" class="form-control ml-2" value="{{ pair.right }}" required>
+                      <button type="button" class="btn btn-danger btn-sm ml-2 remove-pair">Remove</button>
+                    </div>
+                  {% endfor %}
+                </div>
+
+                <div id="additional_right_options" class="mt-4">
+                  <label>Additional Right Side Options (Distractors):</label>
+                  {% for extra in question.extra_right %}
+                    <div class="input-group mb-3">
+                      <input type="text" name="extra_right" class="form-control" value="{{ extra }}">
+                      <button type="button" class="btn btn-danger btn-sm ml-2 remove-right">Remove</button>
+                    </div>
+                  {% endfor %}
+                </div>
+                <button type="button" class="btn btn-secondary mt-2" onclick="addRightOption()">Add Another Right Side Option</button>
+
+              {% elif question.quiz_type == 'Calculated Numeric' %}
+                <!-- Calculated Numeric Section -->
+               
+                <!-- MathJax Preview -->
+                <div class="mt-3">
+                  <label>Preview (Question):</label>
+                  <p id="mathjax-preview-question"></p>
+                </div>
+                <div class="form-group">
+                  <label for="correct_answer">Correct Answer:</label>
+                  <input type="text" id="correct_answer" name="correct_answer" class="form-control shadow-sm" value="{{ question.correct_answer }}" required>
+                </div>
+
+                <div class="mt-3">
+                  <label>Preview (Answer):</label>
+                  <p id="mathjax-preview-answer"></p>
+                </div>
+
+              {% elif question.quiz_type == 'True/False' %}
+                <!-- True/False Section -->
+                <div class="form-group">
+                  <label for="correct_answer">Correct Answer:</label>
+                  <select id="correct_answer" name="correct_answer" class="form-control shadow-sm" required>
+                    <option value="True" {% if question.correct_answer == 'True' %}selected{% endif %}>True</option>
+                    <option value="False" {% if question.correct_answer == 'False' %}selected{% endif %}>False</option>
+                  </select>
+                </div>
+
+              {% elif question.quiz_type == 'Essay' or question.quiz_type == 'Document' %}
+                <!-- Essay or Document Section -->
+                <div class="form-group">
+                  <label for="correct_answer">Correct Answer:</label>
+                  <input type="text" id="correct_answer" name="correct_answer" class="form-control shadow-sm" value="{{ question.correct_answer }}" required>
+                </div>
+              {% endif %}
+
+              <!-- Submit & Back Buttons -->
+              <div class="text-right mt-4">
+                <button type="submit" class="btn btn-primary btn-lg rounded-pill shadow-lg px-5">Update Question</button>
+                <a onclick="history.back()" class="btn btn-secondary btn-lg rounded-pill shadow-lg px-5">Back</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+</div>
+
+<!-- JavaScript -->
+<script>
+  function addChoice() {
+    const choiceContainer = document.createElement('div');
+    choiceContainer.classList.add('input-group', 'mb-3', 'choice-container');
+
+    const radioInput = document.createElement('input');
+    radioInput.type = 'radio';
+    radioInput.name = 'correct_answer';
+    radioInput.required = true;
+
+    const textInput = document.createElement('input');
+    textInput.type = 'text';
+    textInput.name = 'choices';
+    textInput.classList.add('form-control', 'ml-2');
+    textInput.required = true;
+
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.classList.add('btn', 'btn-danger', 'btn-sm', 'ml-2', 'remove-choice');
+    deleteButton.textContent = 'Remove';
+    deleteButton.onclick = function () {
+      if (document.querySelectorAll('.choice-container').length > 2) {
+        choiceContainer.remove();
+      }
+    };
+
+    choiceContainer.appendChild(radioInput);
+    choiceContainer.appendChild(textInput);
+    choiceContainer.appendChild(deleteButton);
+
+    document.getElementById('choices').appendChild(choiceContainer);
+  }
+</script>
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    },
+    options: {
+      skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+    }
+  };
+</script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var questionInput = document.getElementById("question_text");
+    var answerInput = document.getElementById("correct_answer");
+    var questionPreview = document.getElementById("mathjax-preview-question");
+    var answerPreview = document.getElementById("mathjax-preview-answer");
+
+    function updateMathJaxPreview(inputElement, previewElement) {
+      if (inputElement && previewElement) {
+        var input = inputElement.value.trim();
+        previewElement.innerHTML = `\\(${input}\\)`;
+        MathJax.typesetPromise([previewElement]).catch(function (err) {
+          console.error("MathJax typeset error:", err.message);
+        });
+      }
+    }
+
+    // Run preview on input events
+    if (questionInput) {
+      questionInput.addEventListener("input", function () {
+        updateMathJaxPreview(questionInput, questionPreview);
+      });
+
+      // Trigger update on page load
+      updateMathJaxPreview(questionInput, questionPreview);
+    }
+
+    if (answerInput) {
+      answerInput.addEventListener("input", function () {
+        updateMathJaxPreview(answerInput, answerPreview);
+      });
+
+      // Trigger update on page load
+      updateMathJaxPreview(answerInput, answerPreview);
+    }
+  });
+</script>
+<script>
+  function addRightOption() {
+    const additionalRightOptions = document.getElementById("additional_right_options");
+
+    const rightOptionContainer = document.createElement("div");
+    rightOptionContainer.classList.add("input-group", "mb-3");
+
+    const textInput = document.createElement("input");
+    textInput.type = "text";
+    textInput.name = "extra_right";  // ✅ Ensure the correct name attribute
+    textInput.classList.add("form-control");
+    textInput.required = true;
+
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.classList.add("btn", "btn-danger", "btn-sm", "ml-2", "remove-right");
+    deleteButton.textContent = "Remove";
+    deleteButton.onclick = function () {
+      rightOptionContainer.remove();
+    };
+
+    rightOptionContainer.appendChild(textInput);
+    rightOptionContainer.appendChild(deleteButton);
+
+    additionalRightOptions.appendChild(rightOptionContainer);
+  }
+
+  // ✅ Ensure existing remove buttons work after page load
+  document.querySelectorAll(".remove-right").forEach((button) => {
+    button.addEventListener("click", function () {
+      this.parentElement.remove();
+    });
+  });
+</script>
+
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+
+{% endblock %}

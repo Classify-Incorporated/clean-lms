@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {% load static %}
+    <title>Classroom Mode - {{ subject.subject_name }}</title>
+    <link rel="stylesheet" href="{% static 'assets/plugins/fontawesome-free/css/all.min.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/dist/css/adminlte.min.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/dist/css/settings.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/dist/css/custom_modal.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/subject_details.css' %}" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
+    <link rel="icon" type="image/png" href="{% static 'favicon.ico' %}">
+        <style>
+      .card-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+      }
+      .attendance-card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        text-align: center;
+      }
+      .student-photo {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-bottom: 10px;
+      }
+      .attendance-status {
+        margin: 10px 0;
+        font-weight: bold;
+        font-size: 1.2em;
+      }
+      .attendance-date {
+        font-size: 0.9em;
+        color: #888;
+      }
+      .action-dropdown {
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Classroom Header -->
+    <div class="classroom-header fade-in">
+      <div class="header-content">
+        <h1>Classroom Mode: {{ subject.subject_name }}</h1>
+        <a href="{% url 'subjectDetail' subject.id %}" class="btn btn-light">Exit Classroom Mode</a>
+      </div>
+    </div>
+
+    <div class="classroom-container fade-in">
+        <section class="content">
+          <div class="container-fluid">
+            <!-- Dropdown for selecting date -->
+            <div class="mb-3">
+              <form method="get" action="">
+                <label for="date" class="form-label">Select Date:</label>
+                <select name="date" id="date" class="form-control" onchange="this.form.submit()">
+                  {% for date in available_dates %}
+                    <option value="{{ date|date:'Y-m-d' }}" {% if date == selected_date %}selected{% endif %}>
+                      {{ date|date:'Y-m-d' }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </form>
+            </div>
+      
+            <!-- Attendance Cards -->
+            {% if attendance %}
+              <div class="card-container">
+                {% for record in attendance %}
+                  <div class="attendance-card">
+                    {% if record.student.profile.student_photo %}
+                      <img src="{{ record.student.profile.student_photo.url }}" alt="Student" class="student-photo">
+                    {% else %}
+                      <img src="{% static 'assets/dist/images/def_user.jpg' %}" alt="Default Profile" class="student-photo">
+                    {% endif %}
+                    <div class="student-name">{{ record.student.get_full_name }}</div>
+                    <div class="attendance-status">
+                      {% if record.status.status == 'Present' %}
+                        <span class="badge bg-success"><i class="fas fa-check-circle"></i> Present</span>
+                      {% elif record.status.status == 'Late' %}
+                        <span class="badge bg-warning"><i class="fas fa-clock"></i> Late</span>
+                      {% elif record.status.status == 'Absent' %}
+                        <span class="badge bg-danger"><i class="fas fa-times-circle"></i> Absent</span>
+                      {% elif record.status.status == 'Excused' %}
+                        <span class="badge bg-primary"><i class="fas fa-calendar-check"></i> Excused</span>
+                      {% endif %}
+                    </div>
+                    <div class="attendance-date">Date: {{ record.date }}</div>
+                    <div class="action-button mt-2">
+                      <button class="btn btn-primary btn-sm" onclick="openEditModal({{ record.id }})">
+                        <i class="fas fa-edit"></i> Update
+                      </button>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="no-data">
+                <p class="text-center text-muted mt-4">No attendance data available for the selected date.</p>
+              </div>
+            {% endif %}
+      
+            <div class="text-left mt-4">
+              <a href="{% url 'classroom_mode' subject.id %}" class="btn btn-secondary mb-2">Back</a>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Modal Structure for Editing Attendance -->
+    <div id="editModal" class="custom-modal">
+        <div class="custom-modal-header d-flex justify-content-between">
+            <h5>Edit Attendance</h5>
+            <button class="close-btn" id="closeEditModalBtn"></button>
+            </div>
+            <div class="custom-modal-body" id="editModalBody">
+            <!-- This content will be dynamically loaded -->
+            </div>
+        </div>
+    <div id="editModalBackdrop" class="custom-modal-backdrop"></div>
+
+  <script>
+    // Script to open the Add Semester modal (loaded from external file)
+    document.getElementById('openAddModalBtn').addEventListener('click', function () {
+        document.getElementById('customModal').classList.add('show')
+        document.getElementById('customModalBackdrop').classList.add('show')
+      })
+      
+      // Script to close the Add Semester modal
+      document.getElementById('closeModalBtn').addEventListener('click', function () {
+        document.getElementById('customModal').classList.remove('show')
+        document.getElementById('customModalBackdrop').classList.remove('show')
+      })
+
+    // Function to open the Edit Semester modal and load the content dynamically
+    function openEditModal(recordId) {
+      fetch(`/updateAttendanceCM/${recordId}/`)
+        .then((response) => response.text())
+        .then((html) => {
+          document.getElementById('editModalBody').innerHTML = html;
+          document.getElementById('editModal').classList.add('show');
+          document.getElementById('editModalBackdrop').classList.add('show');
+    
+          // Add event listener to the close button after loading the content
+          document.getElementById('closeEditModalBtn').addEventListener('click', function () {
+            document.getElementById('editModal').classList.remove('show');
+            document.getElementById('editModalBackdrop').classList.remove('show');
+          });
+        })
+        .catch((error) => console.error('Error loading modal content:', error));
+    }
+    </script>
+
+    <script src="{% static 'assets/plugins/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'assets/plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'assets/plugins/chart.js/Chart.min.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        function displayToast(message, icon) {
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: icon,
+            title: message,
+            showConfirmButton: false,
+            timer: 5000,
+            timerProgressBar: true,
+          });
+        }
+    
+        // Check for form errors and display them with error icon
+        {% if form.errors %}
+          {% for field in form %}
+            {% for error in field.errors %}
+              displayToast("{{ error }}", 'error');  // Display form errors with 'error' icon
+            {% endfor %}
+          {% endfor %}
+        {% endif %}
+    
+        // Check for Django messages and handle their type
+        {% if messages %}
+          {% for message in messages %}
+            {% if message.tags == 'error' %}
+              displayToast("{{ message }}", 'error');  // Display error messages
+            {% else %}
+              displayToast("{{ message }}", 'success');  // Display success or other messages
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+    </script>
+    
+    <script src="{% static 'js/classroom-mode.js' %}"></script>
+    <script src="{% static 'js/classroom-mode-full-screen.js' %}"></script>
+    <script src="{% static 'js/file-validation.js' %}"></script>
+    <script src="{% static 'js/modal.js' %}"></script>
+  </body>
+</html>

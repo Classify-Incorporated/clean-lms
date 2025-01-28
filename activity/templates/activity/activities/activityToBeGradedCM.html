@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {% load static %}
+    <title>Classroom Mode - {{ subject.subject_name }}</title>
+    <link rel="stylesheet" href="{% static 'assets/plugins/fontawesome-free/css/all.min.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/dist/css/adminlte.min.css' %}" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="{% static 'assets/dist/css/settings.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/subject_details.css' %}" />
+    <link rel="icon" type="image/png" href="{% static 'favicon.ico' %}">  </head>
+  <body>
+    <!-- Classroom Header -->
+    <div class="classroom-header fade-in mb-4">
+      <div class="header-content">
+        <h1>Classroom Mode: {{ subject.subject_name }}</h1>
+        <a href="{% url 'subjectDetail' subject.id %}" class="btn btn-light">Exit Classroom Mode</a>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="classroom-container fade-in">
+      <section class="content">
+        <div class="container-fluid">
+          <!-- Students With Scores -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h4>Activity Name: {{ activity.activity_name }} | Max Score: {{ activity.max_score }}</h4>
+            </div>
+            <div class="card-body">
+              <h6>Students With Scores</h6>
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Student Name</th>
+                    <th>Score</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for student_activity in students_with_scores %}
+                    <tr>
+                      <td>{{ student_activity.student.get_full_name }}</td>
+                      <td>{{ student_activity.total_score|floatformat:"-1" }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Students Without Scores -->
+          <div class="card">
+            <div class="card-header">
+              <h4>Grade Students Without Scores</h4>
+            </div>
+            <div class="card-body">
+              <h6>Students in Class</h6>
+              <form method="POST" action="{% url 'grade_activityCM' activity.id %}">
+                {% csrf_token %}
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>Student Name</th>
+                      <th>Score</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for student_activity in students_without_scores %}
+                      <tr>
+                        <td>{{ student_activity.student.get_full_name }}</td>
+                        <td>
+                          <input type="number" name="student_{{ student_activity.student.id }}" class="form-control" min="0" max="{{ activity.max_score }}" step="0.01" />
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+                <button type="submit" class="btn btn-primary">Save Grades</button>
+                <a href="{% url 'activityListCM' subject.id %}" class="btn btn-secondary">Back</a>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script src="{% static 'assets/plugins/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'assets/plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'assets/plugins/chart.js/Chart.min.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    {% comment %}classroom_mode code{% endcomment %}
+    <script src="{% static 'js/classroom-mode.js' %}"></script>
+    <script src="{% static 'js/classroom-mode-full-screen.js' %}"></script>
+    <script src="{% static 'js/file-validation.js' %}"></script>
+    <script src="{% static 'js/modal.js' %}"></script>
+  </body>
+</html>

@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}
+  Grade Activity
+{% endblock %}
+{% block content %}
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0">Grade Activity</h1>
+          </div>
+          <!-- /.col -->
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">
+                <a href="#">Home</a>
+              </li>
+              <li class="breadcrumb-item active">Grade Activity</li>
+            </ol>
+          </div>
+          <!-- /.col -->
+        </div>
+        <!-- /.row -->
+      </div>
+      <!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <!-- Grade Activity Content -->
+        <div class="container">
+          <h4>Activity Name: {{ activity.activity_name }} | Max Score: {{ activity.max_score }}</h4>
+
+          <!-- Students with existing scores -->
+          <h6>Students With Scores</h6>
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Student Name</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for student_activity in students_with_scores %}
+                <tr>
+                  <td>{{ student_activity.student.get_full_name }}</td>
+                  <td>{{ student_activity.total_score }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+
+          <!-- Students without scores -->
+          <h6>Students in Class</h6>
+          <form method="POST" action="{% url 'grade_activity' activity.id %}">
+            {% csrf_token %}
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Student Name</th>
+                  <th>Score</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for student_activity in students_without_scores %}
+                  <tr>
+                    <td>{{ student_activity.student.get_full_name }}</td>
+                    <td>
+                      <input type="number" name="student_{{ student_activity.student.id }}" class="form-control" min="0" max="{{ activity.max_score }}" step="0.01" />
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            <button type="submit" class="btn btn-primary">Save Grades</button>
+          </form>
+        </div>
+      </div>
+    </section>
+    <!-- /.content -->
+  </div>
+{% endblock %}

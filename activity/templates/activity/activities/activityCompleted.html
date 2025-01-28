@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Activity Completed
+{% endblock %}
+
+{% block content %}
+  <div class="content-wrapper">
+    <!-- Content Header -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <h1>Activity Completed!</h1>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid text-center">
+        <!-- Success message -->
+        <div class="alert bg-success p-4 rounded-lg shadow-sm">
+          <h2 class="font-weight-bold">Thank you, {{ request.user.first_name }}!</h2>
+          <p class="lead">Your answers have been submitted successfully.</p>
+        </div>
+
+        <!-- Progress score circle (if applicable) -->
+        {% if show_score %}
+          <div class="progress-circle-container my-5">
+            <div class="progress-circle" data-score="{{ score }}" data-max="{{ max_score }}">
+              <span class="progress-text">{{ score|floatformat:'0' }} / {{ max_score|floatformat:'0' }}</span>
+              <div class="progress-inner-circle"></div>
+            </div>
+            <p class="mt-3 font-weight-bold">You scored {{ score|floatformat:'0' }} out of {{ max_score|floatformat:'0' }}!</p>
+          </div>
+        {% endif %}
+
+        <!-- Back button -->
+        <div class="text-center">
+          <a href="{% url 'SubjectList' %}" class="btn btn-lg btn-primary shadow-sm">Back to Activities</a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Styles for progress circle and overall layout -->
+  {% if show_score %}
+    <style>
+      .progress-circle-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 30px;
+      }
+      
+      .progress-circle {
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        background: conic-gradient(#28a745 0% 0%, transparent 0% 100%);
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        font-weight: bold;
+        color: #000;
+        transition: transform 0.3s ease;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+      }
+      
+      .progress-circle:hover {
+        transform: scale(1.1);
+      }
+      
+      .progress-inner-circle {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background-color: #f3f3f3;
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .progress-text {
+        position: absolute;
+        z-index: 1;
+        font-size: 22px;
+        font-weight: bold;
+        color: #28a745;
+      }
+      
+      .alert-success {
+        background-color: #e9f7ef;
+        border-color: #d4edda;
+        color: #155724;
+        font-size: 1.2rem;
+      }
+      
+      .btn-primary {
+        background-color: #4caf50;
+        border-color: #4caf50;
+      }
+      
+      .btn-primary:hover {
+        background-color: #45a049;
+      }
+    </style>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.progress-circle').forEach(function (circle) {
+          const score = parseFloat(circle.getAttribute('data-score'))
+          const max = parseFloat(circle.getAttribute('data-max'))
+          const percentage = (score / max) * 100
+          circle.style.background = `conic-gradient(#28a745 0% ${percentage}%, transparent ${percentage}% 100%)`
+        })
+      })
+    </script>
+  {% endif %}
+{% endblock %}

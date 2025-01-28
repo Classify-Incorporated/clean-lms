@@ -1,0 +1,230 @@
+{% load static %}
+<!-- Navbar -->
+<style>
+  .dot {
+    width: 8px;
+    height: 8px;
+    background-color: #28a745; /* Green color */
+    border-radius: 50%;
+    display: inline-block;
+    animation: smooth-blink 4s infinite; /* Slow and smooth animation */
+  }
+  
+  @keyframes smooth-blink {
+    0%,
+    50%,
+    100% {
+      opacity: 1; /* Fully visible */
+    }
+    25%,
+    75% {
+      opacity: 0.5; /* Smooth transition to half visibility */
+    }
+  }
+</style>
+<nav class="main-header navbar navbar-expand fixed-top">
+  <!-- Left navbar links -->
+  <ul class="navbar-nav">
+    <li class="nav-item">
+      <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars text-dark"></i></a>
+    </li>
+  </ul>
+
+  <!-- Right navbar links -->
+  <ul class="navbar-nav ml-auto">
+    <!-- Dark Mode Toggle -->
+    <li class="nav-item">
+      <div class="nav-link d-flex align-items-center">
+        <div class="custom-control custom-switch">
+          <input type="checkbox" class="custom-control-input" id="darkModeToggle" />
+          <label class="custom-control-label" for="darkModeToggle"><i id="darkModeIcon" class="fas fa-sun"></i> <!-- Default to Sun Icon --></label>
+        </div>
+      </div>
+    </li>
+
+    <!-- Notifications Dropdown Menu -->
+    {% if show_logs %}
+      <li class="nav-item dropdown">
+        <a class="nav-link" data-toggle="dropdown" href="#">
+          <i class="far fa-bell text-dark"></i>
+          {% if unread_notifications_count > 0 %}
+            <span class="badge badge-danger navbar-badge">{{ unread_notifications_count }}</span>
+          {% endif %}
+        </a>
+        <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+          <span class="dropdown-header">
+            {% if unread_notifications_count > 0 %}
+              {{ unread_notifications_count }} Notifications
+            {% else %}
+              No new notifications
+            {% endif %}
+          </span>
+          <div class="dropdown-divider"></div>
+
+          <!-- Combined Notifications -->
+          {% for entry in notifications %}
+            <a href="#"
+              class="dropdown-item d-flex align-items-start {% if entry.is_read %}
+                
+                
+                
+                
+                 read-log
+
+
+
+
+              {% else %}
+                
+                
+                
+                
+                 bg-light unread-log
+
+
+
+
+              {% endif %}">
+              <i class="fas fa-bell mr-2"></i> <!-- Notification icon -->
+              <div class="flex-grow-1">
+                <span class="d-block text-wrap">{{ entry.message }}</span>
+                <small class="text-muted">{{ entry.created_at|timesince }} ago</small>
+              </div>
+            </a>
+            <div class="dropdown-divider"></div>
+          {% empty %}
+            <a class="dropdown-item">No new notifications</a>
+          {% endfor %}
+        </div>
+      </li>
+    {% endif %}
+
+    <!-- Messages Dropdown Menu -->
+    <li class="nav-item dropdown">
+      <a class="nav-link" data-toggle="dropdown" href="#">
+        <i class="far fa-comment-alt text-dark"></i>
+        {% if unread_messages_count > 0 %}
+          <span class="badge badge-danger navbar-badge">{{ unread_messages_count }}</span>
+        {% endif %}
+      </a>
+      <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+        <h6 class="dropdown-header">Message Center</h6>
+        {% if unread_messages_count > 0 %}
+          <p class="dropdown-item text-center small text-white font-weight-bold" style="background-color: #dc3545;">
+            <i class="fas fa-envelope-open-text"></i> New message! Please check your inbox.
+          </p>
+        {% else %}
+          <p class="dropdown-item text-center small text-gray-500">
+            <i class="fas fa-inbox"></i> No new message.
+          </p>
+        {% endif %}
+      </div>
+    </li>
+
+    <!-- User Dropdown Menu -->
+    <!-- User Dropdown Menu -->
+    <li class="nav-item dropdown">
+      <a class="nav-link" data-toggle="dropdown" href="#" style="display: flex; align-items: center;">
+        <!-- Hide user info on mobile -->
+        <span class="text-dark d-none d-md-flex align-items-center">
+          <span class="dot mr-2"></span> <!-- Blinking green dot -->
+          Hi, {{ request.user.first_name }}
+          {% if request.user.profile.role %}
+            | <span class="badge badge-success ml-2">{{ request.user.profile.role }}</span>
+          {% endif %}
+        </span>
+
+        <!-- Profile Image (Always Visible) -->
+        <div class="header-profile-image" style="width: 30px; height: 30px; overflow: hidden; border-radius: 50%; margin-left: 10px;">
+          <img class="img-fluid"
+            src="{% if request.user.profile.student_photo %}
+              {{ request.user.profile.student_photo.url }}
+            {% else %}
+              {% static 'assets/dist/img/profile_default.png' %}
+            {% endif %}"
+            alt="User Image"
+            style="width: 100%; height: 100%; object-fit: cover;" />
+        </div>
+
+        <i class="fas fa-caret-down text-dark ml-2"></i>
+      </a>
+
+      <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+        <a href="{% url 'view_profile_header' request.user.id %}" class="dropdown-item"><i class="fas fa-user-cog mr-2"></i> Profile Settings</a>
+        <a class="dropdown-item" href="#" id="settingsDropdown" role="button" data-toggle="modal" data-target="#settingsModal"><i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i> Settings</a>
+        <div class="dropdown-divider"></div>
+        <a href="#" class="dropdown-item" data-toggle="modal" data-target="#logoutModal"><i class="fas fa-sign-out-alt mr-2"></i> Logout</a>
+      </div>
+    </li>
+  </ul>
+</nav>
+<!-- /.navbar -->
+
+<!-- Logout Confirmation Modal -->
+<div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="logoutModalLabel">Confirm Logout</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">Are you sure you want to logout?</div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <a href="{% url 'sign_out' %}" class="btn btn-primary">Logout</a>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  // Function to update the icon between sun and moon
+  function updateDarkModeIcon(isDarkMode) {
+    const darkModeIcon = document.getElementById('darkModeIcon')
+    if (isDarkMode) {
+      darkModeIcon.classList.remove('fa-sun')
+      darkModeIcon.classList.add('fa-moon')
+    } else {
+      darkModeIcon.classList.remove('fa-moon')
+      darkModeIcon.classList.add('fa-sun')
+    }
+  }
+  
+  // Handle dark mode toggle
+  document.getElementById('darkModeToggle').addEventListener('change', function () {
+    if (this.checked) {
+      document.body.classList.add('dark-mode')
+      localStorage.setItem('darkMode', 'enabled')
+      updateDarkModeIcon(true) // Switch to moon icon
+    } else {
+      document.body.classList.remove('dark-mode')
+      localStorage.setItem('darkMode', 'disabled')
+      updateDarkModeIcon(false) // Switch to sun icon
+    }
+  })
+  
+  // Persist dark mode based on user preference
+  if (localStorage.getItem('darkMode') === 'enabled') {
+    document.body.classList.add('dark-mode')
+    document.getElementById('darkModeToggle').checked = true
+    updateDarkModeIcon(true) // Ensure moon icon is shown if dark mode is enabled
+  } else {
+    document.body.classList.remove('dark-mode')
+    updateDarkModeIcon(false) // Ensure sun icon is shown if dark mode is disabled
+  }
+</script>
+<script>
+  document.querySelector('.nav-link[data-toggle="dropdown"]').addEventListener('click', function () {
+    fetch("{% url 'mark_notifications_as_read' %}", {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': '{{ csrf_token }}'
+      }
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.status === 'success') {
+          document.querySelector('.navbar-badge').remove()
+        }
+      })
+  })
+</script>

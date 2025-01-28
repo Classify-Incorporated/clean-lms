@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+  Student Profile
+{% endblock %}
+{% block content %}
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0">Profile</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right"></ol>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <main role="main" class="col-md-10 ml-sm-auto col-lg-12 content">
+            <div class="card mb-4" style="background: linear-gradient(to right, #89AD80, #A1C099 , #e3f2fd);">
+              <!-- Added gradient background -->
+              <div class="card-body d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                  <div class="profile-image-frame" style="width: 100px; height: 100px; overflow: hidden; border-radius: 50%;">
+                    {% if profile.student_photo %}
+                      <img src="{{ profile.student_photo.url }}" alt="Profile Picture" class="img-fluid" style="width: 100%; height: 100%; object-fit: cover;" />
+                    {% else %}
+                      <img src="https://via.placeholder.com/100" alt="Profile Picture" class="img-fluid" style="width: 100%; height: 100%; object-fit: cover;" />
+                    {% endif %}
+                  </div>
+                  <div class="ml-3 text-white">
+                    <h2 class="mb-0">{{ profile.first_name }} {{ profile.last_name }}</h2>
+                    <h6>{{ profile.user.email }}</h6>
+                  </div>
+                </div>
+                <!-- Move the button to the right using ml-auto -->
+                <div class="ml-auto">
+                  <button class="btn btn-secondary" id="editBtn"><i class="fas fa-edit"></i> Edit</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-8">
+                <div class="card mb-4">
+                  <div class="card-header bg-success text-white">Basic Information</div>
+                  <div class="card-body">
+                    <p>
+                      <strong>ID:</strong> {{ profile.identification }}
+                    </p>
+                    <p>
+                      <strong>Full Name:</strong> {{ profile.first_name }} {{ profile.last_name }}
+                    </p>
+                    <p>
+                      <strong>Email Address:</strong> {{ profile.user.email }}
+                    </p>
+                    <p>
+                      <strong>Gender:</strong> {{ profile.gender }}
+                    </p>
+                    <p>
+                      <strong>Birthday:</strong> {{ profile.date_of_birth }}
+                    </p>
+                    <p>
+                      <strong>Contact Number:</strong> {{ profile.phone_number }}
+                    </p>
+                    <p>
+                      <strong>Address:</strong> {{ profile.address }}
+                    </p>
+                  </div>
+                </div>
+                {% if profile.role.name|lower != 'admin' and profile.role.name|lower != 'teacher' and profile.role.name|lower != 'registrar' %}
+                  <div class="card mb-4">
+                    <div class="card-header bg-success text-white">Academic Information</div>
+                    <div class="card-body">
+                      <p>
+                        <strong>Course:</strong> {{ profile.major }}
+                      </p>
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Custom Modal -->
+  <div class="custom-modal" id="customModal">
+    <div class="custom-modal-header">
+      <span class="close-btn" id="closeBtn"></span>
+      <h3>Edit Profile</h3>
+    </div>
+    <div class="custom-modal-body" id="editProfileForm">
+      <!-- The form will be loaded dynamically here -->
+    </div>
+  </div>
+
+  <!-- Custom Backdrop -->
+  <div class="custom-modal-backdrop" id="customModalBackdrop"></div>
+
+  <script>
+      document.getElementById('editBtn').addEventListener('click', function () {
+        openEditModal({{ profile.user.id }});
+      });
+  
+      function openEditModal(profileId) {
+        fetch(`/update_header_profile/${profileId}/`)  // Fetch the update form
+          .then(response => response.text())
+          .then(html => {
+            document.getElementById('editProfileForm').innerHTML = html; // Load the form into the modal
+            document.getElementById('customModal').classList.add('show'); // Show the custom modal
+            document.getElementById('customModalBackdrop').classList.add('show'); // Show the backdrop
+          });
+      }
+  
+      document.getElementById('closeBtn').addEventListener('click', function () {
+        closeModal();
+      });
+  
+      function closeModal() {
+        document.getElementById('customModal').classList.remove('show');
+        document.getElementById('customModalBackdrop').classList.remove('show');
+      }
+  
+      // Close modal when clicking on the backdrop
+      document.getElementById('customModalBackdrop').addEventListener('click', function () {
+        closeModal();
+      });
+  
+      // Optional: Close the modal when clicking outside the modal content
+      window.addEventListener('click', function (event) {
+        const modal = document.getElementById('customModal');
+        const backdrop = document.getElementById('customModalBackdrop');
+        if (modal.classList.contains('show') && !modal.contains(event.target) && !event.target.matches('#editBtn')) {
+          closeModal();
+        }
+      });
+    </script>
+{% endblock %}

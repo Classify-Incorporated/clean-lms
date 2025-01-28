@@ -1,0 +1,8 @@
+<!-- updateSemester.html -->
+<form method="post" action="{% url 'updateActivityType' activityType.id %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Submit</button>
+    <a href="{% url 'activityTypeList' %}" class="btn btn-secondary">Back</a>
+  </form>
+  

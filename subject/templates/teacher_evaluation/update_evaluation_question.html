@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0">Update Evaluation Question</h1>
+          </div>
+          <!-- Breadcrumb Navigation -->
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right"></ol>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <section class="content">
+      <div class="container-fluid d-flex justify-content-center">
+        <!-- Centered and Small Card -->
+        <div class="card" style="width: 50%;">
+          <!-- Card Header with Color -->
+          <div class="card-header bg-primary text-white">
+            <h3 class="card-title">Evaluation Form</h3>
+          </div>
+          <!-- Card Body with Form -->
+          <form method="post">
+            <div class="card-body">
+              {% csrf_token %}
+              <!-- Question Text Field -->
+              <div class="card-body">
+                {% csrf_token %}
+                <!-- Question Text Field -->
+                <div class="form-group">{{ form.question_text.label_tag }}
+                  {{ form.question_text }}
+                </div>
+                <div class="form-group form-check">{{ form.is_active }}
+                  {{ form.is_active.label_tag }}
+                </div>
+              </div>
+            <!-- Card Footer -->
+            <div class="card-footer">
+              <button type="submit" class="btn btn-primary">Save</button>
+              <a href="javascript:history.back()" class="btn btn-secondary">Back</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+  </div>
+{% endblock %}

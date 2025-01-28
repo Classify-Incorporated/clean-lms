@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import subjectForm, scheduleForm, EvaluationQuestionForm, EvaluationAssignmentForm, TeacherEvaluationForm
+from .forms import *
 from .models import Subject, Schedule, EvaluationQuestion, EvaluationAssignment, TeacherEvaluation, TeacherEvaluationResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -184,10 +184,11 @@ def updateSubject(request, pk):
             messages.error(request, "All required fields must be filled in.")
             return redirect('subject')
         
-        # Check for duplicate room number, excluding the current subject
-        if Subject.objects.filter(room_number=room_number).exclude(pk=subject.pk).exists():
-            messages.error(request, "The room number is already assigned to another subject. Please use a different room number.")
-            return redirect('subject')
+        # ✅ Check for duplicate room number only if it's updated (not empty)
+        if room_number and room_number != subject.room_number:
+            if Subject.objects.filter(room_number=room_number).exclude(pk=subject.pk).exists():
+                messages.error(request, "The room number is already assigned to another subject. Please use a different room number.")
+                return redirect('subject')
         
         if assign_teacher_id:
             assign_teacher = CustomUser.objects.filter(id=assign_teacher_id).first()
@@ -218,6 +219,29 @@ def updateSubject(request, pk):
         form = subjectForm(instance=subject)
 
     return render(request, 'subject/updateSubject.html', {'form': form, 'subject': subject})
+
+
+@login_required
+@permission_required('subject.view_subject', raise_exception=True)
+def updateSubjectPhoto(request, pk):
+    """ Allows teachers to update only the subject photo """
+    subject = get_object_or_404(Subject, pk=pk)
+
+    if request.method == 'POST':
+        form = subjectPhotoForm(request.POST, request.FILES, instance=subject)  # Use a separate form
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Subject photo updated successfully!')
+            return redirect('subject')
+        else:
+            print("Form Errors:", form.errors.as_data())
+            messages.error(request, 'There was an error updating the photo. Please try again.')
+
+    else:
+        form = subjectPhotoForm(instance=subject)
+
+    return render(request, 'subject/updateSubjectPhoto.html', {'form': form, 'subject': subject})
 
 
 # Delete Subject

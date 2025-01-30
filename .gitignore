@@ -25,3 +25,5 @@ env
 
 # Git
 .DS_Store
+
+lms/settings.py

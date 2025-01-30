@@ -1729,25 +1729,23 @@ def assignPoints(request):
             points = form.cleaned_data['points']
             teacher = request.user
 
-            # Check if a record already exists for this teacher and status
             try:
                 instance, created = TeacherAttendancePoints.objects.update_or_create(
                     teacher=teacher,
                     status=status,
                     defaults={'points': points}
                 )
-                if created:
-                    messages.success(request, 'Status points assigned successfully!')
-                else:
-                    messages.success(request, 'Status points updated successfully!')
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Status points assigned successfully!' if created else 'Status points updated successfully!'
+                })
             except IntegrityError:
-                messages.error(request, 'An error occurred while saving points. Please try again.')
+                return JsonResponse({'success': False, 'message': 'An error occurred while saving points. Please try again.'}, status=400)
 
-            return redirect('statusPointsList')
-    else:
-        form = TeacherAttendancePointsForm()
+        return JsonResponse({'success': False, 'errors': form.errors}, status=400)
 
-    return render(request, 'course/statusPoints/assignPoints.html', {'form': form})
+    return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
+
 
 @login_required
 def updatePoints(request, id):
@@ -1764,6 +1762,7 @@ def updatePoints(request, id):
 
     return render(request, 'course/statusPoints/updateStatusPoints.html', {'form': form, 'status_points': status_points})
 
+
 @login_required
 def deletePoints(request, id):
     status_points = get_object_or_404(TeacherAttendancePoints, id=id, teacher=request.user)
@@ -1779,7 +1778,8 @@ def deletePoints(request, id):
 @login_required
 def statusPointsList(request):
     form = TeacherAttendancePointsForm()
-    status_points = TeacherAttendancePoints.objects.all()
+    user = request.user
+    status_points = TeacherAttendancePoints.objects.filter(teacher=user)
     return render(request, 'course/statusPoints/statusPointsList.html', {'status_points': status_points, 'form': form})
 
 

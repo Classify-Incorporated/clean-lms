@@ -162,6 +162,7 @@ def createSubject(request):
 
     return render(request, 'subject/createSubject.html', {'form': form})
 
+
 #Modify Subject
 @login_required
 @permission_required('subject.change_subject', raise_exception=True)
@@ -183,8 +184,7 @@ def updateSubject(request, pk):
         if not subject_name or not assign_teacher:
             messages.error(request, "All required fields must be filled in.")
             return redirect('subject')
-        
-        # ✅ Check for duplicate room number only if it's updated (not empty)
+
         if room_number and room_number != subject.room_number:
             if Subject.objects.filter(room_number=room_number).exclude(pk=subject.pk).exists():
                 messages.error(request, "The room number is already assigned to another subject. Please use a different room number.")

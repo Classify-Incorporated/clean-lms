@@ -74,11 +74,11 @@ Status Points
               <h5>Add Status Points</h5>
             </div>
             <div class="custom-modal-body">
-                <form method="post" action="{% url 'assignPoints' %}">
-                    {% csrf_token %}
-                    {{ form.as_p }}
-                    <button type="submit" class="btn btn-primary">Assign Points</button>
-                </form>
+              <form id="assignPointsForm" method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary">Assign Points</button>
+              </form>            
             </div>
           </div>
         <div id="customModalBackdrop" class="custom-modal-backdrop"></div>
@@ -188,4 +188,76 @@ Status Points
       }
     
   </script>
+  <script>
+    document.querySelector('#assignPointsForm').addEventListener('submit', function (event) {
+        event.preventDefault();  // Prevent full-page reload
+    
+        let form = new FormData(this);
+    
+        fetch("{% url 'assignPoints' %}", {
+            method: "POST",
+            body: form,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')  // CSRF token for security
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: data.message
+                }).then(() => {
+                    location.reload();  // Reload the page to update the table
+                });
+            } else {
+                let errorsHtml = '<ul>';
+                if (data.errors) {
+                    for (let field in data.errors) {
+                        data.errors[field].forEach(error => {
+                            errorsHtml += `<li>${field}: ${error}</li>`;
+                        });
+                    }
+                } else {
+                    errorsHtml += `<li>${data.message}</li>`;
+                }
+                errorsHtml += '</ul>';
+    
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    html: errorsHtml
+                });
+            }
+        })
+        .catch(error => {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: 'An unexpected error occurred. Please try again.'
+            });
+            console.error('Error:', error);
+        });
+    });
+    </script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+          const pointsInput = document.querySelector("input[name='points']");
+          
+          if (pointsInput) {
+              pointsInput.addEventListener("input", function() {
+                  if (parseFloat(this.value) > 10) {
+                      this.value = 10;  // Reset to max value
+                      Swal.fire({
+                          icon: "warning",
+                          title: "Limit Exceeded",
+                          text: "Points cannot exceed 10."
+                      });
+                  }
+              });
+          }
+      });
+      </script>
+      
 {% endblock %}

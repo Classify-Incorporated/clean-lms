@@ -171,7 +171,7 @@ class TeacherAttendancePointsForm(forms.ModelForm):
         fields = ['status', 'points']
         widgets = {
             'status': forms.Select(attrs={'class': 'form-control selectpicker','data-style': 'btn-outline-secondary', 'title': 'Select Status'}),
-            'points': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'points': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'max': '10', 'min': '0'}),
         }
     
     def __init__(self, *args, **kwargs):

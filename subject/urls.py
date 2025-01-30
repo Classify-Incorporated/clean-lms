@@ -1,6 +1,18 @@
-from django.urls import path
+from django.urls import path, include
 from .views import *
 urlpatterns = [
+
+    path('',include([
+        path('Schedule_data/', Schedule_Data.as_view({
+            'get': 'list',
+            'post': 'create',
+        })),
+        path('Schedule_data/<int:pk>/', Schedule_Data.as_view({
+            'put': 'update',
+            'delete': 'destroy',
+        })),
+    ])),
+
     path('subject/', subjectList, name='subject'),
     path('createSubject/', createSubject, name='createSubject'), 
     path('updateSubject/<int:pk>/', updateSubject, name='updateSubject'),

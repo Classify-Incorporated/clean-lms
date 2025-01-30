@@ -28,6 +28,7 @@ from rest_framework.views import APIView
 from .serialzers import *
 from rest_framework.response import Response
 import os
+from rest_framework.viewsets import ModelViewSet
 # Create your views here.
 
 @login_required
@@ -1003,3 +1004,11 @@ class ScheduleAPI(APIView):
             'schedule_data': formatted_schedule,
             'available_evaluations': evaluations_list 
         }, status=200)
+    
+
+
+class Schedule_Data(ModelViewSet):
+    serializer_class = ScheduleDataSerializer
+
+    def get_queryset(self):
+        return self.serializer_class.Meta.model.objects.all()

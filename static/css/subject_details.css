@@ -252,3 +252,69 @@
     font-size: 14px;
     font-weight: bold;
   }
+
+  .btn-tablet-mode {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center content horizontally */
+    justify-content: center; /* Center content vertically */
+    width: 175px;
+    height: 155px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center; /* Center text */
+    border-radius: 10px;
+    border: none;
+    transition: all 0.3s ease-in-out;
+    padding: 15px;
+    cursor: pointer;
+    text-decoration: none;
+    position: relative;
+    box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.1);
+    margin-right: 10px;
+  }
+  
+  /* --- BUTTON COLORS (PASTEL THEME) --- */
+  .btn-tablet-mode.add { background: #FFD3B5; } /* Soft Peach */
+  .btn-tablet-mode.list { background: #A8D5BA; } /* Mint Green */
+  .btn-tablet-mode.copy { background: #B5D3E7; } /* Light Blue */
+  .btn-tablet-mode.lesson { background: #E7C8D3; } /* Soft Pink */
+  .btn-tablet-mode.students { background: #F2E0C9; } /* Pastel Beige */
+  .btn-tablet-mode.attendance { background: #D4CBE7; } /* Soft Lavender */
+
+  /* --- ICON POSITION (TOP LEFT) --- */
+  .btn-tablet-mode i {
+    font-size: 3.5rem;
+    position: absolute;
+    top: 10px;
+    left: 15px;
+    transition: transform 0.3s ease-in-out, opacity 0.2s ease-in-out;
+  }
+
+  /* --- ICON COLORS (Darker Shades) --- */
+  .btn-tablet-mode.add i { color: #E6954A; } /* Darker Peach */
+  .btn-tablet-mode.list i { color: #5D9C77; } /* Darker Mint Green */
+  .btn-tablet-mode.copy i { color: #4A83A8; } /* Darker Light Blue */
+  .btn-tablet-mode.lesson i { color: #B55A74; } /* Darker Soft Pink */
+  .btn-tablet-mode.students i { color: #A3865C; } /* Darker Pastel Beige */
+  .btn-tablet-mode.attendance i { color: #7A5D9C; } /* Darker Soft Lavender */
+
+  /* --- HOVER EFFECTS --- */
+  .btn-tablet-mode:hover {
+    filter: brightness(1.1); /* Brighten the button slightly */
+    transform: scale(1.05); /* Slight zoom effect */
+  }
+
+  .btn-tablet-mode:hover i {
+    transform: scale(1.2); /* Enlarge the icon slightly */
+    opacity: 0.9; /* Make the icon stand out more */
+  }
+
+  /* --- TEXT POSITION (Centered in Button) --- */
+  .btn-tablet-mode span {
+    position: static; /* Remove absolute positioning */
+    margin-top: 80px; /* Push text below the icon */
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #555555; /* Soft black for text */
+  }

@@ -14,6 +14,130 @@
     <meta name="csrf-token" content="{{ csrf_token }}">
     <!-- Bootstrap Select -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css" />
+    <!-- Include FullCalendar CSS and JS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet" />
+    <style>
+      /* Divider Section */
+      .lesson-divider-section {
+        margin-bottom: 20px;
+      }
+
+      .lesson-divider {
+        border: 2px solid #ccc;
+        width: 100%;
+        margin: 0 auto;
+      }
+
+      .lesson-title-header {
+        font-weight: bold;
+        color: #555;
+        margin-top: -15px;
+        background: #f8f9fa;
+        display: inline-block;
+        padding: 5px 15px;
+        border-radius: 10px;
+        border: 2px solid #ccc;
+      }
+
+      /* Weekly Lessons Container */
+      .lesson-container {
+        display: flex;
+        flex-wrap: nowrap;  /* Ensure all days are in one row */
+        overflow-x: auto;   /* Enable scrolling if content overflows */
+        gap: 10px;
+        padding: 10px;
+        justify-content: center;
+      }
+
+      /* Lesson Column with Pastel Colors */
+      .lesson-column {
+        flex: 1;
+        min-width: 180px; /* Ensures uniform width */
+        text-align: center;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 2px 4px 6px rgba(0, 0, 0, 0.1);
+        border: 2px solid rgba(200, 200, 200, 0.3);
+      }
+
+      /* Soft Pastel Background Colors for Each Day */
+      .lesson-column:nth-child(1) { background: #ffebee; } /* Light Red */
+      .lesson-column:nth-child(2) { background: #f3e5f5; } /* Light Purple */
+      .lesson-column:nth-child(3) { background: #e8f5e9; } /* Light Green */
+      .lesson-column:nth-child(4) { background: #e3f2fd; } /* Light Blue */
+      .lesson-column:nth-child(5) { background: #fff3e0; } /* Light Orange */
+      .lesson-column:nth-child(6) { background: #fce4ec; } /* Light Pink */
+      .lesson-column:nth-child(7) { background: #ede7f6; } /* Light Violet */
+
+      /* Lesson Day */
+      .lesson-day {
+        font-weight: bold;
+        background: rgba(0, 0, 0, 0.1); /* Slight transparency */
+        color: #333;
+        padding: 8px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+      }
+
+      /* Lesson Date */
+      .lesson-date {
+        font-size: 12px;
+        color: #666;
+        background: rgba(0, 0, 0, 0.1);
+        padding: 3px 6px;
+        border-radius: 4px;
+        margin-left: 5px;
+      }
+
+      /* Lesson Card - Ensuring Equal Width & Height */
+      .lesson-card {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 8px;
+        border: 2px solid rgba(200, 200, 200, 0.3);
+        padding: 10px;
+        margin-bottom: 10px;
+        width: 100%; /* Ensures consistency */
+        min-height: 160px; /* Set minimum height */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-around; /* Distributes content evenly */
+        transition: background 0.3s, transform 0.2s;
+      }
+
+      .lesson-card:hover {
+        background: rgba(250, 250, 250, 0.9);
+        transform: translateY(-3px);
+      }
+
+      /* Lesson Icon */
+      .lesson-icon i {
+        font-size: 36px;
+        margin-bottom: 10px;
+      }
+
+      /* Lesson Title */
+      .lesson-title {
+        font-size: 14px;
+        font-weight: bold;
+      }
+
+      /* Lesson Time */
+      .lesson-time {
+        font-size: 12px;
+        color: #333;
+      }
+
+      /* Lesson Actions */
+      .lesson-actions .btn {
+        margin: 5px;
+        font-size: 12px;
+      }
+      .sortable-ghost {
+        opacity: 0.5;
+        background: rgba(0, 0, 0, 0.1);
+      }
+    </style>
   </head>
   <body>
     <!-- Classroom Header -->
@@ -31,106 +155,126 @@
     </div>
 
     <div class="classroom-container fade-in">
-      <div class="row mb-4">
-        <div class="col-lg-4 col-md-6 col-sm-12">
-          <div class="classroom-card shadow-sm" style=" height: 400px;">
-            <div class="card-header">Ongoing Activities</div>
-            <div class="card-body">
-              <canvas id="ongoingActivitiesChart" style=" height: 300px;"></canvas>
-              <p id="noDataOngoing" class="text-center text-muted" style="display: none;">No ongoing activities</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Upcoming Activities -->
-        <div class="col-lg-4 col-md-6 col-sm-12">
-          <div class="classroom-card shadow-sm" style=" height: 400px;">
-            <div class="card-header">Upcoming Activities</div>
-            <div class="card-body">
-              <canvas id="upcomingActivitiesChart" style=" height: 300px;"></canvas>
-              <p id="noDataUpcoming" class="text-center text-muted" style="display: none;">No upcoming activities</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Activities to be Graded -->
-        <div class="col-lg-4 col-md-6 col-sm-12">
-          <div class="classroom-card shadow-sm" style=" height: 400px;">
-            <div class="card-header">Activities to be Graded</div>
-            <div class="card-body">
-              <canvas id="activitiesToBeGradedChart" style=" height: 300px;"></canvas>
-              <p id="noDataGradingNeeded" class="text-center text-muted" style="display: none;">No activities to be graded</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Completed Activities Chart -->
-      <div class="row mb-4">
-        <div class="col-md-12">
-          <div class="form-group">
-            <label for="activityTypeSelect">Select Activity Type:</label>
-            <select id="activityTypeSelect" class="form-control">
-              <!-- Options will be populated dynamically -->
-            </select>
-          </div>
-          <div class="card shadow-sm">
-            <div class="card-header gradient-header bg-success text-center">Completed Activity Summary</div>
-            <div class="card-body" style="height: 600px;">
-              <canvas id="finishedActivitiesChart" class="activity-chart"></canvas>
-              <p id="noDataFinished" class="text-center text-muted" style="display: none;">No completed activities</p>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- Teacher's section -->
       {% if is_teacher %}
         {% now 'Y-m-d' as today_date %}
         {% if selected_semester.start_date|date:'Y-m-d' <= today_date and selected_semester.end_date|date:'Y-m-d' >= today_date %}
-          <div class="row justify-content-center mb-4">
-            <div class="col-md-12">
-              <div class="d-flex flex-wrap justify-content-center">
-                <a class="btn btn-success mb-2 mx-2" data-toggle="modal" data-target="#addActivityLessonModalCM">
-                  <i class="fas fa-plus"></i> Add an Activity or Lesson
-                </a>                
-                <a href="{% url 'activityListCM' subject.id %}" class="btn btn-primary mb-2 mx-2">Activity List</a>
-                <a class="btn btn-info mb-2 mx-2" onclick="openCopyActivityModal('{{ subject.id }}')">Copy Activities</a>
-                <button class="btn btn-info mb-2 mx-2" onclick="openCopyLessonModal('{{ subject.id }}')">Copy Lessons</button>
-                <a href="{% url 'subjectStudentListCM' subject.id %}?semester={{ selected_semester_id }}" class="btn btn-warning mb-2 mx-2">View Students List</a>
-                <a href="{% url 'attendanceListCM' subject.id %}" class="btn btn-primary mb-2 mx-2">Attendance List</a>
-              </div>
+        <div class="row justify-content-center mb-4">
+          <div class="col-md-12">
+            <div class="d-flex flex-wrap justify-content-center">
+              <a class="btn-tablet-mode add" data-toggle="modal" data-target="#addActivityLessonModalCM">
+                <i class="fas fa-plus"></i>
+                <span>Add Activity or Lesson</span>
+              </a>                
+              <a href="{% url 'activityListCM' subject.id %}" class="btn-tablet-mode list">
+                <i class="fas fa-tasks"></i>
+                <span>Activity List</span>
+              </a>
+              <a class="btn-tablet-mode copy" onclick="openCopyActivityModal('{{ subject.id }}')">
+                <i class="fas fa-copy"></i>
+                <span>Copy Activities</span>
+              </a>
+              <button class="btn-tablet-mode lesson" onclick="openCopyLessonModal('{{ subject.id }}')">
+                <i class="fas fa-book"></i>
+                <span>Copy Lessons</span>
+              </button>
+              <a href="{% url 'subjectStudentListCM' subject.id %}?semester={{ selected_semester_id }}" class="btn-tablet-mode students">
+                <i class="fas fa-users"></i>
+                <span>View Students</span>
+              </a>
+              <a href="{% url 'attendanceListCM' subject.id %}" class="btn-tablet-mode attendance">
+                <i class="fas fa-list-alt"></i>
+                <span>Attendance</span>
+              </a>
             </div>
           </div>
+        </div>            
         {% endif %}
       {% endif %}
 
-      <!-- Lessons (Collapsible with Activities) -->
-      <div class="row mb-4">
-        <div class="col-md-12 mx-auto">
-          <div class="card shadow-sm">
-            <div class="card-header bg-success d-flex justify-content-between align-items-center position-relative">
-              <div>
-                <span>Lessons &nbsp; <sup>(Organized by Week)</sup></span>
-              </div>
-              <!-- Month Selector Dropdown (Moved to the Far Right) -->
-              <div class="ml-auto">
-                <div class="dropdown">
-                  <button class="btn btn-light dropdown-toggle" type="button" id="monthSelector" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Select Month</button>
-                  <div class="dropdown-menu dropdown-menu-right" aria-labelledby="monthSelector" id="monthDropdown">
-                      <!-- Dynamic month options will be inserted here -->
-                  </div>
-                </div>
-              </div>
-            </div>
-      
-            <!-- Week Sections -->
-            <ul class="list-group list-group-flush" id="lesson-list">
-              <!-- Dynamic content will be loaded here -->
-            </ul>
-          </div>
+      <!-- Lessons Section -->
+      <div class="container mt-4 col-md-12">
+        <!-- Weekly Lessons Header -->
+        <div class="lesson-divider-section text-center">
+            <hr class="lesson-divider">
+            <h4 class="lesson-title-header">📚 Weekly Lessons</h4>
         </div>
-      </div>
+    
+        <!-- Weekly Schedule Row -->
+        <div class="lesson-container">
+            <!-- Sunday -->
+            <div class="lesson-column" id="sunday-column">
+                <h5 class="lesson-day">Sunday <span class="lesson-date" id="sunday-date"></span></h5>
+            </div>
+    
+            <!-- Monday -->
+            <div class="lesson-column" id="monday-column">
+                <h5 class="lesson-day">Monday <span class="lesson-date" id="monday-date"></span></h5>
+                <div class="lesson-card" id="monday-lesson-1" data-module-id="1">
+                    <div class="lesson-icon"><i class="far fa-file-alt text-secondary"></i></div>
+                    <div class="lesson-title">Data Structures</div>
+                    <div class="lesson-time">⏰ 10:00 AM - 11:30 AM</div>
+                </div>
+                <div class="lesson-card" id="monday-lesson-2" data-module-id="1">
+                    <div class="lesson-icon"><i class="far fa-file-pdf text-danger"></i></div>
+                    <div class="lesson-title">Introduction to Programming</div>
+                    <div class="lesson-time">⏰ 9:00 AM - 10:30 AM</div>
+                </div>
+            </div>
+    
+            <!-- Tuesday -->
+            <div class="lesson-column" id="tuesday-column">
+                <h5 class="lesson-day">Tuesday <span class="lesson-date" id="tuesday-date"></span></h5>
+                <div class="lesson-card" id="tuesday-lesson-1" data-module-id="1">
+                    <div class="lesson-icon"><i class="far fa-file-video text-primary"></i></div>
+                    <div class="lesson-title">Object-Oriented Programming</div>
+                    <div class="lesson-time">⏰ 1:00 PM - 2:30 PM</div>
+                </div>
+            </div>
+    
+            <!-- Wednesday -->
+            <div class="lesson-column" id="wednesday-column">
+                <h5 class="lesson-day">Wednesday <span class="lesson-date" id="wednesday-date"></span></h5>
+                <div class="lesson-card" id="wednesday-lesson-1" data-module-id="1">
+                    <div class="lesson-icon"><i class="far fa-file-word text-info"></i></div>
+                    <div class="lesson-title">Algorithms</div>
+                    <div class="lesson-time">⏰ 2:00 PM - 3:30 PM</div>
+                </div>
+            </div>
+    
+            <!-- Thursday -->
+            <div class="lesson-column" id="thursday-column">
+                <h5 class="lesson-day">Thursday <span class="lesson-date" id="thursday-date"></span></h5>
+                <div class="lesson-card" id="thursday-lesson-1" data-module-id="1">
+                    <div class="lesson-icon"><i class="far fa-file-excel text-success"></i></div>
+                    <div class="lesson-title">Database Management</div>
+                    <div class="lesson-time">⏰ 3:00 PM - 4:30 PM</div>
+                </div>
+            </div>
+    
+            <!-- Friday -->
+            <div class="lesson-column" id="friday-column">
+                <h5 class="lesson-day">Friday <span class="lesson-date" id="friday-date"></span></h5>
+                <div class="lesson-card" id="friday-lesson-1" data-module-id="1">
+                    <div class="lesson-icon"><i class="far fa-file-powerpoint text-warning"></i></div>
+                    <div class="lesson-title">Web Development</div>
+                    <div class="lesson-time">⏰ 4:00 PM - 5:30 PM</div>
+                </div>
+                <div class="lesson-card" id="friday-lesson-2" data-module-id="1">
+                    <div class="lesson-icon"><i class="far fa-file-archive text-secondary"></i></div>
+                    <div class="lesson-title">Software Engineering</div>
+                    <div class="lesson-time">⏰ 5:00 PM - 6:30 PM</div>
+                </div>
+            </div>
+    
+            <!-- Saturday -->
+            <div class="lesson-column" id="saturday-column">
+                <h5 class="lesson-day">Saturday <span class="lesson-date" id="saturday-date"></span></h5>
+            </div>
+        </div>
+    </div>
+    
     </div>
 
     <!-- Bootstrap Modal for Adding Activity or Lesson -->
@@ -139,9 +283,9 @@
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="addActivityLessonModalLabel">Add an Activity or Lesson</h5>
-            <button type="button" id="closeAddActivityLessonModalCMBtn" class="close" aria-label="Close">
+            <button type="button" id="closeAddActivityLessonModalCMBtn" class="close" data-dismiss="modal" aria-label="Close">
               <span aria-hidden="true">&times;</span>
-            </button>
+            </button>            
           </div>
           <div class="modal-body">
             <!-- Button-app layout for all content types with colored icons and fixed margin -->
@@ -282,6 +426,23 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <!-- SortableJS for drag-and-drop functionality (Frontend Only) -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+
+    {% comment %}classroom_mode code{% endcomment %}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{% static 'js/classroom-mode.js' %}"></script>
+    <script src="{% static 'js/classroom-mode-full-screen.js' %}"></script>
+    <script src="{% static 'js/file-validation.js' %}"></script>
+    <script src="{% static 'js/modal.js' %}"></script>
+    <!-- Bootstrap Select -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    <script src="{% static 'js/deactivate-classroom-mode.js' %}"></script>
+    <script src="{% static 'js/file-validation.js' %}"></script>
+
     <script>
       function confirmDeleteLesson(moduleId) {
         Swal.fire({
@@ -303,457 +464,440 @@
     </script>
 
     <script>
-    const createPieChart = (chartId, labels, data, links, noDataId) => {
-      const ctx = document.getElementById(chartId).getContext('2d');
-      
-      // Fetch the root styles (CSS variables) and get specific colors
-      const rootStyles = getComputedStyle(document.documentElement);
-      const primaryColor = rootStyles.getPropertyValue('--primary').trim();
-      const warningColor = rootStyles.getPropertyValue('--warning').trim();
-      const successColor = rootStyles.getPropertyValue('--success').trim();
-      const infoColor = rootStyles.getPropertyValue('--info').trim();
-      const dangerColor = rootStyles.getPropertyValue('--danger').trim();
-      const secondaryColor = rootStyles.getPropertyValue('--secondary').trim();
-    
-      const colors = [primaryColor, warningColor, successColor, infoColor, dangerColor, secondaryColor];
-    
-      if (data.length > 0) {
-        const chart = new Chart(ctx, {
-          type: 'pie',
-          data: {
-            labels: labels.map(label => label.length > 20 ? label.substring(0, 20) + '...' : label), // Truncate long labels
-            datasets: [{
-              data: data,
-              backgroundColor: colors, // Use the root colors
-              borderColor: colors, // Use the root colors for border as well
-              borderWidth: 2
-            }],
-          },
-          options: {
-            onClick: (event, array) => {
-              if (array.length) {
-                const index = array[0].index;
-                window.location.href = links[index];
-              }
-            },
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                position: 'left',  
-                align: 'start',    
-                labels: {
-                  usePointStyle: true,
-                  padding: 20,
-                  font: {
-                    size: 12
+        const createPieChart = (chartId, labels, data, links, noDataId) => {
+          const ctx = document.getElementById(chartId).getContext('2d');
+          
+          // Fetch the root styles (CSS variables) and get specific colors
+          const rootStyles = getComputedStyle(document.documentElement);
+          const primaryColor = rootStyles.getPropertyValue('--primary').trim();
+          const warningColor = rootStyles.getPropertyValue('--warning').trim();
+          const successColor = rootStyles.getPropertyValue('--success').trim();
+          const infoColor = rootStyles.getPropertyValue('--info').trim();
+          const dangerColor = rootStyles.getPropertyValue('--danger').trim();
+          const secondaryColor = rootStyles.getPropertyValue('--secondary').trim();
+        
+          const colors = [primaryColor, warningColor, successColor, infoColor, dangerColor, secondaryColor];
+        
+          if (data.length > 0) {
+            const chart = new Chart(ctx, {
+              type: 'pie',
+              data: {
+                labels: labels.map(label => label.length > 20 ? label.substring(0, 20) + '...' : label), // Truncate long labels
+                datasets: [{
+                  data: data,
+                  backgroundColor: colors, // Use the root colors
+                  borderColor: colors, // Use the root colors for border as well
+                  borderWidth: 2
+                }],
+              },
+              options: {
+                onClick: (event, array) => {
+                  if (array.length) {
+                    const index = array[0].index;
+                    window.location.href = links[index];
+                  }
+                },
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: 'left',  
+                    align: 'start',    
+                    labels: {
+                      usePointStyle: true,
+                      padding: 20,
+                      font: {
+                        size: 12
+                      },
+                      generateLabels: function(chart) {
+                        const originalLabels = chart.data.labels;
+                        return originalLabels.map((label, i) => ({
+                          text: label.length > 20 ? label.substring(0, 20) + '...' : label,
+                          fillStyle: chart.data.datasets[0].backgroundColor[i],
+                          hidden: chart.getDatasetMeta(0).data[i].hidden,
+                          index: i,
+                          fullText: label // Store full label text
+                        }));
+                      }
+                    },
+                    onHover: function(event, legendItem) {
+                      // Show full text in a tooltip when hovering over the label
+                      const tooltipDiv = document.createElement('div');
+                      tooltipDiv.id = 'legendTooltip';
+                      tooltipDiv.style.position = 'absolute';
+                      tooltipDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+                      tooltipDiv.style.color = '#fff';
+                      tooltipDiv.style.padding = '5px';
+                      tooltipDiv.style.borderRadius = '4px';
+                      tooltipDiv.style.pointerEvents = 'none';
+                      tooltipDiv.style.zIndex = 1000;
+                      tooltipDiv.innerHTML = legendItem.fullText;
+                      
+                      document.body.appendChild(tooltipDiv);
+        
+                      document.onmousemove = function(e) {
+                        tooltipDiv.style.top = (e.pageY + 10) + 'px';
+                        tooltipDiv.style.left = (e.pageX + 10) + 'px';
+                      };
+                    },
+                    onLeave: function() {
+                      const tooltipDiv = document.getElementById('legendTooltip');
+                      if (tooltipDiv) {
+                        tooltipDiv.remove();
+                      }
+                      document.onmousemove = null;
+                    }
                   },
-                  generateLabels: function(chart) {
-                    const originalLabels = chart.data.labels;
-                    return originalLabels.map((label, i) => ({
-                      text: label.length > 20 ? label.substring(0, 20) + '...' : label,
-                      fillStyle: chart.data.datasets[0].backgroundColor[i],
-                      hidden: chart.getDatasetMeta(0).data[i].hidden,
-                      index: i,
-                      fullText: label // Store full label text
-                    }));
+                  tooltip: {
+                    callbacks: {
+                      label: function(tooltipItem) {
+                        return `${tooltipItem.label}: ${tooltipItem.raw}`;
+                      }
+                    }
                   }
                 },
-                onHover: function(event, legendItem) {
-                  // Show full text in a tooltip when hovering over the label
-                  const tooltipDiv = document.createElement('div');
-                  tooltipDiv.id = 'legendTooltip';
-                  tooltipDiv.style.position = 'absolute';
-                  tooltipDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-                  tooltipDiv.style.color = '#fff';
-                  tooltipDiv.style.padding = '5px';
-                  tooltipDiv.style.borderRadius = '4px';
-                  tooltipDiv.style.pointerEvents = 'none';
-                  tooltipDiv.style.zIndex = 1000;
-                  tooltipDiv.innerHTML = legendItem.fullText;
-                  
-                  document.body.appendChild(tooltipDiv);
-    
-                  document.onmousemove = function(e) {
-                    tooltipDiv.style.top = (e.pageY + 10) + 'px';
-                    tooltipDiv.style.left = (e.pageX + 10) + 'px';
-                  };
-                },
-                onLeave: function() {
-                  const tooltipDiv = document.getElementById('legendTooltip');
-                  if (tooltipDiv) {
-                    tooltipDiv.remove();
-                  }
-                  document.onmousemove = null;
-                }
-              },
-              tooltip: {
-                callbacks: {
-                  label: function(tooltipItem) {
-                    return `${tooltipItem.label}: ${tooltipItem.raw}`;
+                layout: {
+                  padding: {
+                    left: 10,
+                    right: 100
                   }
                 }
               }
-            },
-            layout: {
-              padding: {
-                left: 10,
-                right: 100
-              }
-            }
+            });
+          } else {
+            document.getElementById(chartId).style.display = 'none';
+            document.getElementById(noDataId).style.display = 'block';
           }
-        });
-      } else {
-        document.getElementById(chartId).style.display = 'none';
-        document.getElementById(noDataId).style.display = 'block';
-      }
-    };
-    
+        };
+        
+        // Ongoing Activities
+        const ongoingActivitiesLabels = [{% for activity in ongoing_activities %}'{{ activity.activity_name }}',{% endfor %}];
+        const ongoingActivitiesData = [{% for activity in ongoing_activities %}1,{% endfor %}];
+        const ongoingActivitiesLinks = [{% for activity in ongoing_activities %}'{% url "activity_detailCM" activity.id %}?semester={{ selected_semester_id }}',{% endfor %}];
+        createPieChart('ongoingActivitiesChart', ongoingActivitiesLabels, ongoingActivitiesData, ongoingActivitiesLinks, 'noDataOngoing'); 
 
-    // Ongoing Activities
-    const ongoingActivitiesLabels = [{% for activity in ongoing_activities %}'{{ activity.activity_name }}',{% endfor %}];
-    const ongoingActivitiesData = [{% for activity in ongoing_activities %}1,{% endfor %}];
-    const ongoingActivitiesLinks = [{% for activity in ongoing_activities %}'{% url "activity_detailCM" activity.id %}?semester={{ selected_semester_id }}',{% endfor %}];
-    createPieChart('ongoingActivitiesChart', ongoingActivitiesLabels, ongoingActivitiesData, ongoingActivitiesLinks, 'noDataOngoing'); 
-
-     {% comment %} // Ongoing Activities Labels (Grouped by Type)
-  const ongoingActivitiesLabels = [
-    {% for group in ongoing_activities_grouped %}
-      '{{ group.activity_type__name }}: {{ group.count }}',
-    {% endfor %}
-  ];
-
-  // Individual Data Points for the Chart
-  const ongoingActivitiesData = [
-    {% for activity in ongoing_activities %}
-      1,  // Each activity is counted as 1 to retain original data count
-    {% endfor %}
-  ];
-
-  // Links for Each Individual Data Point
-  const ongoingActivitiesLinks = [
-    {% for activity in ongoing_activities_links %}
-      '{{ activity.link }}',
-    {% endfor %}
-  ];
-
-  // Create the chart, keeping labels consolidated for display but linking data points individually
-  createPieChart('ongoingActivitiesChart', ongoingActivitiesLabels, ongoingActivitiesData, ongoingActivitiesLinks, 'noDataOngoing'); {% endcomment %}
-
-
-    // Upcoming Activities
-    const upcomingActivitiesLabels = [{% for activity in upcoming_activities %}'{{ activity.activity_name }}',{% endfor %}];
-    const upcomingActivitiesData = [{% for activity in upcoming_activities %}1,{% endfor %}];
-    const upcomingActivitiesLinks = [{% for activity in upcoming_activities %}'#',{% endfor %}];
-    createPieChart('upcomingActivitiesChart', upcomingActivitiesLabels, upcomingActivitiesData, upcomingActivitiesLinks, 'noDataUpcoming');
-
-    // Activities to be Graded
-    const gradingNeededLabels = [{% for activity, count in activities_with_grading_needed %}'{{ activity.activity_name }}',{% endfor %}];
-    const gradingNeededData = [{% for activity, count in activities_with_grading_needed %}{{ count }},{% endfor %}];
-    const gradingNeededLinks = [{% for activity, count in activities_with_grading_needed %}'{% url "grade_essays" activity.id %}?semester={{ selected_semester_id }}',{% endfor %}];
-    createPieChart('activitiesToBeGradedChart', gradingNeededLabels, gradingNeededData, gradingNeededLinks, 'noDataGradingNeeded');
-
-
-    document.addEventListener('DOMContentLoaded', function() {
-      const subjectId = {{ subject.id }};
-    
-        // Fetch the computed styles of the root element (where CSS variables are defined)
-  const rootStyles = getComputedStyle(document.documentElement);
-
-  // Get the CSS variable values
-  const primaryColor = rootStyles.getPropertyValue('--primary').trim();  // Primary color for completed
-  const dangerColor = rootStyles.getPropertyValue('--danger').trim();    // Danger color for missed
-
-  fetch("{% url 'termActivitiesGraph' 0 %}".replace('0', subjectId))
-    .then(response => response.json())
-    .then(data => {
-      const terms = Object.keys(data.terms);  // Get all term names (e.g., ['Prelim', 'Midterm', 'Finals'])
-      const termIds = terms.map(term => data.terms[term].id);
-      const activityTypeSelect = document.getElementById('activityTypeSelect');
-
-      // Get all activity types and add "All" option
-      let activityTypes = [...new Set(terms.flatMap(term => Object.keys(data.terms[term].activity_types || {})))];
-      const allOption = document.createElement('option');
-      allOption.value = 'All';
-      allOption.textContent = 'All Activities';
-      activityTypeSelect.appendChild(allOption);
-
-      // Populate dropdown with individual activity types
-      activityTypes.forEach(activityType => {
-        const option = document.createElement('option');
-        option.value = activityType;
-        option.textContent = activityType;
-        activityTypeSelect.appendChild(option);
-      });
-
-      // Initial chart display for "All" activities
-      updateChartForActivityType('All');
-
-      // Event listener to update chart when a new activity type is selected
-      activityTypeSelect.addEventListener('change', function() {
-        const selectedActivityType = this.value;
-        updateChartForActivityType(selectedActivityType);
-      });
-
-      function updateChartForActivityType(activityType) {
-        let datasets = [];
-      
-        // Fetch the computed styles (CSS variables) from the root element
-        const rootStyles = getComputedStyle(document.documentElement);
-        const colors = [
-          rootStyles.getPropertyValue('--primary').trim(),
-          rootStyles.getPropertyValue('--success').trim(),
-          rootStyles.getPropertyValue('--info').trim(),
-          rootStyles.getPropertyValue('--warning').trim(),
-          rootStyles.getPropertyValue('--danger').trim(),
-          rootStyles.getPropertyValue('--secondary').trim()
+        {% comment %} // Ongoing Activities Labels (Grouped by Type)
+        const ongoingActivitiesLabels = [
+          {% for group in ongoing_activities_grouped %}
+            '{{ group.activity_type__name }}: {{ group.count }}',
+          {% endfor %}
         ];
-      
-        let colorIndex = 0;
-      
-        if (activityType === 'All') {
-          activityTypes.forEach((type) => {
-            const completedData = terms.map(term => data.terms[term].activity_types[type]?.completed || 0);
-            const missedData = terms.map(term => -Math.abs(data.terms[term].activity_types[type]?.missed || 0));
-      
-            // Assign a different color for each activity type
-            const completedColor = colors[colorIndex % colors.length];
-            const missedColor = colors[(colorIndex + 1) % colors.length];
-            colorIndex += 2;
-      
-            datasets.push({
-              label: `${type} - Completed`,
-              data: completedData,
-              backgroundColor: completedColor,
-              borderColor: completedColor,
-              borderWidth: 2,
-              fill: true,
-              pointBackgroundColor: completedColor,
-              pointRadius: 5,
-              pointHoverRadius: 7
-            });
-      
-            datasets.push({
-              label: `${type} - Missed`,
-              data: missedData,
-              backgroundColor: missedColor,
-              borderColor: missedColor,
-              borderWidth: 2,
-              fill: true,
-              pointBackgroundColor: missedColor,
-              pointRadius: 5,
-              pointHoverRadius: 7
-            });
-          });
-        } else {
-          const completedData = terms.map(term => data.terms[term].activity_types[activityType]?.completed || 0);
-          const missedData = terms.map(term => -Math.abs(data.terms[term].activity_types[activityType]?.missed || 0));
-      
-          // Completed dataset with primary color
-          datasets.push({
-            label: `${activityType} - Completed`,
-            data: completedData,
-            backgroundColor: colors[0], // Primary color for completed
-            borderColor: colors[0],
-            borderWidth: 2,
-            fill: true,
-            pointBackgroundColor: colors[0],
-            pointRadius: 5,
-            pointHoverRadius: 7
-          });
-      
-          // Missed dataset with danger color
-          datasets.push({
-            label: `${activityType} - Missed`,
-            data: missedData,
-            backgroundColor: colors[1], // Danger color for missed
-            borderColor: colors[1],
-            borderWidth: 2,
-            fill: true,
-            pointBackgroundColor: colors[1],
-            pointRadius: 5,
-            pointHoverRadius: 7
-          });
-        }
-      
-        createStackedLineChart('finishedActivitiesChart', terms, termIds, datasets);
-      }
-      
 
-    function createStackedLineChart(chartId, labels, termIds, datasets) {
-      const ctx = document.getElementById(chartId).getContext('2d');
-      
-      if (window.chartInstance) {
-        window.chartInstance.destroy();  // Destroy previous chart instance before creating a new one
-      }
+        // Individual Data Points for the Chart
+        const ongoingActivitiesData = [
+          {% for activity in ongoing_activities %}
+            1,  // Each activity is counted as 1 to retain original data count
+          {% endfor %}
+        ];
 
-      window.chartInstance = new Chart(ctx, {
-        type: 'line',  // Stacked line chart
-        data: {
-          labels: labels,  // Term names as labels (Prelim, Midterm, Finals)
-          datasets: datasets
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            y: {
-              beginAtZero: true,
-              stacked: true,
-              title: {
-                display: true,
-                text: 'Number of Students'
-              },
-              ticks: {
-                callback: function(value, index, values) {
-                  // Ensure Y-axis only shows positive values even for negative data
-                  return Math.abs(value);
-                }
-              }
-            },
-            x: {
-              title: {
-                display: true,
-              }
-            }
-          },
-          plugins: {
-            legend: {
-              display: true
-            },
-            title: {
-              display: true,
-              text: 'Students Completed vs Missed per Term'
-            },
-            tooltip: {
-              callbacks: {
-                label: function(tooltipItem) {
-                  // Ensure tooltips show positive values for missed data
-                  return `${tooltipItem.dataset.label}: ${Math.abs(tooltipItem.raw)}`;
-                }
-              }
-            }
-          },
-          onClick: function(evt) {
-            const points = window.chartInstance.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, false);
+        // Links for Each Individual Data Point
+        const ongoingActivitiesLinks = [
+          {% for activity in ongoing_activities_links %}
+            '{{ activity.link }}',
+          {% endfor %}
+        ];
 
-            if (points.length > 0) {
-              const firstPoint = points[0];
-              const index = firstPoint.index;
-              const datasetIndex = firstPoint.datasetIndex;
+        // Create the chart, keeping labels consolidated for display but linking data points individually
+        createPieChart('ongoingActivitiesChart', ongoingActivitiesLabels, ongoingActivitiesData, ongoingActivitiesLinks, 'noDataOngoing'); {% endcomment %}
 
-              const termId = termIds[index];  // Use the index to fetch the correct term ID
-              const activityType = datasetIndex % 2 === 0 ? 'completed' : 'missed';  // Even index means completed, odd means missed
-              const activityName = datasets[datasetIndex].label.split(' - ')[0];  // Get the activity type name from the dataset label
 
-              // Redirect to the activities page for the selected term and activity type
-              if (termId) {
-                window.location.href = `/displayActivitiesForTermCM/${termId}/${activityType}/${subjectId}/${activityName}/`;
-              } else {
-                console.error('Term ID is undefined for index:', index);
-              }
-            }
-          }
-        }
-      });
-    }
+        // Upcoming Activities
+        const upcomingActivitiesLabels = [{% for activity in upcoming_activities %}'{{ activity.activity_name }}',{% endfor %}];
+        const upcomingActivitiesData = [{% for activity in upcoming_activities %}1,{% endfor %}];
+        const upcomingActivitiesLinks = [{% for activity in upcoming_activities %}'#',{% endfor %}];
+        createPieChart('upcomingActivitiesChart', upcomingActivitiesLabels, upcomingActivitiesData, upcomingActivitiesLinks, 'noDataUpcoming');
 
-  })
-  .catch(error => console.error('Error fetching term activities:', error));
+        // Activities to be Graded
+        const gradingNeededLabels = [{% for activity, count in activities_with_grading_needed %}'{{ activity.activity_name }}',{% endfor %}];
+        const gradingNeededData = [{% for activity, count in activities_with_grading_needed %}{{ count }},{% endfor %}];
+        const gradingNeededLinks = [{% for activity, count in activities_with_grading_needed %}'{% url "grade_essays" activity.id %}?semester={{ selected_semester_id }}',{% endfor %}];
+        createPieChart('activitiesToBeGradedChart', gradingNeededLabels, gradingNeededData, gradingNeededLinks, 'noDataGradingNeeded');
 
-    });
 
-  </script>
+        document.addEventListener('DOMContentLoaded', function() {
+          const subjectId = {{ subject.id }};
+        
+            // Fetch the computed styles of the root element (where CSS variables are defined)
+      const rootStyles = getComputedStyle(document.documentElement);
 
-    <!-- SortableJS for drag-and-drop functionality (Frontend Only) -->
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+      // Get the CSS variable values
+      const primaryColor = rootStyles.getPropertyValue('--primary').trim();  // Primary color for completed
+      const dangerColor = rootStyles.getPropertyValue('--danger').trim();    // Danger color for missed
 
-    <script>
-    // Remove the function that displays the Add Lesson button
-    let lessonEditMode = false;
-    let sortable = null;
-
-    document.getElementById('editButton').addEventListener('click', function () {
-      if (!lessonEditMode) {
-        // Enable lesson editing mode
-        lessonEditMode = true;
-        this.textContent = 'Save'; // Change button text to "Save"
-
-        // Initialize SortableJS for the lesson list
-        sortable = new Sortable(document.getElementById('lesson-list'), {
-          animation: 150,
-          onEnd: function (evt) {
-            var order = [];
-            document.querySelectorAll('#lesson-list li').forEach(function (item) {
-              order.push(item.getAttribute('data-id'));
-            });
-          }
-        });
-      } else {
-        // Disable lesson editing mode
-        lessonEditMode = false;
-        this.textContent = 'Edit'; // Change button text back to "Edit"
-
-        // Disable sorting by destroying the SortableJS instance
-        if (sortable) {
-          sortable.destroy();
-        }
-
-        // Collect the new order and send it to the server via AJAX
-        var order = [];
-        document.querySelectorAll('#lesson-list li').forEach(function (item) {
-          var moduleId = item.getAttribute('data-id');
-          if (moduleId) {  // Ensure only valid module IDs are added
-            order.push(moduleId);
-          }
-        });
-
-        // Send the updated order to the backend
-        fetch("{% url 'update_module_order' %}", {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token }}'
-          },
-          body: JSON.stringify({ order: order })
-        })
+      fetch("{% url 'termActivitiesGraph' 0 %}".replace('0', subjectId))
         .then(response => response.json())
         .then(data => {
-          if (data.status === 'success') {
-            // Successfully saved the new order
-          } else {
-            console.error('Error saving order:', data.message);
+          const terms = Object.keys(data.terms);  // Get all term names (e.g., ['Prelim', 'Midterm', 'Finals'])
+          const termIds = terms.map(term => data.terms[term].id);
+          const activityTypeSelect = document.getElementById('activityTypeSelect');
+
+          // Get all activity types and add "All" option
+          let activityTypes = [...new Set(terms.flatMap(term => Object.keys(data.terms[term].activity_types || {})))];
+          const allOption = document.createElement('option');
+          allOption.value = 'All';
+          allOption.textContent = 'All Activities';
+          activityTypeSelect.appendChild(allOption);
+
+          // Populate dropdown with individual activity types
+          activityTypes.forEach(activityType => {
+            const option = document.createElement('option');
+            option.value = activityType;
+            option.textContent = activityType;
+            activityTypeSelect.appendChild(option);
+          });
+
+          // Initial chart display for "All" activities
+          updateChartForActivityType('All');
+
+          // Event listener to update chart when a new activity type is selected
+          activityTypeSelect.addEventListener('change', function() {
+            const selectedActivityType = this.value;
+            updateChartForActivityType(selectedActivityType);
+          });
+
+          function updateChartForActivityType(activityType) {
+            let datasets = [];
+          
+            // Fetch the computed styles (CSS variables) from the root element
+            const rootStyles = getComputedStyle(document.documentElement);
+            const colors = [
+              rootStyles.getPropertyValue('--primary').trim(),
+              rootStyles.getPropertyValue('--success').trim(),
+              rootStyles.getPropertyValue('--info').trim(),
+              rootStyles.getPropertyValue('--warning').trim(),
+              rootStyles.getPropertyValue('--danger').trim(),
+              rootStyles.getPropertyValue('--secondary').trim()
+            ];
+          
+            let colorIndex = 0;
+          
+            if (activityType === 'All') {
+              activityTypes.forEach((type) => {
+                const completedData = terms.map(term => data.terms[term].activity_types[type]?.completed || 0);
+                const missedData = terms.map(term => -Math.abs(data.terms[term].activity_types[type]?.missed || 0));
+          
+                // Assign a different color for each activity type
+                const completedColor = colors[colorIndex % colors.length];
+                const missedColor = colors[(colorIndex + 1) % colors.length];
+                colorIndex += 2;
+          
+                datasets.push({
+                  label: `${type} - Completed`,
+                  data: completedData,
+                  backgroundColor: completedColor,
+                  borderColor: completedColor,
+                  borderWidth: 2,
+                  fill: true,
+                  pointBackgroundColor: completedColor,
+                  pointRadius: 5,
+                  pointHoverRadius: 7
+                });
+          
+                datasets.push({
+                  label: `${type} - Missed`,
+                  data: missedData,
+                  backgroundColor: missedColor,
+                  borderColor: missedColor,
+                  borderWidth: 2,
+                  fill: true,
+                  pointBackgroundColor: missedColor,
+                  pointRadius: 5,
+                  pointHoverRadius: 7
+                });
+              });
+            } else {
+              const completedData = terms.map(term => data.terms[term].activity_types[activityType]?.completed || 0);
+              const missedData = terms.map(term => -Math.abs(data.terms[term].activity_types[activityType]?.missed || 0));
+          
+              // Completed dataset with primary color
+              datasets.push({
+                label: `${activityType} - Completed`,
+                data: completedData,
+                backgroundColor: colors[0], // Primary color for completed
+                borderColor: colors[0],
+                borderWidth: 2,
+                fill: true,
+                pointBackgroundColor: colors[0],
+                pointRadius: 5,
+                pointHoverRadius: 7
+              });
+          
+              // Missed dataset with danger color
+              datasets.push({
+                label: `${activityType} - Missed`,
+                data: missedData,
+                backgroundColor: colors[1], // Danger color for missed
+                borderColor: colors[1],
+                borderWidth: 2,
+                fill: true,
+                pointBackgroundColor: colors[1],
+                pointRadius: 5,
+                pointHoverRadius: 7
+              });
+            }
+          
+            createStackedLineChart('finishedActivitiesChart', terms, termIds, datasets);
           }
-        })
-        .catch(error => {
-          console.error('An error occurred while saving the order:', error);
+          
+
+        function createStackedLineChart(chartId, labels, termIds, datasets) {
+          const ctx = document.getElementById(chartId).getContext('2d');
+          
+          if (window.chartInstance) {
+            window.chartInstance.destroy();  // Destroy previous chart instance before creating a new one
+          }
+
+          window.chartInstance = new Chart(ctx, {
+            type: 'line',  // Stacked line chart
+            data: {
+              labels: labels,  // Term names as labels (Prelim, Midterm, Finals)
+              datasets: datasets
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  stacked: true,
+                  title: {
+                    display: true,
+                    text: 'Number of Students'
+                  },
+                  ticks: {
+                    callback: function(value, index, values) {
+                      // Ensure Y-axis only shows positive values even for negative data
+                      return Math.abs(value);
+                    }
+                  }
+                },
+                x: {
+                  title: {
+                    display: true,
+                  }
+                }
+              },
+              plugins: {
+                legend: {
+                  display: true
+                },
+                title: {
+                  display: true,
+                  text: 'Students Completed vs Missed per Term'
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function(tooltipItem) {
+                      // Ensure tooltips show positive values for missed data
+                      return `${tooltipItem.dataset.label}: ${Math.abs(tooltipItem.raw)}`;
+                    }
+                  }
+                }
+              },
+              onClick: function(evt) {
+                const points = window.chartInstance.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, false);
+
+                if (points.length > 0) {
+                  const firstPoint = points[0];
+                  const index = firstPoint.index;
+                  const datasetIndex = firstPoint.datasetIndex;
+
+                  const termId = termIds[index];  // Use the index to fetch the correct term ID
+                  const activityType = datasetIndex % 2 === 0 ? 'completed' : 'missed';  // Even index means completed, odd means missed
+                  const activityName = datasets[datasetIndex].label.split(' - ')[0];  // Get the activity type name from the dataset label
+
+                  // Redirect to the activities page for the selected term and activity type
+                  if (termId) {
+                    window.location.href = `/displayActivitiesForTermCM/${termId}/${activityType}/${subjectId}/${activityName}/`;
+                  } else {
+                    console.error('Term ID is undefined for index:', index);
+                  }
+                }
+              }
+            }
+          });
+        }
+
+      })
+      .catch(error => console.error('Error fetching term activities:', error));
+
         });
-      }
-    });
-  </script>
+    </script>
 
     <script>
-    $(document).ready(function () {
-        // Event delegation to handle dynamically loaded content inside the modal
-        $(document).on('click', '.selectAll', function () {
-            const statusId = $(this).data('status'); // Get the status ID from data attribute
+      let lessonEditMode = false;
+      let sortable = null;
 
-            // Find and check all radio buttons with the class for this status
-            $(`.status-${statusId}`).prop('checked', true);
-        });
-    });
-  </script>
+      document.getElementById('editButton').addEventListener('click', function () {
+        if (!lessonEditMode) {
+          // Enable lesson editing mode
+          lessonEditMode = true;
+          this.textContent = 'Save'; // Change button text to "Save"
 
-    {% comment %}classroom_mode code{% endcomment %}
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="{% static 'js/classroom-mode.js' %}"></script>
-    <script src="{% static 'js/classroom-mode-full-screen.js' %}"></script>
-    <script src="{% static 'js/file-validation.js' %}"></script>
-    <script src="{% static 'js/modal.js' %}"></script>
-    <!-- Bootstrap Select -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script>
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+          // Initialize SortableJS for the lesson list
+          sortable = new Sortable(document.getElementById('lesson-list'), {
+            animation: 150,
+            onEnd: function (evt) {
+              var order = [];
+              document.querySelectorAll('#lesson-list li').forEach(function (item) {
+                order.push(item.getAttribute('data-id'));
+              });
+            }
+          });
+        } else {
+          // Disable lesson editing mode
+          lessonEditMode = false;
+          this.textContent = 'Edit'; // Change button text back to "Edit"
+
+          // Disable sorting by destroying the SortableJS instance
+          if (sortable) {
+            sortable.destroy();
+          }
+
+          // Collect the new order and send it to the server via AJAX
+          var order = [];
+          document.querySelectorAll('#lesson-list li').forEach(function (item) {
+            var moduleId = item.getAttribute('data-id');
+            if (moduleId) {  // Ensure only valid module IDs are added
+              order.push(moduleId);
+            }
+          });
+
+          // Send the updated order to the backend
+          fetch("{% url 'update_module_order' %}", {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ order: order })
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.status === 'success') {
+              // Successfully saved the new order
+            } else {
+              console.error('Error saving order:', data.message);
+            }
+          })
+          .catch(error => {
+            console.error('An error occurred while saving the order:', error);
+          });
+        }
+      });
+    </script>
+
+    <script>
+      $(document).ready(function () {
+          // Event delegation to handle dynamically loaded content inside the modal
+          $(document).on('click', '.selectAll', function () {
+              const statusId = $(this).data('status'); // Get the status ID from data attribute
+
+              // Find and check all radio buttons with the class for this status
+              $(`.status-${statusId}`).prop('checked', true);
+          });
+      });
+    </script>
 
     <script>
       function displayToast(message, icon) {
@@ -788,345 +932,79 @@
         {% endfor %}
       {% endif %}
     </script>
+    <script>
+      // Disable past dates in the date input field
+      document.addEventListener('DOMContentLoaded', function () {
+        const dateInput = document.getElementById('attendanceDate');
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.setAttribute('min', today); // Set the minimum selectable date to today
+      });
+    </script>
 
-    <script src="{% static 'js/deactivate-classroom-mode.js' %}"></script>
-
-  <script src="{% static 'js/deactivate-classroom-mode.js' %}"></script> 
-  <script>
-    // Disable past dates in the date input field
-    document.addEventListener('DOMContentLoaded', function () {
-      const dateInput = document.getElementById('attendanceDate');
-      const today = new Date().toISOString().split('T')[0];
-      dateInput.setAttribute('min', today); // Set the minimum selectable date to today
-    });
-  </script>
   {% if is_teacher %}
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const modules = document.querySelectorAll('.lesson-item');
-  
-      modules.forEach(module => {
-          const activityList = module.querySelector(`#activity-list-${module.dataset.id}`);
-  
-          if (activityList) {
-              new Sortable(activityList, {
-                  animation: 150,
-                  onEnd: function (evt) {
-                      // Collect new order
-                      const orderedItems = Array.from(activityList.children).map((item, index) => ({
-                          id: item.dataset.id,
-                          order: index + 1
-                      }));
-  
-                      // Send new order to the server
-                      fetch("{% url 'update_activity_order' %}", {
-                          method: 'POST',
-                          headers: {
-                              'Content-Type': 'application/json',
-                              'X-CSRFToken': '{{ csrf_token }}'
-                          },
-                          body: JSON.stringify({ order: orderedItems })
-                      })
-                      .then(response => response.json())
-                      .then(data => {
-                          if (data.status === 'success') {
-                              console.log('Activity order updated successfully!');
-                          } else {
-                              alert('Failed to update activity order.');
-                          }
-                      })
-                      .catch(error => {
-                          console.error('Error:', error);
-                      });
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+          const days = [
+              "sunday", "monday", "tuesday", "wednesday",
+              "thursday", "friday", "saturday"
+          ];
+      
+          // Initialize SortableJS for each day's column
+          days.forEach((day) => {
+              const column = document.querySelector(`.lesson-column:nth-child(${days.indexOf(day) + 1})`);
+              if (column) {
+                  new Sortable(column, {
+                      animation: 150,
+                      ghostClass: "sortable-ghost",
+                      onEnd: function (evt) {
+                          console.log(`Moved lesson from index ${evt.oldIndex} to ${evt.newIndex}`);
+                      }
+                  });
+              }
+          });
+      
+          // Add click event for lesson cards to redirect to viewModuleCM
+          document.querySelectorAll(".lesson-card").forEach((card) => {
+              card.addEventListener("click", function () {
+                  const moduleId = this.dataset.moduleId; // Get module ID from dataset
+                  if (moduleId) {
+                      window.location.href = `/viewModuleCM/${moduleId}/`; // Redirect to viewModuleCM
                   }
               });
-          }
+          });
+      
+          // Set weekly dates dynamically
+          const today = new Date();
+          const firstDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
+      
+          days.forEach((day, index) => {
+              let currentDate = new Date(firstDayOfWeek);
+              currentDate.setDate(firstDayOfWeek.getDate() + index);
+              let formattedDate = currentDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      
+              document.getElementById(`${day}-date`).innerText = `(${formattedDate})`;
+          });
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+          const today = new Date();
+          const firstDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay())); // Start from Sunday
+      
+          const days = [
+              "sunday", "monday", "tuesday", "wednesday",
+              "thursday", "friday", "saturday"
+          ];
+      
+          days.forEach((day, index) => {
+              let currentDate = new Date(firstDayOfWeek);
+              currentDate.setDate(firstDayOfWeek.getDate() + index); // Get the date for each day
+              let formattedDate = currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      
+              document.getElementById(`${day}-date`).innerText = `(${formattedDate})`;
+          });
       });
-  });
-  
-  </script>
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-
-      const isTeacher = {{ is_teacher|yesno:"true,false" }};
-
-      // Access the semester_months passed from the view directly
-      const semesterMonths = {{ semester_months|safe }};
-      console.log('Semester Months:', semesterMonths);
-      
-      const monthDropdown = document.getElementById("monthDropdown");
-      const monthSelectorButton = document.getElementById("monthSelector");
-      
-      if (monthDropdown) {
-          // Create a dropdown option for each month in the semester
-          semesterMonths.forEach(month => {
-              const monthOption = document.createElement("a");
-              monthOption.classList.add("dropdown-item", "month-option");
-              monthOption.setAttribute("data-month", month);
-              monthOption.textContent = month;
-              monthDropdown.appendChild(monthOption);
-          });
-  
-          // Set the current month as the default option
-          const currentMonth = new Date().toLocaleString('default', { month: 'long' });
-          const currentMonthOption = document.querySelector(`.month-option[data-month="${currentMonth}"]`);
-          
-          if (currentMonthOption) {
-              currentMonthOption.classList.add('active');
-              monthSelectorButton.textContent = `Select Month: ${currentMonth}`;
-              fetchScheduleData(currentMonth);  // Fetch data for the current month
-          }
-      
-          // Event listener for month selection
-          document.querySelectorAll('.month-option').forEach(option => {
-              option.addEventListener('click', function () {
-                  const selectedMonth = this.getAttribute('data-month');
-                  // Fetch data based on the selected month
-                  monthSelectorButton.textContent = `Month: ${selectedMonth}`;
-                  fetchScheduleData(selectedMonth);
-              });
-          });
-      }
-
-      // Function to fetch schedule data based on selected month
-      function fetchScheduleData(selectedMonth) {
-        const subjectId = "{{ subject.id }}"; // Ensure this correctly renders an ID
-        const apiUrl = `/api/schedules/${subjectId}/?month=${selectedMonth}&t=${new Date().getTime()}`; // Cache busting
-        const lessonList = document.getElementById("lesson-list");
-      
-        fetch(apiUrl)
-            .then(response => response.json())
-            .then(scheduleData => {
-                console.log("Fetched Schedule Data:", scheduleData); // Debugging
-      
-                lessonList.innerHTML = ''; // Clear current lessons
-                if (!scheduleData.schedule_data || scheduleData.schedule_data.length === 0) {
-                    lessonList.innerHTML = '<p class="text-center mt-3">No schedule available for this subject in the selected month.</p>';
-                    return;
-                }
-      
-                // Render lessons organized by weeks
-                scheduleData.schedule_data.forEach((week, index) => {
-                    if (week.dates.length === 0) return;
-                    const weekId = `week${index + 1}Lessons`;
-      
-                    const weekItem = document.createElement("li");
-                    weekItem.classList.add("list-group-item", "week-header");
-      
-                    const weekHeader = document.createElement("a");
-                    weekHeader.classList.add("lesson-toggle", "d-flex", "justify-content-between", "align-items-center", "text-dark");
-                    weekHeader.setAttribute("data-toggle", "collapse");
-                    weekHeader.setAttribute("href", `#${weekId}`);
-                    weekHeader.setAttribute("role", "button");
-                    weekHeader.setAttribute("aria-expanded", "false");
-                    weekHeader.setAttribute("aria-controls", weekId);
-                    weekHeader.innerHTML = `
-                        <span class="d-flex align-items-center">
-                            <i class="fas fa-calendar-week text-primary mr-2"></i>
-                            ${week.week}
-                            <small class="ml-2 text-muted expand-label">(Click to expand date)</small>
-                        </span>
-                        <i class="fas fa-chevron-down"></i>
-                    `;
-      
-                    const weekContent = document.createElement("div");
-                    weekContent.classList.add("collapse");
-                    weekContent.id = weekId;
-      
-                    const weekList = document.createElement("ul");
-                    weekList.classList.add("list-group", "mt-3");
-      
-                    week.dates.forEach((dateInfo, dayIndex) => {
-                        const dayId = `day${index + 1}_${dayIndex + 1}Lessons`;
-      
-                        const dayItem = document.createElement("li");
-                        dayItem.classList.add("list-group-item", "day-header");
-      
-                        const dayHeader = document.createElement("a");
-                        dayHeader.classList.add("lesson-toggle", "d-flex", "justify-content-between", "align-items-center", "text-dark");
-                        dayHeader.setAttribute("data-toggle", "collapse");
-                        dayHeader.setAttribute("href", `#${dayId}`);
-                        dayHeader.setAttribute("role", "button");
-                        dayHeader.setAttribute("aria-expanded", "false");
-                        dayHeader.setAttribute("aria-controls", dayId);
-                        dayHeader.innerHTML = `
-                            <span class="d-flex align-items-center">
-                                <i class="fas fa-calendar-day text-dark mr-2"></i> 
-                                ${dateInfo.date} - ${formatTime(dateInfo.time)}
-                                <small class="ml-2 text-muted expand-label">(Click to expand day)</small>
-                            </span>
-                            <i class="fas fa-chevron-down"></i>
-                        `;
-      
-                        const dayContent = document.createElement("div");
-                        dayContent.classList.add("collapse");
-                        dayContent.id = dayId;
-      
-                        const lessonList = document.createElement("ul");
-                        lessonList.classList.add("list-group", "mt-2");
-      
-                        dateInfo.lessons.forEach((lesson, lessonIndex) => {
-                            const lessonId = `lesson${index + 1}_${dayIndex + 1}_${lessonIndex + 1}`;
-      
-                            let iconClass = "far fa-file-alt text-secondary"; // Default icon
-                              if (lesson.file_extension) {
-                                  const ext = lesson.file_extension.toLowerCase();
-                                  if (ext === ".pdf") iconClass = "far fa-file-pdf text-danger"; // PDF
-                                  else if (ext === ".mp4") iconClass = "far fa-file-video text-primary"; // MP4 (Video)
-                                  else if (ext === ".jpg" || ext === ".png" || ext === ".jpeg") iconClass = "far fa-file-image text-success"; // Images
-                                  else if (ext === ".doc" || ext === ".docx") iconClass = "far fa-file-word text-primary"; // Word Docs
-                                  else if (ext === ".xls" || ext === ".xlsx") iconClass = "far fa-file-excel text-success"; // Excel
-                                  else if (ext === ".ppt" || ext === ".pptx") iconClass = "far fa-file-powerpoint text-warning"; // PowerPoint
-                                  else if (ext === ".zip" || ext === ".rar") iconClass = "far fa-file-archive text-secondary"; // Zip
-                                  else if (ext === ".txt") iconClass = "far fa-file-alt text-dark"; // Text File
-                              }
-      
-                            const lessonItem = document.createElement("li");
-                            lessonItem.classList.add("list-group-item", "lesson-content");
-      
-                            const lessonHeader = document.createElement("a");
-                            lessonHeader.classList.add("lesson-toggle", "d-flex", "justify-content-between", "align-items-center", "text-dark");
-                            lessonHeader.setAttribute("data-toggle", "collapse");
-                            lessonHeader.setAttribute("href", `#${lessonId}`);
-                            lessonHeader.setAttribute("role", "button");
-                            lessonHeader.setAttribute("aria-expanded", "false");
-                            lessonHeader.setAttribute("aria-controls", lessonId);
-                            lessonHeader.innerHTML = `
-                                <span class="d-flex align-items-center">
-                                    <i class="${iconClass} mr-2"></i> 
-                                    ${lesson.lesson}
-                                    <small class="ml-2 text-muted expand-label">(Click to expand lesson)</small>
-                                </span>
-                                <i class="fas fa-chevron-down"></i>
-                            `;
-      
-                            const lessonContent = document.createElement("div");
-                            lessonContent.classList.add("collapse");
-                            lessonContent.id = lessonId;
-      
-                            const lessonDetails = document.createElement("div");
-                            lessonDetails.classList.add("p-3", "bg-light");
-                            lessonDetails.innerHTML = `
-                                <p class="mb-1"><strong>Description:</strong> ${lesson.description || "No description available"}</p>
-                            `;
-      
-                            const viewLessonButton = document.createElement("a");
-                            viewLessonButton.classList.add("btn", "btn-primary", "mt-2", "mr-2");
-                            viewLessonButton.href = `/viewModule/${lesson.module_id}/`;
-                            viewLessonButton.textContent = "View";
-      
-                            lessonDetails.appendChild(viewLessonButton);
-      
-                            if (isTeacher) {
-                                const updateLessonButton = document.createElement("a");
-                                updateLessonButton.classList.add("btn", "btn-warning", "mt-2", "mr-2");
-                                updateLessonButton.href = `/updateModule/${lesson.module_id}/`;
-                                updateLessonButton.textContent = "Update";
-      
-                                lessonDetails.appendChild(updateLessonButton);
-      
-                                const deleteLessonButton = document.createElement("a");
-                                deleteLessonButton.classList.add("btn", "btn-danger", "mt-2", "mr-2");
-                                deleteLessonButton.href = `/deleteModule/${lesson.module_id}/`;
-                                deleteLessonButton.textContent = "Delete";
-      
-                                lessonDetails.appendChild(deleteLessonButton);
-                            }
-      
-                            // **Check if activities exist before rendering**
-                            if (lesson.activities && lesson.activities.length > 0) {
-                              let activityListHTML = `<ul class="list-group mt-2">`;
-                              lesson.activities.forEach(activity => {
-                                  let activityIcon = "fas fa-tasks text-secondary"; // Default icon
-      
-                                  switch (activity.activity_type.toLowerCase()) {
-                                      case "assignment":
-                                          activityIcon = "fas fa-file-alt text-primary";
-                                          break;
-                                      case "attendance":
-                                          activityIcon = "fas fa-user-check text-success";
-                                          break;
-                                      case "participation":
-                                          activityIcon = "fas fa-users text-danger";
-                                          break;
-                                      case "lesson":
-                                          activityIcon = "fas fa-book-open text-dark";
-                                          break;
-                                      case "video conference":
-                                          activityIcon = "fas fa-video text-info";
-                                          break;
-                                      case "quiz":
-                                          activityIcon = "fas fa-pencil-alt text-warning";
-                                          break;
-                                      case "exam":
-                                          activityIcon = "fas fa-file-signature text-purple";
-                                          break;
-                                      case "special activity":
-                                          activityIcon = "fas fa-star text-secondary";
-                                          break;
-                                      case "url":
-                                          activityIcon = "fas fa-link text-purple";
-                                          break;
-                                  }
-      
-                                  activityListHTML += `
-                                      <li class="list-group-item">
-                                          <a href="/activity_detail/${activity.activity_id}/" class="text-dark">
-                                              <i class="${activityIcon} mr-2"></i>
-                                              <strong>${activity.activity_name}</strong> (${activity.activity_type})
-                                              Time: ${activity.start_time || "TBD"} - ${activity.end_time || "TBD"} <br>
-                                          </a>
-                                      </li>
-                                  `;
-                              });
-                              activityListHTML += `</ul>`;
-                              lessonDetails.innerHTML += `<p class="mb-2 mt-2"><strong>Activities:</strong></p>` + activityListHTML;
-                          }
-      
-                            lessonContent.appendChild(lessonDetails);
-                            lessonItem.appendChild(lessonHeader);
-                            lessonItem.appendChild(lessonContent);
-                            lessonList.appendChild(lessonItem);
-                        });
-      
-                        dayContent.appendChild(lessonList);
-                        dayItem.appendChild(dayHeader);
-                        dayItem.appendChild(dayContent);
-                        weekList.appendChild(dayItem);
-                    });
-      
-                    weekContent.appendChild(weekList);
-                    weekItem.appendChild(weekHeader);
-                    weekItem.appendChild(weekContent);
-                    lessonList.appendChild(weekItem);
-                });
-            })
-            .catch(error => {
-                console.error("Error fetching schedule data:", error);
-                lessonList.innerHTML = '<p class="text-center mt-3 text-danger">Error loading schedule data. Please try again later.</p>';
-            });
-      }
-
-    function formatTime(timeRange) {
-        if (!timeRange) return "N/A";  // Handle missing time cases
-        const timeParts = timeRange.split(" to ");
-        return `${convertTo12Hour(timeParts[0])} to ${convertTo12Hour(timeParts[1])}`;
-    }
-
-    function convertTo12Hour(timeString) {
-        const [hours, minutes] = timeString.split(":");
-        let period = "AM";
-        let hour = parseInt(hours, 10);
-
-        if (hour >= 12) {
-            period = "PM";
-            if (hour > 12) hour -= 12;
-        }
-        return `${hour}:${minutes} ${period}`;
-    }
-});
-</script>
-<script src="{% static 'js/file-validation.js' %}"></script>
+    </script>
   {% endif %}
   </body>
 </html>

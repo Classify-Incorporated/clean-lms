@@ -415,44 +415,52 @@
   });
   
   function displaySchedule(week) {
-      week.dates.forEach(day => {
-          let dayId = day.day.toLowerCase(); // Convert "Monday" -> "monday"
-          let formattedDate = new Date(day.date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  
-          // Insert the formatted date into the correct HTML span
-          let dateElement = document.getElementById(`${dayId}-date`);
-          if (dateElement) {
-              dateElement.innerText = `(${formattedDate})`;
-          }
-  
-          // Insert lessons for the day
-          let lessonList = document.getElementById(`${dayId}-lessons`);
-          if (lessonList) {
-              lessonList.innerHTML = ""; // Clear existing lessons
-  
-              if (day.lessons.length > 0) {
-                  day.lessons.forEach(lesson => {
-                      let lessonCard = document.createElement("div");
-                      lessonCard.classList.add("lesson-card");
-                      lessonCard.setAttribute("data-module-id", lesson.module_id);
+    week.dates.forEach(day => {
+        let dayId = day.day.toLowerCase(); // Convert "Monday" -> "monday"
+        let formattedDate = new Date(day.date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
-                      let icon = getModuleIcon(lesson.type); 
+        // Insert the formatted date into the correct HTML span
+        let dateElement = document.getElementById(`${dayId}-date`);
+        if (dateElement) {
+            dateElement.innerText = `(${formattedDate})`;
+        }
 
-                      lessonCard.innerHTML = `
-                          <div class="lesson-icon">${icon}</i></div>
-                          <div class="lesson-title">${lesson.lesson}</div>
-                          <div class="lesson-time">⏰ ${day.time || 'N/A'}</div>
-                      `;
-  
-                      // Append to lesson list
-                      lessonList.appendChild(lessonCard);
-                  });
-              } else {
-                  lessonList.innerHTML = `<p class="text-muted">No lessons</p>`;
-              }
-          }
-      });
-  }
+        // Insert lessons for the day
+        let lessonList = document.getElementById(`${dayId}-lessons`);
+        if (lessonList) {
+            lessonList.innerHTML = ""; // Clear existing lessons
+
+            if (day.lessons.length > 0) {
+                day.lessons.forEach(lesson => {
+                    let lessonCard = document.createElement("div");
+                    lessonCard.classList.add("lesson-card");
+                    lessonCard.setAttribute("data-module-id", lesson.module_id);
+                    lessonCard.style.cursor = "pointer"; // Indicate it's clickable
+
+                    let icon = getModuleIcon(lesson.type);
+
+                    lessonCard.innerHTML = `
+                        <div class="lesson-icon">${icon}</div>
+                        <div class="lesson-title">${lesson.lesson}</div>
+                        <div class="lesson-time">⏰ ${day.time || 'N/A'}</div>
+                    `;
+
+                    // Add click event for redirection
+                    lessonCard.addEventListener("click", function () {
+                        if (lesson.module_id) {
+                            window.location.href = `/viewSubjectModule/${lesson.module_id}/`; // Redirect to module page
+                        }
+                    });
+
+                    // Append to lesson list
+                    lessonList.appendChild(lessonCard);
+                });
+            } else {
+                lessonList.innerHTML = `<p class="text-muted">No lessons</p>`;
+            }
+        }
+    });
+}
   // Function to determine the appropriate icon based on module type
   function getModuleIcon(type) {
     if (!type) return '<i class="fas fa-file text-secondary"></i>'; // Default
@@ -470,7 +478,7 @@
         case "embed": return '<i class="fas fa-code text-teal"></i>';
         default: return '<i class="fas fa-file text-secondary"></i>';
     }
-}
+  }
 
     </script>
     

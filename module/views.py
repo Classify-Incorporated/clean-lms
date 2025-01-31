@@ -401,6 +401,23 @@ def viewModule(request, pk):
 
     return render(request, 'module/viewModule.html', context)
 
+#View Module
+@login_required
+@permission_required('module.view_module', raise_exception=True)
+def viewSubjectModule(request, pk):
+    module = get_object_or_404(Module, pk=pk)
+    subject = module.subject
+    subject = subject_id = module.subject.id
+    subject = get_object_or_404(Subject, id=subject_id)
+
+
+    context = {
+        'module': module,
+        'subject': subject,
+    }
+
+    return render(request, 'module/viewSubjectModule.html', context)
+
 # View Module
 @login_required
 @permission_required('module.view_module', raise_exception=True)

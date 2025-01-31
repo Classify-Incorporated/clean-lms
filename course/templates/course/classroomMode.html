@@ -16,168 +16,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css" />
     <!-- Include FullCalendar CSS and JS -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet" />
-    <style>
-      /* 📚 Divider Section */
-.lesson-divider-section {
-  margin-bottom: 20px;
-}
-
-.lesson-divider {
-  border: 2px solid #ccc;
-  width: 100%;
-  margin: 0 auto;
-}
-
-.lesson-title-header {
-  font-weight: bold;
-  color: #555;
-  margin-top: -15px;
-  background: #f8f9fa;
-  display: inline-block;
-  padding: 5px 15px;
-  border-radius: 10px;
-  border: 2px solid #ccc;
-}
-
-/* 📅 Weekly Lessons Container */
-.lesson-container {
-  display: flex;
-  flex-wrap: nowrap;  /* Ensure all days are in one row */
-  overflow-x: auto;   /* Enable scrolling if content overflows */
-  gap: 10px;
-  padding: 10px;
-  justify-content: center;
-}
-
-/* 🎨 Lesson Column with Pastel Colors */
-.lesson-column {
-  flex: 1;
-  min-width: 180px; /* Ensures uniform width */
-  text-align: center;
-  border-radius: 10px;
-  padding: 15px;
-  box-shadow: 2px 4px 6px rgba(0, 0, 0, 0.1);
-  border: 2px solid rgba(200, 200, 200, 0.3);
-}
-
-/* 🌈 Soft Pastel Background Colors */
-.lesson-column:nth-child(1) { background: #ffebee; } /* Light Red */
-.lesson-column:nth-child(2) { background: #f3e5f5; } /* Light Purple */
-.lesson-column:nth-child(3) { background: #e8f5e9; } /* Light Green */
-.lesson-column:nth-child(4) { background: #e3f2fd; } /* Light Blue */
-.lesson-column:nth-child(5) { background: #fff3e0; } /* Light Orange */
-.lesson-column:nth-child(6) { background: #fce4ec; } /* Light Pink */
-.lesson-column:nth-child(7) { background: #ede7f6; } /* Light Violet */
-
-/* 🏷 Lesson Day Header */
-.lesson-day {
-  font-weight: bold;
-  background: rgba(0, 0, 0, 0.1);
-  color: #333;
-  padding: 8px;
-  border-radius: 5px;
-  margin-bottom: 10px;
-}
-
-/* 📅 Lesson Date */
-.lesson-date {
-  font-size: 12px;
-  color: #666;
-  background: rgba(0, 0, 0, 0.1);
-  padding: 3px 6px;
-  border-radius: 4px;
-  margin-left: 5px;
-}
-
-/* 🚫 Prevent dragging the lesson headers */
-.lesson-day.no-drag {
-  cursor: default !important;
-  pointer-events: none;
-}
-
-/* 📝 Lesson List Container */
-.lesson-list {
-  min-height: 50px; /* Prevent collapse when empty */
-}
-
-/* 🎯 Lesson Card - Clickable & Draggable */
-.lesson-card {
-  cursor: grab;
-  user-select: none;
-  background: white;
-  padding: 15px;
-  border: 3px solid #ddd;
-  border-radius: 10px;
-  margin-bottom: 10px;
-  box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.15);
-  transition: background 0.3s, transform 0.2s, border-color 0.3s, box-shadow 0.3s;
-
-  /* 📏 Set Consistent Size */
-  width: 220px;  /* Fixed width for all lesson cards */
-  height: 160px; /* Fixed height for all lesson cards */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-/* 🔥 Hover Effect - More visibility */
-.lesson-card:hover {
-  background: #f8f9fa;
-  border-color: #007bff;
-  box-shadow: 4px 6px 12px rgba(0, 123, 255, 0.3);
-  transform: translateY(-2px);
-}
-
-/* ✋ Dragging Effect - Clearer Feedback */
-.lesson-card:active {
-  cursor: grabbing;
-  border-color: #28a745;
-  box-shadow: 0px 0px 15px rgba(40, 167, 69, 0.6);
-  transform: scale(1.05);
-}
-
-/* 🔵 Glow Effect on Drag Start */
-.sortable-ghost {
-  opacity: 0.8;
-  background: rgba(0, 123, 255, 0.15);
-  border: 3px dashed #007bff;
-}
-
-/* ⚡ Click Animation - Small bounce effect */
-.lesson-card:active {
-  animation: bounce 0.3s ease;
-}
-
-@keyframes bounce {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
-
-/* 🎓 Lesson Title */
-.lesson-title {
-  font-size: 16px;
-  font-weight: bold;
-  color: #333;
-  text-align: center;
-}
-
-/* 🔲 Lesson Icon - Larger & More Visible */
-.lesson-icon i {
-  font-size: 42px;
-  margin-bottom: 8px;
-}
-
-/* 🕒 Lesson Time - More Readable */
-.lesson-time {
-  font-size: 14px;
-  color: #555;
-  font-weight: 500;
-  text-align: center;
-}
-
-    </style>
   </head>
   <body>
     <!-- Classroom Header -->
@@ -253,16 +91,6 @@
             <div class="lesson-column" id="monday-column">
                 <h5 class="lesson-day no-drag">Monday <span class="lesson-date" id="monday-date"></span></h5>
                 <div class="lesson-list" id="monday-lessons">
-                    <div class="lesson-card" id="monday-lesson-1" data-module-id="1">
-                        <div class="lesson-icon"><i class="far fa-file-alt text-secondary"></i></div>
-                        <div class="lesson-title">Data Structures</div>
-                        <div class="lesson-time">⏰ 10:00 AM - 11:30 AM</div>
-                    </div>
-                    <div class="lesson-card" id="monday-lesson-2" data-module-id="2">
-                        <div class="lesson-icon"><i class="far fa-file-pdf text-danger"></i></div>
-                        <div class="lesson-title">Introduction to Programming</div>
-                        <div class="lesson-time">⏰ 9:00 AM - 10:30 AM</div>
-                    </div>
                 </div>
             </div>
     
@@ -270,11 +98,6 @@
             <div class="lesson-column" id="tuesday-column">
                 <h5 class="lesson-day no-drag">Tuesday <span class="lesson-date" id="tuesday-date"></span></h5>
                 <div class="lesson-list" id="tuesday-lessons">
-                    <div class="lesson-card" id="tuesday-lesson-1" data-module-id="3">
-                        <div class="lesson-icon"><i class="far fa-file-video text-primary"></i></div>
-                        <div class="lesson-title">Object-Oriented Programming</div>
-                        <div class="lesson-time">⏰ 1:00 PM - 2:30 PM</div>
-                    </div>
                 </div>
             </div>
     
@@ -282,11 +105,6 @@
             <div class="lesson-column" id="wednesday-column">
                 <h5 class="lesson-day no-drag">Wednesday <span class="lesson-date" id="wednesday-date"></span></h5>
                 <div class="lesson-list" id="wednesday-lessons">
-                    <div class="lesson-card" id="wednesday-lesson-1" data-module-id="4">
-                        <div class="lesson-icon"><i class="far fa-file-word text-info"></i></div>
-                        <div class="lesson-title">Algorithms</div>
-                        <div class="lesson-time">⏰ 2:00 PM - 3:30 PM</div>
-                    </div>
                 </div>
             </div>
     
@@ -294,11 +112,6 @@
             <div class="lesson-column" id="thursday-column">
                 <h5 class="lesson-day no-drag">Thursday <span class="lesson-date" id="thursday-date"></span></h5>
                 <div class="lesson-list" id="thursday-lessons">
-                    <div class="lesson-card" id="thursday-lesson-1" data-module-id="5">
-                        <div class="lesson-icon"><i class="far fa-file-excel text-success"></i></div>
-                        <div class="lesson-title">Database Management</div>
-                        <div class="lesson-time">⏰ 3:00 PM - 4:30 PM</div>
-                    </div>
                 </div>
             </div>
     
@@ -306,16 +119,6 @@
             <div class="lesson-column" id="friday-column">
                 <h5 class="lesson-day no-drag">Friday <span class="lesson-date" id="friday-date"></span></h5>
                 <div class="lesson-list" id="friday-lessons">
-                    <div class="lesson-card" id="friday-lesson-1" data-module-id="6">
-                        <div class="lesson-icon"><i class="far fa-file-powerpoint text-warning"></i></div>
-                        <div class="lesson-title">Web Development</div>
-                        <div class="lesson-time">⏰ 4:00 PM - 5:30 PM</div>
-                    </div>
-                    <div class="lesson-card" id="friday-lesson-2" data-module-id="7">
-                        <div class="lesson-icon"><i class="far fa-file-archive text-secondary"></i></div>
-                        <div class="lesson-title">Software Engineering</div>
-                        <div class="lesson-time">⏰ 5:00 PM - 6:30 PM</div>
-                    </div>
                 </div>
             </div>
     
@@ -516,429 +319,6 @@
       }
     </script>
 
-    <script>
-        const createPieChart = (chartId, labels, data, links, noDataId) => {
-          const ctx = document.getElementById(chartId).getContext('2d');
-          
-          // Fetch the root styles (CSS variables) and get specific colors
-          const rootStyles = getComputedStyle(document.documentElement);
-          const primaryColor = rootStyles.getPropertyValue('--primary').trim();
-          const warningColor = rootStyles.getPropertyValue('--warning').trim();
-          const successColor = rootStyles.getPropertyValue('--success').trim();
-          const infoColor = rootStyles.getPropertyValue('--info').trim();
-          const dangerColor = rootStyles.getPropertyValue('--danger').trim();
-          const secondaryColor = rootStyles.getPropertyValue('--secondary').trim();
-        
-          const colors = [primaryColor, warningColor, successColor, infoColor, dangerColor, secondaryColor];
-        
-          if (data.length > 0) {
-            const chart = new Chart(ctx, {
-              type: 'pie',
-              data: {
-                labels: labels.map(label => label.length > 20 ? label.substring(0, 20) + '...' : label), // Truncate long labels
-                datasets: [{
-                  data: data,
-                  backgroundColor: colors, // Use the root colors
-                  borderColor: colors, // Use the root colors for border as well
-                  borderWidth: 2
-                }],
-              },
-              options: {
-                onClick: (event, array) => {
-                  if (array.length) {
-                    const index = array[0].index;
-                    window.location.href = links[index];
-                  }
-                },
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                  legend: {
-                    position: 'left',  
-                    align: 'start',    
-                    labels: {
-                      usePointStyle: true,
-                      padding: 20,
-                      font: {
-                        size: 12
-                      },
-                      generateLabels: function(chart) {
-                        const originalLabels = chart.data.labels;
-                        return originalLabels.map((label, i) => ({
-                          text: label.length > 20 ? label.substring(0, 20) + '...' : label,
-                          fillStyle: chart.data.datasets[0].backgroundColor[i],
-                          hidden: chart.getDatasetMeta(0).data[i].hidden,
-                          index: i,
-                          fullText: label // Store full label text
-                        }));
-                      }
-                    },
-                    onHover: function(event, legendItem) {
-                      // Show full text in a tooltip when hovering over the label
-                      const tooltipDiv = document.createElement('div');
-                      tooltipDiv.id = 'legendTooltip';
-                      tooltipDiv.style.position = 'absolute';
-                      tooltipDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-                      tooltipDiv.style.color = '#fff';
-                      tooltipDiv.style.padding = '5px';
-                      tooltipDiv.style.borderRadius = '4px';
-                      tooltipDiv.style.pointerEvents = 'none';
-                      tooltipDiv.style.zIndex = 1000;
-                      tooltipDiv.innerHTML = legendItem.fullText;
-                      
-                      document.body.appendChild(tooltipDiv);
-        
-                      document.onmousemove = function(e) {
-                        tooltipDiv.style.top = (e.pageY + 10) + 'px';
-                        tooltipDiv.style.left = (e.pageX + 10) + 'px';
-                      };
-                    },
-                    onLeave: function() {
-                      const tooltipDiv = document.getElementById('legendTooltip');
-                      if (tooltipDiv) {
-                        tooltipDiv.remove();
-                      }
-                      document.onmousemove = null;
-                    }
-                  },
-                  tooltip: {
-                    callbacks: {
-                      label: function(tooltipItem) {
-                        return `${tooltipItem.label}: ${tooltipItem.raw}`;
-                      }
-                    }
-                  }
-                },
-                layout: {
-                  padding: {
-                    left: 10,
-                    right: 100
-                  }
-                }
-              }
-            });
-          } else {
-            document.getElementById(chartId).style.display = 'none';
-            document.getElementById(noDataId).style.display = 'block';
-          }
-        };
-        
-        // Ongoing Activities
-        const ongoingActivitiesLabels = [{% for activity in ongoing_activities %}'{{ activity.activity_name }}',{% endfor %}];
-        const ongoingActivitiesData = [{% for activity in ongoing_activities %}1,{% endfor %}];
-        const ongoingActivitiesLinks = [{% for activity in ongoing_activities %}'{% url "activity_detailCM" activity.id %}?semester={{ selected_semester_id }}',{% endfor %}];
-        createPieChart('ongoingActivitiesChart', ongoingActivitiesLabels, ongoingActivitiesData, ongoingActivitiesLinks, 'noDataOngoing'); 
-
-        {% comment %} // Ongoing Activities Labels (Grouped by Type)
-        const ongoingActivitiesLabels = [
-          {% for group in ongoing_activities_grouped %}
-            '{{ group.activity_type__name }}: {{ group.count }}',
-          {% endfor %}
-        ];
-
-        // Individual Data Points for the Chart
-        const ongoingActivitiesData = [
-          {% for activity in ongoing_activities %}
-            1,  // Each activity is counted as 1 to retain original data count
-          {% endfor %}
-        ];
-
-        // Links for Each Individual Data Point
-        const ongoingActivitiesLinks = [
-          {% for activity in ongoing_activities_links %}
-            '{{ activity.link }}',
-          {% endfor %}
-        ];
-
-        // Create the chart, keeping labels consolidated for display but linking data points individually
-        createPieChart('ongoingActivitiesChart', ongoingActivitiesLabels, ongoingActivitiesData, ongoingActivitiesLinks, 'noDataOngoing'); {% endcomment %}
-
-
-        // Upcoming Activities
-        const upcomingActivitiesLabels = [{% for activity in upcoming_activities %}'{{ activity.activity_name }}',{% endfor %}];
-        const upcomingActivitiesData = [{% for activity in upcoming_activities %}1,{% endfor %}];
-        const upcomingActivitiesLinks = [{% for activity in upcoming_activities %}'#',{% endfor %}];
-        createPieChart('upcomingActivitiesChart', upcomingActivitiesLabels, upcomingActivitiesData, upcomingActivitiesLinks, 'noDataUpcoming');
-
-        // Activities to be Graded
-        const gradingNeededLabels = [{% for activity, count in activities_with_grading_needed %}'{{ activity.activity_name }}',{% endfor %}];
-        const gradingNeededData = [{% for activity, count in activities_with_grading_needed %}{{ count }},{% endfor %}];
-        const gradingNeededLinks = [{% for activity, count in activities_with_grading_needed %}'{% url "grade_essays" activity.id %}?semester={{ selected_semester_id }}',{% endfor %}];
-        createPieChart('activitiesToBeGradedChart', gradingNeededLabels, gradingNeededData, gradingNeededLinks, 'noDataGradingNeeded');
-
-
-        document.addEventListener('DOMContentLoaded', function() {
-          const subjectId = {{ subject.id }};
-        
-            // Fetch the computed styles of the root element (where CSS variables are defined)
-      const rootStyles = getComputedStyle(document.documentElement);
-
-      // Get the CSS variable values
-      const primaryColor = rootStyles.getPropertyValue('--primary').trim();  // Primary color for completed
-      const dangerColor = rootStyles.getPropertyValue('--danger').trim();    // Danger color for missed
-
-      fetch("{% url 'termActivitiesGraph' 0 %}".replace('0', subjectId))
-        .then(response => response.json())
-        .then(data => {
-          const terms = Object.keys(data.terms);  // Get all term names (e.g., ['Prelim', 'Midterm', 'Finals'])
-          const termIds = terms.map(term => data.terms[term].id);
-          const activityTypeSelect = document.getElementById('activityTypeSelect');
-
-          // Get all activity types and add "All" option
-          let activityTypes = [...new Set(terms.flatMap(term => Object.keys(data.terms[term].activity_types || {})))];
-          const allOption = document.createElement('option');
-          allOption.value = 'All';
-          allOption.textContent = 'All Activities';
-          activityTypeSelect.appendChild(allOption);
-
-          // Populate dropdown with individual activity types
-          activityTypes.forEach(activityType => {
-            const option = document.createElement('option');
-            option.value = activityType;
-            option.textContent = activityType;
-            activityTypeSelect.appendChild(option);
-          });
-
-          // Initial chart display for "All" activities
-          updateChartForActivityType('All');
-
-          // Event listener to update chart when a new activity type is selected
-          activityTypeSelect.addEventListener('change', function() {
-            const selectedActivityType = this.value;
-            updateChartForActivityType(selectedActivityType);
-          });
-
-          function updateChartForActivityType(activityType) {
-            let datasets = [];
-          
-            // Fetch the computed styles (CSS variables) from the root element
-            const rootStyles = getComputedStyle(document.documentElement);
-            const colors = [
-              rootStyles.getPropertyValue('--primary').trim(),
-              rootStyles.getPropertyValue('--success').trim(),
-              rootStyles.getPropertyValue('--info').trim(),
-              rootStyles.getPropertyValue('--warning').trim(),
-              rootStyles.getPropertyValue('--danger').trim(),
-              rootStyles.getPropertyValue('--secondary').trim()
-            ];
-          
-            let colorIndex = 0;
-          
-            if (activityType === 'All') {
-              activityTypes.forEach((type) => {
-                const completedData = terms.map(term => data.terms[term].activity_types[type]?.completed || 0);
-                const missedData = terms.map(term => -Math.abs(data.terms[term].activity_types[type]?.missed || 0));
-          
-                // Assign a different color for each activity type
-                const completedColor = colors[colorIndex % colors.length];
-                const missedColor = colors[(colorIndex + 1) % colors.length];
-                colorIndex += 2;
-          
-                datasets.push({
-                  label: `${type} - Completed`,
-                  data: completedData,
-                  backgroundColor: completedColor,
-                  borderColor: completedColor,
-                  borderWidth: 2,
-                  fill: true,
-                  pointBackgroundColor: completedColor,
-                  pointRadius: 5,
-                  pointHoverRadius: 7
-                });
-          
-                datasets.push({
-                  label: `${type} - Missed`,
-                  data: missedData,
-                  backgroundColor: missedColor,
-                  borderColor: missedColor,
-                  borderWidth: 2,
-                  fill: true,
-                  pointBackgroundColor: missedColor,
-                  pointRadius: 5,
-                  pointHoverRadius: 7
-                });
-              });
-            } else {
-              const completedData = terms.map(term => data.terms[term].activity_types[activityType]?.completed || 0);
-              const missedData = terms.map(term => -Math.abs(data.terms[term].activity_types[activityType]?.missed || 0));
-          
-              // Completed dataset with primary color
-              datasets.push({
-                label: `${activityType} - Completed`,
-                data: completedData,
-                backgroundColor: colors[0], // Primary color for completed
-                borderColor: colors[0],
-                borderWidth: 2,
-                fill: true,
-                pointBackgroundColor: colors[0],
-                pointRadius: 5,
-                pointHoverRadius: 7
-              });
-          
-              // Missed dataset with danger color
-              datasets.push({
-                label: `${activityType} - Missed`,
-                data: missedData,
-                backgroundColor: colors[1], // Danger color for missed
-                borderColor: colors[1],
-                borderWidth: 2,
-                fill: true,
-                pointBackgroundColor: colors[1],
-                pointRadius: 5,
-                pointHoverRadius: 7
-              });
-            }
-          
-            createStackedLineChart('finishedActivitiesChart', terms, termIds, datasets);
-          }
-          
-
-        function createStackedLineChart(chartId, labels, termIds, datasets) {
-          const ctx = document.getElementById(chartId).getContext('2d');
-          
-          if (window.chartInstance) {
-            window.chartInstance.destroy();  // Destroy previous chart instance before creating a new one
-          }
-
-          window.chartInstance = new Chart(ctx, {
-            type: 'line',  // Stacked line chart
-            data: {
-              labels: labels,  // Term names as labels (Prelim, Midterm, Finals)
-              datasets: datasets
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  stacked: true,
-                  title: {
-                    display: true,
-                    text: 'Number of Students'
-                  },
-                  ticks: {
-                    callback: function(value, index, values) {
-                      // Ensure Y-axis only shows positive values even for negative data
-                      return Math.abs(value);
-                    }
-                  }
-                },
-                x: {
-                  title: {
-                    display: true,
-                  }
-                }
-              },
-              plugins: {
-                legend: {
-                  display: true
-                },
-                title: {
-                  display: true,
-                  text: 'Students Completed vs Missed per Term'
-                },
-                tooltip: {
-                  callbacks: {
-                    label: function(tooltipItem) {
-                      // Ensure tooltips show positive values for missed data
-                      return `${tooltipItem.dataset.label}: ${Math.abs(tooltipItem.raw)}`;
-                    }
-                  }
-                }
-              },
-              onClick: function(evt) {
-                const points = window.chartInstance.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, false);
-
-                if (points.length > 0) {
-                  const firstPoint = points[0];
-                  const index = firstPoint.index;
-                  const datasetIndex = firstPoint.datasetIndex;
-
-                  const termId = termIds[index];  // Use the index to fetch the correct term ID
-                  const activityType = datasetIndex % 2 === 0 ? 'completed' : 'missed';  // Even index means completed, odd means missed
-                  const activityName = datasets[datasetIndex].label.split(' - ')[0];  // Get the activity type name from the dataset label
-
-                  // Redirect to the activities page for the selected term and activity type
-                  if (termId) {
-                    window.location.href = `/displayActivitiesForTermCM/${termId}/${activityType}/${subjectId}/${activityName}/`;
-                  } else {
-                    console.error('Term ID is undefined for index:', index);
-                  }
-                }
-              }
-            }
-          });
-        }
-
-      })
-      .catch(error => console.error('Error fetching term activities:', error));
-
-        });
-    </script>
-
-    <script>
-      let lessonEditMode = false;
-      let sortable = null;
-
-      document.getElementById('editButton').addEventListener('click', function () {
-        if (!lessonEditMode) {
-          // Enable lesson editing mode
-          lessonEditMode = true;
-          this.textContent = 'Save'; // Change button text to "Save"
-
-          // Initialize SortableJS for the lesson list
-          sortable = new Sortable(document.getElementById('lesson-list'), {
-            animation: 150,
-            onEnd: function (evt) {
-              var order = [];
-              document.querySelectorAll('#lesson-list li').forEach(function (item) {
-                order.push(item.getAttribute('data-id'));
-              });
-            }
-          });
-        } else {
-          // Disable lesson editing mode
-          lessonEditMode = false;
-          this.textContent = 'Edit'; // Change button text back to "Edit"
-
-          // Disable sorting by destroying the SortableJS instance
-          if (sortable) {
-            sortable.destroy();
-          }
-
-          // Collect the new order and send it to the server via AJAX
-          var order = [];
-          document.querySelectorAll('#lesson-list li').forEach(function (item) {
-            var moduleId = item.getAttribute('data-id');
-            if (moduleId) {  // Ensure only valid module IDs are added
-              order.push(moduleId);
-            }
-          });
-
-          // Send the updated order to the backend
-          fetch("{% url 'update_module_order' %}", {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: JSON.stringify({ order: order })
-          })
-          .then(response => response.json())
-          .then(data => {
-            if (data.status === 'success') {
-              // Successfully saved the new order
-            } else {
-              console.error('Error saving order:', data.message);
-            }
-          })
-          .catch(error => {
-            console.error('An error occurred while saving the order:', error);
-          });
-        }
-      });
-    </script>
 
     <script>
       $(document).ready(function () {
@@ -995,84 +375,105 @@
     </script>
 
   {% if is_teacher %}
-      <script>
-        document.addEventListener("DOMContentLoaded", function () {
-          const days = [
-              "sunday", "monday", "tuesday", "wednesday",
-              "thursday", "friday", "saturday"
-          ];
-      
-          // Prevent dragging the lesson-day headers
-          document.querySelectorAll(".lesson-day").forEach((header) => {
-              header.setAttribute("draggable", "false");
-              header.style.pointerEvents = "none"; // Prevents mouse interactions
-          });
-      
-          // Enable sorting only for lesson cards inside each lesson-list
-          document.querySelectorAll(".lesson-list").forEach((list) => {
-              new Sortable(list, {
-                  animation: 200,
-                  ghostClass: "sortable-ghost", // Add ghost effect while dragging
-                  group: "lessons", // Allows dragging between different lesson lists
-                  onStart: function (evt) {
-                      evt.item.style.borderColor = "#28a745"; // Green outline while dragging
-                  },
-                  onEnd: function (evt) {
-                      evt.item.style.borderColor = "#ddd"; // Reset border color
-                      console.log(`Moved lesson from index ${evt.oldIndex} to ${evt.newIndex}`);
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const subjectId = "{{ subject.id }}";
+      let semesterId = "{{ selected_semester_id }}";
+  
+      if (!semesterId || semesterId === "None") {
+          semesterId = ""; // Handle missing semester
+      }
+  
+      const apiUrl = `/api/classroom_mode_schedules/${subjectId}/`;
+  
+      fetch(apiUrl)
+          .then(response => response.json())
+          .then(data => {
+              console.log("API Response:", data);
+  
+              if (data.schedule_data.length > 0) {
+                  const today = new Date();
+                  let currentWeekData = null;
+  
+                  // Find the current week based on today's date
+                  data.schedule_data.forEach(week => {
+                      const weekStart = new Date(week.week_start);
+                      const weekEnd = new Date(week.week_end);
+                      if (today >= weekStart && today <= weekEnd) {
+                          currentWeekData = week;
+                      }
+                  });
+  
+                  if (currentWeekData) {
+                      displaySchedule(currentWeekData);
+                  } else {
+                      console.warn("No schedule found for the current week.");
                   }
-              });
-          });
-      
-          // Add click event for lesson cards to redirect to viewModuleCM
-          document.querySelectorAll(".lesson-card").forEach((card) => {
-              card.addEventListener("click", function () {
-                  const moduleId = this.dataset.moduleId; // Get module ID from dataset
-                  if (moduleId) {
-                      this.style.borderColor = "#ffc107"; // Yellow border on click
-                      this.style.boxShadow = "0px 0px 12px rgba(255, 193, 7, 0.5)";
-                      setTimeout(() => {
-                          this.style.borderColor = "#007bff"; // Reset after animation
-                          this.style.boxShadow = "none";
-                          window.location.href = `/viewModuleCM/${moduleId}/`; // Redirect to viewModuleCM
-                      }, 200);
-                  }
-              });
-          });
-      
-          // Set weekly dates dynamically
-          const today = new Date();
-          const firstDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
-      
-          days.forEach((day, index) => {
-              let currentDate = new Date(firstDayOfWeek);
-              currentDate.setDate(firstDayOfWeek.getDate() + index);
-              let formattedDate = currentDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-      
-              document.getElementById(`${day}-date`).innerText = `(${formattedDate})`;
-          });
+              }
+          })
+          .catch(error => console.error("Error fetching schedule:", error));
+  });
+  
+  function displaySchedule(week) {
+      week.dates.forEach(day => {
+          let dayId = day.day.toLowerCase(); // Convert "Monday" -> "monday"
+          let formattedDate = new Date(day.date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  
+          // Insert the formatted date into the correct HTML span
+          let dateElement = document.getElementById(`${dayId}-date`);
+          if (dateElement) {
+              dateElement.innerText = `(${formattedDate})`;
+          }
+  
+          // Insert lessons for the day
+          let lessonList = document.getElementById(`${dayId}-lessons`);
+          if (lessonList) {
+              lessonList.innerHTML = ""; // Clear existing lessons
+  
+              if (day.lessons.length > 0) {
+                  day.lessons.forEach(lesson => {
+                      let lessonCard = document.createElement("div");
+                      lessonCard.classList.add("lesson-card");
+                      lessonCard.setAttribute("data-module-id", lesson.module_id);
+
+                      let icon = getModuleIcon(lesson.type); 
+
+                      lessonCard.innerHTML = `
+                          <div class="lesson-icon">${icon}</i></div>
+                          <div class="lesson-title">${lesson.lesson}</div>
+                          <div class="lesson-time">⏰ ${day.time || 'N/A'}</div>
+                      `;
+  
+                      // Append to lesson list
+                      lessonList.appendChild(lessonCard);
+                  });
+              } else {
+                  lessonList.innerHTML = `<p class="text-muted">No lessons</p>`;
+              }
+          }
       });
-      
-      </script>
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-          const today = new Date();
-          const firstDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay())); // Start from Sunday
-      
-          const days = [
-              "sunday", "monday", "tuesday", "wednesday",
-              "thursday", "friday", "saturday"
-          ];
-      
-          days.forEach((day, index) => {
-              let currentDate = new Date(firstDayOfWeek);
-              currentDate.setDate(firstDayOfWeek.getDate() + index); // Get the date for each day
-              let formattedDate = currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      
-              document.getElementById(`${day}-date`).innerText = `(${formattedDate})`;
-          });
-      });
+  }
+  // Function to determine the appropriate icon based on module type
+  function getModuleIcon(type) {
+    if (!type) return '<i class="fas fa-file text-secondary"></i>'; // Default
+
+    switch (type.toLowerCase()) {
+        case "pdf": return '<i class="fas fa-file-pdf text-danger"></i>';
+        case "image": return '<i class="fas fa-image text-warning"></i>';
+        case "youtube": return '<i class="fab fa-youtube text-danger"></i>';
+        case "url": return '<i class="fas fa-link text-primary"></i>';
+        case "msteams": return '<i class="fab fa-microsoft text-blue"></i>';
+        case "word": return '<i class="fas fa-file-word text-primary"></i>';
+        case "excel": return '<i class="fas fa-file-excel text-success"></i>';
+        case "ppt": return '<i class="fas fa-file-powerpoint text-orange"></i>';
+        case "video": return '<i class="fas fa-video text-purple"></i>';
+        case "embed": return '<i class="fas fa-code text-teal"></i>';
+        default: return '<i class="fas fa-file text-secondary"></i>';
+    }
+}
+
     </script>
+    
   {% endif %}
   </body>
 </html>

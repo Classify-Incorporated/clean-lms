@@ -318,3 +318,163 @@
     font-weight: 600;
     color: #555555; /* Soft black for text */
   }
+
+  /* 📚 Divider Section */
+.lesson-divider-section {
+margin-bottom: 20px;
+}
+
+.lesson-divider {
+border: 2px solid #ccc;
+width: 100%;
+margin: 0 auto;
+}
+
+.lesson-title-header {
+font-weight: bold;
+color: #555;
+margin-top: -15px;
+background: #f8f9fa;
+display: inline-block;
+padding: 5px 15px;
+border-radius: 10px;
+border: 2px solid #ccc;
+}
+
+/* 📅 Weekly Lessons Container */
+.lesson-container {
+display: flex;
+flex-wrap: nowrap;  /* Ensure all days are in one row */
+overflow-x: auto;   /* Enable scrolling if content overflows */
+gap: 10px;
+padding: 10px;
+justify-content: center;
+}
+
+/* 🎨 Lesson Column with Pastel Colors */
+.lesson-column {
+flex: 1;
+min-width: 180px; /* Ensures uniform width */
+text-align: center;
+border-radius: 10px;
+padding: 15px;
+box-shadow: 2px 4px 6px rgba(0, 0, 0, 0.1);
+border: 2px solid rgba(200, 200, 200, 0.3);
+}
+
+/* 🌈 Soft Pastel Background Colors */
+.lesson-column:nth-child(1) { background: #ffebee; } /* Light Red */
+.lesson-column:nth-child(2) { background: #f3e5f5; } /* Light Purple */
+.lesson-column:nth-child(3) { background: #e8f5e9; } /* Light Green */
+.lesson-column:nth-child(4) { background: #e3f2fd; } /* Light Blue */
+.lesson-column:nth-child(5) { background: #fff3e0; } /* Light Orange */
+.lesson-column:nth-child(6) { background: #fce4ec; } /* Light Pink */
+.lesson-column:nth-child(7) { background: #ede7f6; } /* Light Violet */
+
+/* 🏷 Lesson Day Header */
+.lesson-day {
+font-weight: bold;
+background: rgba(0, 0, 0, 0.1);
+color: #333;
+padding: 8px;
+border-radius: 5px;
+margin-bottom: 10px;
+}
+
+/* 📅 Lesson Date */
+.lesson-date {
+font-size: 12px;
+color: #666;
+background: rgba(0, 0, 0, 0.1);
+padding: 3px 6px;
+border-radius: 4px;
+margin-left: 5px;
+}
+
+/* 🚫 Prevent dragging the lesson headers */
+.lesson-day.no-drag {
+cursor: default !important;
+pointer-events: none;
+}
+
+/* 📝 Lesson List Container */
+.lesson-list {
+min-height: 50px; /* Prevent collapse when empty */
+}
+
+/* 🎯 Lesson Card - Clickable & Draggable */
+.lesson-card {
+cursor: grab;
+user-select: none;
+background: white;
+padding: 15px;
+border: 3px solid #ddd;
+border-radius: 10px;
+margin-bottom: 10px;
+box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.15);
+transition: background 0.3s, transform 0.2s, border-color 0.3s, box-shadow 0.3s;
+
+/* 📏 Set Consistent Size */
+width: 220px;  /* Fixed width for all lesson cards */
+height: 160px; /* Fixed height for all lesson cards */
+display: flex;
+flex-direction: column;
+justify-content: center;
+align-items: center;
+}
+
+/* 🔥 Hover Effect - More visibility */
+.lesson-card:hover {
+background: #f8f9fa;
+border-color: #007bff;
+box-shadow: 4px 6px 12px rgba(0, 123, 255, 0.3);
+transform: translateY(-2px);
+}
+
+/* ✋ Dragging Effect - Clearer Feedback */
+.lesson-card:active {
+cursor: grabbing;
+border-color: #28a745;
+box-shadow: 0px 0px 15px rgba(40, 167, 69, 0.6);
+transform: scale(1.05);
+}
+
+/* 🔵 Glow Effect on Drag Start */
+.sortable-ghost {
+opacity: 0.8;
+background: rgba(0, 123, 255, 0.15);
+border: 3px dashed #007bff;
+}
+
+/* ⚡ Click Animation - Small bounce effect */
+.lesson-card:active {
+animation: bounce 0.3s ease;
+}
+
+@keyframes bounce {
+0% { transform: scale(1); }
+50% { transform: scale(1.05); }
+100% { transform: scale(1); }
+}
+
+/* 🎓 Lesson Title */
+.lesson-title {
+font-size: 16px;
+font-weight: bold;
+color: #333;
+text-align: center;
+}
+
+/* 🔲 Lesson Icon - Larger & More Visible */
+.lesson-icon i {
+font-size: 42px;
+margin-bottom: 8px;
+}
+
+/* 🕒 Lesson Time - More Readable */
+.lesson-time {
+font-size: 14px;
+color: #555;
+font-weight: 500;
+text-align: center;
+}

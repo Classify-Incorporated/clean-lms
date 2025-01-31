@@ -886,7 +886,7 @@ class ScheduleAPI(APIView):
         # 🔹 Ensure that weeks include previous month's data
         first_day_of_month = semester_start.replace(day=1)
         first_week_start = first_day_of_month
-        while first_week_start.weekday() != 0:  # Move to the previous Monday
+        while first_week_start.weekday() != 6:  # Move to the previous Monday
             first_week_start -= timedelta(days=1)
 
         week_schedule = {}
@@ -1006,6 +1006,201 @@ class ScheduleAPI(APIView):
         }, status=200)
     
 
+
+class Classroom_Mode_ScheduleAPI(APIView):
+    def get(self, request, subject_id, semester_id=None):
+        try:
+            subject = Subject.objects.get(id=subject_id)
+        except Subject.DoesNotExist:
+            return Response({"error": "Subject not found"}, status=404)
+
+        selected_month = request.GET.get('month', None)
+
+        # Get Semester
+        if semester_id and semester_id != "None":
+            try:
+                semester = Semester.objects.get(id=int(semester_id))
+            except (Semester.DoesNotExist, ValueError):
+                return Response({"error": "Semester not found"}, status=404)
+        else:
+            current_date = timezone.localdate()
+            try:
+                semester = Semester.objects.get(start_date__lte=current_date, end_date__gte=current_date)
+            except Semester.DoesNotExist:
+                return Response({"error": "Current semester not found"}, status=404)
+
+        semester_start = semester.start_date
+        semester_end = semester.end_date
+
+        # Get months in semester
+        months_in_semester = []
+        current_date = semester_start
+        while current_date <= semester_end:
+            month_name = current_date.strftime('%B')
+            if month_name not in months_in_semester:
+                months_in_semester.append(month_name)
+            current_date = current_date.replace(day=28) + timedelta(days=4)
+
+        # Ensure that weeks start on Sunday
+        first_day_of_month = semester_start.replace(day=1)
+        first_week_start = first_day_of_month
+        while first_week_start.weekday() != 6:  # Move to the previous Sunday
+            first_week_start -= timedelta(days=1)
+
+        week_schedule = {}
+        current_week_start = first_week_start
+        week_number = 1
+
+        schedules = Schedule.objects.filter(subject=subject)
+
+        # Get modules (lessons) that fall within the given date range
+        modules = Module.objects.filter(
+            subject=subject, start_date__lte=semester_end, end_date__gte=first_week_start
+        )
+
+        while current_week_start <= semester_end:
+            current_week_end = current_week_start + timedelta(days=6)  # Week ends on Saturday
+            week_schedule[week_number] = {
+                "week": f"Week {week_number}",
+                "week_start": current_week_start.strftime("%Y-%m-%d"),
+                "week_end": current_week_end.strftime("%Y-%m-%d"),
+                "dates": []
+            }
+
+            # Store the week range as Sunday-Saturday
+            week_start_str = current_week_start.strftime("%B %d")
+            week_end_str = current_week_end.strftime("%B %d")
+
+            for day in range(7):
+                date = current_week_start + timedelta(days=day)
+                formatted_date = date.strftime("%Y-%m-%d")
+
+                lessons_for_date = []
+                unique_modules = set()
+
+                for schedule in schedules:
+                    if date.strftime("%a") in schedule.days_of_week:
+                        for module in modules:
+                            if module.start_date.date() <= date and module.end_date.date() >= date:
+                                if module.id not in unique_modules:
+                                    unique_modules.add(module.id)
+                                    activities = Activity.objects.filter(module=module).order_by('order')
+
+                                    activities_list = [
+                                        {
+                                            "activity_id": activity.id,
+                                            "activity_name": activity.activity_name,
+                                            "activity_type": activity.activity_type.name if activity.activity_type else "N/A",
+                                            "start_time": timezone.localtime(activity.start_time).strftime("%I:%M %p") if activity.start_time else None,
+                                            "end_time": timezone.localtime(activity.end_time).strftime("%I:%M %p") if activity.end_time else None,
+                                            "max_score": activity.max_score,
+                                            "status": activity.status,
+                                        }
+                                        for activity in activities
+                                        if activity.activity_type.name.lower() != "participation"
+                                    ]
+
+                                    lessons_for_date.append({
+                                        "module_id": module.id,
+                                        "lesson": module.file_name,
+                                        "description": module.description or "",
+                                        "file_url": module.file.url if module.file else None,
+                                        "embed": module.iframe_code if module.iframe_code else None,
+                                        "file_extension": os.path.splitext(module.file.name)[1].lower() if module.file else None,
+                                        "url": module.url if module.url else None,
+                                        "allow_download": module.allow_download,
+                                        "type": get_file_type(module),
+                                        "activities": activities_list
+                                    })
+
+                # Append lessons to the correct date
+                week_schedule[week_number]["dates"].append({
+                    "date": formatted_date,
+                    "day": date.strftime("%A"),
+                    "time": f"{schedule.schedule_start_time} to {schedule.schedule_end_time}" if lessons_for_date else None,
+                    "lessons": lessons_for_date,
+                })
+
+            # Update the week label to include the full range
+            week_schedule[week_number]["week"] = f"Week {week_number} - {week_start_str} to {week_end_str}"
+
+            current_week_start += timedelta(days=7)
+            week_number += 1
+
+        formatted_schedule = [week_data for week_num, week_data in week_schedule.items() if week_data["dates"]]
+
+        # Modify filtering to include previous month's data in the first week
+        if selected_month:
+            formatted_schedule = [
+                {
+                    "week": week_data["week"],
+                    "dates": [
+                        date for date in week_data["dates"]
+                        if selected_month in date['date'] or week_num == 1  # Ensure Week 1 is always included
+                    ]
+                }
+                for week_num, week_data in week_schedule.items() if week_data["dates"]
+            ]
+
+        # Fetch Available Evaluations
+        available_evaluations = None
+        if request.user.is_authenticated:
+            if hasattr(request.user, "profile") and getattr(request.user.profile.role, "name", "").lower() == "student":
+                available_evaluations = EvaluationAssignment.objects.filter(
+                    subject=subject,
+                    semester=semester,
+                    is_visible=True
+                ).exclude(
+                    evaluations__student=request.user
+                ).select_related('teacher', 'subject').distinct()
+
+        evaluations_list = [
+            {
+                "evaluation_id": evaluation.id,
+                "teacher": f"{evaluation.teacher.first_name} {evaluation.teacher.last_name}",
+                "subject": evaluation.subject.subject_name,
+                "is_visible": evaluation.is_visible,
+            }
+            for evaluation in available_evaluations
+        ] if available_evaluations else []
+
+        return Response({
+            'semester_months': months_in_semester,
+            'schedule_data': formatted_schedule,
+            'available_evaluations': evaluations_list 
+        }, status=200)
+
+def get_file_type(module):
+    """ Determines the file type based on extension or URL """
+    
+    if hasattr(module, "iframe_code") and module.iframe_code:
+        return "embed"
+    
+    if module.url:
+        # Check if it's a YouTube or MS Teams URL
+        if "youtube.com" in module.url or "youtu.be" in module.url:
+            return "youtube"
+        elif "teams.microsoft.com" in module.url:
+            return "msteams"
+        return "url"  # Generic URL
+
+    if module.file:
+        ext = os.path.splitext(module.file.name)[1].lower()
+        if ext in [".pdf"]:
+            return "pdf"
+        elif ext in [".jpg", ".jpeg", ".png", ".gif", ".svg"]:
+            return "image"
+        elif ext in [".doc", ".docx"]:
+            return "word"
+        elif ext in [".xls", ".xlsx"]:
+            return "excel"
+        elif ext in [".ppt", ".pptx"]:
+            return "ppt"
+        elif ext in [".mp4", ".avi", ".mov", ".mkv"]:
+            return "video"
+    
+    return "file"  # Default file type
+    
 
 class Schedule_Data(ModelViewSet):
     serializer_class = ScheduleDataSerializer

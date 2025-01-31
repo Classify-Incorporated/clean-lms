@@ -47,5 +47,6 @@ urlpatterns = [
     path('all_teachers_average_ratings/', get_all_teachers_average_ratings_json, name='all_teachers_average_ratings'),
 
     path('api/schedules/<int:subject_id>/', ScheduleAPI.as_view(), name='schedule-api'),
+    path('api/classroom_mode_schedules/<int:subject_id>/', Classroom_Mode_ScheduleAPI.as_view(), name='api/classroom_mode_schedules'),
 
 ]

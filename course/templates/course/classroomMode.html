@@ -17,126 +17,166 @@
     <!-- Include FullCalendar CSS and JS -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet" />
     <style>
-      /* Divider Section */
-      .lesson-divider-section {
-        margin-bottom: 20px;
-      }
+      /* 📚 Divider Section */
+.lesson-divider-section {
+  margin-bottom: 20px;
+}
 
-      .lesson-divider {
-        border: 2px solid #ccc;
-        width: 100%;
-        margin: 0 auto;
-      }
+.lesson-divider {
+  border: 2px solid #ccc;
+  width: 100%;
+  margin: 0 auto;
+}
 
-      .lesson-title-header {
-        font-weight: bold;
-        color: #555;
-        margin-top: -15px;
-        background: #f8f9fa;
-        display: inline-block;
-        padding: 5px 15px;
-        border-radius: 10px;
-        border: 2px solid #ccc;
-      }
+.lesson-title-header {
+  font-weight: bold;
+  color: #555;
+  margin-top: -15px;
+  background: #f8f9fa;
+  display: inline-block;
+  padding: 5px 15px;
+  border-radius: 10px;
+  border: 2px solid #ccc;
+}
 
-      /* Weekly Lessons Container */
-      .lesson-container {
-        display: flex;
-        flex-wrap: nowrap;  /* Ensure all days are in one row */
-        overflow-x: auto;   /* Enable scrolling if content overflows */
-        gap: 10px;
-        padding: 10px;
-        justify-content: center;
-      }
+/* 📅 Weekly Lessons Container */
+.lesson-container {
+  display: flex;
+  flex-wrap: nowrap;  /* Ensure all days are in one row */
+  overflow-x: auto;   /* Enable scrolling if content overflows */
+  gap: 10px;
+  padding: 10px;
+  justify-content: center;
+}
 
-      /* Lesson Column with Pastel Colors */
-      .lesson-column {
-        flex: 1;
-        min-width: 180px; /* Ensures uniform width */
-        text-align: center;
-        border-radius: 10px;
-        padding: 15px;
-        box-shadow: 2px 4px 6px rgba(0, 0, 0, 0.1);
-        border: 2px solid rgba(200, 200, 200, 0.3);
-      }
+/* 🎨 Lesson Column with Pastel Colors */
+.lesson-column {
+  flex: 1;
+  min-width: 180px; /* Ensures uniform width */
+  text-align: center;
+  border-radius: 10px;
+  padding: 15px;
+  box-shadow: 2px 4px 6px rgba(0, 0, 0, 0.1);
+  border: 2px solid rgba(200, 200, 200, 0.3);
+}
 
-      /* Soft Pastel Background Colors for Each Day */
-      .lesson-column:nth-child(1) { background: #ffebee; } /* Light Red */
-      .lesson-column:nth-child(2) { background: #f3e5f5; } /* Light Purple */
-      .lesson-column:nth-child(3) { background: #e8f5e9; } /* Light Green */
-      .lesson-column:nth-child(4) { background: #e3f2fd; } /* Light Blue */
-      .lesson-column:nth-child(5) { background: #fff3e0; } /* Light Orange */
-      .lesson-column:nth-child(6) { background: #fce4ec; } /* Light Pink */
-      .lesson-column:nth-child(7) { background: #ede7f6; } /* Light Violet */
+/* 🌈 Soft Pastel Background Colors */
+.lesson-column:nth-child(1) { background: #ffebee; } /* Light Red */
+.lesson-column:nth-child(2) { background: #f3e5f5; } /* Light Purple */
+.lesson-column:nth-child(3) { background: #e8f5e9; } /* Light Green */
+.lesson-column:nth-child(4) { background: #e3f2fd; } /* Light Blue */
+.lesson-column:nth-child(5) { background: #fff3e0; } /* Light Orange */
+.lesson-column:nth-child(6) { background: #fce4ec; } /* Light Pink */
+.lesson-column:nth-child(7) { background: #ede7f6; } /* Light Violet */
 
-      /* Lesson Day */
-      .lesson-day {
-        font-weight: bold;
-        background: rgba(0, 0, 0, 0.1); /* Slight transparency */
-        color: #333;
-        padding: 8px;
-        border-radius: 5px;
-        margin-bottom: 10px;
-      }
+/* 🏷 Lesson Day Header */
+.lesson-day {
+  font-weight: bold;
+  background: rgba(0, 0, 0, 0.1);
+  color: #333;
+  padding: 8px;
+  border-radius: 5px;
+  margin-bottom: 10px;
+}
 
-      /* Lesson Date */
-      .lesson-date {
-        font-size: 12px;
-        color: #666;
-        background: rgba(0, 0, 0, 0.1);
-        padding: 3px 6px;
-        border-radius: 4px;
-        margin-left: 5px;
-      }
+/* 📅 Lesson Date */
+.lesson-date {
+  font-size: 12px;
+  color: #666;
+  background: rgba(0, 0, 0, 0.1);
+  padding: 3px 6px;
+  border-radius: 4px;
+  margin-left: 5px;
+}
 
-      /* Lesson Card - Ensuring Equal Width & Height */
-      .lesson-card {
-        background: rgba(255, 255, 255, 0.9);
-        border-radius: 8px;
-        border: 2px solid rgba(200, 200, 200, 0.3);
-        padding: 10px;
-        margin-bottom: 10px;
-        width: 100%; /* Ensures consistency */
-        min-height: 160px; /* Set minimum height */
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: space-around; /* Distributes content evenly */
-        transition: background 0.3s, transform 0.2s;
-      }
+/* 🚫 Prevent dragging the lesson headers */
+.lesson-day.no-drag {
+  cursor: default !important;
+  pointer-events: none;
+}
 
-      .lesson-card:hover {
-        background: rgba(250, 250, 250, 0.9);
-        transform: translateY(-3px);
-      }
+/* 📝 Lesson List Container */
+.lesson-list {
+  min-height: 50px; /* Prevent collapse when empty */
+}
 
-      /* Lesson Icon */
-      .lesson-icon i {
-        font-size: 36px;
-        margin-bottom: 10px;
-      }
+/* 🎯 Lesson Card - Clickable & Draggable */
+.lesson-card {
+  cursor: grab;
+  user-select: none;
+  background: white;
+  padding: 15px;
+  border: 3px solid #ddd;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.15);
+  transition: background 0.3s, transform 0.2s, border-color 0.3s, box-shadow 0.3s;
 
-      /* Lesson Title */
-      .lesson-title {
-        font-size: 14px;
-        font-weight: bold;
-      }
+  /* 📏 Set Consistent Size */
+  width: 220px;  /* Fixed width for all lesson cards */
+  height: 160px; /* Fixed height for all lesson cards */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
 
-      /* Lesson Time */
-      .lesson-time {
-        font-size: 12px;
-        color: #333;
-      }
+/* 🔥 Hover Effect - More visibility */
+.lesson-card:hover {
+  background: #f8f9fa;
+  border-color: #007bff;
+  box-shadow: 4px 6px 12px rgba(0, 123, 255, 0.3);
+  transform: translateY(-2px);
+}
 
-      /* Lesson Actions */
-      .lesson-actions .btn {
-        margin: 5px;
-        font-size: 12px;
-      }
-      .sortable-ghost {
-        opacity: 0.5;
-        background: rgba(0, 0, 0, 0.1);
-      }
+/* ✋ Dragging Effect - Clearer Feedback */
+.lesson-card:active {
+  cursor: grabbing;
+  border-color: #28a745;
+  box-shadow: 0px 0px 15px rgba(40, 167, 69, 0.6);
+  transform: scale(1.05);
+}
+
+/* 🔵 Glow Effect on Drag Start */
+.sortable-ghost {
+  opacity: 0.8;
+  background: rgba(0, 123, 255, 0.15);
+  border: 3px dashed #007bff;
+}
+
+/* ⚡ Click Animation - Small bounce effect */
+.lesson-card:active {
+  animation: bounce 0.3s ease;
+}
+
+@keyframes bounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* 🎓 Lesson Title */
+.lesson-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+}
+
+/* 🔲 Lesson Icon - Larger & More Visible */
+.lesson-icon i {
+  font-size: 42px;
+  margin-bottom: 8px;
+}
+
+/* 🕒 Lesson Time - More Readable */
+.lesson-time {
+  font-size: 14px;
+  color: #555;
+  font-weight: 500;
+  text-align: center;
+}
+
     </style>
   </head>
   <body>
@@ -205,75 +245,88 @@
         <div class="lesson-container">
             <!-- Sunday -->
             <div class="lesson-column" id="sunday-column">
-                <h5 class="lesson-day">Sunday <span class="lesson-date" id="sunday-date"></span></h5>
+                <h5 class="lesson-day no-drag">Sunday <span class="lesson-date" id="sunday-date"></span></h5>
+                <div class="lesson-list" id="sunday-lessons"></div> 
             </div>
     
             <!-- Monday -->
             <div class="lesson-column" id="monday-column">
-                <h5 class="lesson-day">Monday <span class="lesson-date" id="monday-date"></span></h5>
-                <div class="lesson-card" id="monday-lesson-1" data-module-id="1">
-                    <div class="lesson-icon"><i class="far fa-file-alt text-secondary"></i></div>
-                    <div class="lesson-title">Data Structures</div>
-                    <div class="lesson-time">⏰ 10:00 AM - 11:30 AM</div>
-                </div>
-                <div class="lesson-card" id="monday-lesson-2" data-module-id="1">
-                    <div class="lesson-icon"><i class="far fa-file-pdf text-danger"></i></div>
-                    <div class="lesson-title">Introduction to Programming</div>
-                    <div class="lesson-time">⏰ 9:00 AM - 10:30 AM</div>
+                <h5 class="lesson-day no-drag">Monday <span class="lesson-date" id="monday-date"></span></h5>
+                <div class="lesson-list" id="monday-lessons">
+                    <div class="lesson-card" id="monday-lesson-1" data-module-id="1">
+                        <div class="lesson-icon"><i class="far fa-file-alt text-secondary"></i></div>
+                        <div class="lesson-title">Data Structures</div>
+                        <div class="lesson-time">⏰ 10:00 AM - 11:30 AM</div>
+                    </div>
+                    <div class="lesson-card" id="monday-lesson-2" data-module-id="2">
+                        <div class="lesson-icon"><i class="far fa-file-pdf text-danger"></i></div>
+                        <div class="lesson-title">Introduction to Programming</div>
+                        <div class="lesson-time">⏰ 9:00 AM - 10:30 AM</div>
+                    </div>
                 </div>
             </div>
     
             <!-- Tuesday -->
             <div class="lesson-column" id="tuesday-column">
-                <h5 class="lesson-day">Tuesday <span class="lesson-date" id="tuesday-date"></span></h5>
-                <div class="lesson-card" id="tuesday-lesson-1" data-module-id="1">
-                    <div class="lesson-icon"><i class="far fa-file-video text-primary"></i></div>
-                    <div class="lesson-title">Object-Oriented Programming</div>
-                    <div class="lesson-time">⏰ 1:00 PM - 2:30 PM</div>
+                <h5 class="lesson-day no-drag">Tuesday <span class="lesson-date" id="tuesday-date"></span></h5>
+                <div class="lesson-list" id="tuesday-lessons">
+                    <div class="lesson-card" id="tuesday-lesson-1" data-module-id="3">
+                        <div class="lesson-icon"><i class="far fa-file-video text-primary"></i></div>
+                        <div class="lesson-title">Object-Oriented Programming</div>
+                        <div class="lesson-time">⏰ 1:00 PM - 2:30 PM</div>
+                    </div>
                 </div>
             </div>
     
             <!-- Wednesday -->
             <div class="lesson-column" id="wednesday-column">
-                <h5 class="lesson-day">Wednesday <span class="lesson-date" id="wednesday-date"></span></h5>
-                <div class="lesson-card" id="wednesday-lesson-1" data-module-id="1">
-                    <div class="lesson-icon"><i class="far fa-file-word text-info"></i></div>
-                    <div class="lesson-title">Algorithms</div>
-                    <div class="lesson-time">⏰ 2:00 PM - 3:30 PM</div>
+                <h5 class="lesson-day no-drag">Wednesday <span class="lesson-date" id="wednesday-date"></span></h5>
+                <div class="lesson-list" id="wednesday-lessons">
+                    <div class="lesson-card" id="wednesday-lesson-1" data-module-id="4">
+                        <div class="lesson-icon"><i class="far fa-file-word text-info"></i></div>
+                        <div class="lesson-title">Algorithms</div>
+                        <div class="lesson-time">⏰ 2:00 PM - 3:30 PM</div>
+                    </div>
                 </div>
             </div>
     
             <!-- Thursday -->
             <div class="lesson-column" id="thursday-column">
-                <h5 class="lesson-day">Thursday <span class="lesson-date" id="thursday-date"></span></h5>
-                <div class="lesson-card" id="thursday-lesson-1" data-module-id="1">
-                    <div class="lesson-icon"><i class="far fa-file-excel text-success"></i></div>
-                    <div class="lesson-title">Database Management</div>
-                    <div class="lesson-time">⏰ 3:00 PM - 4:30 PM</div>
+                <h5 class="lesson-day no-drag">Thursday <span class="lesson-date" id="thursday-date"></span></h5>
+                <div class="lesson-list" id="thursday-lessons">
+                    <div class="lesson-card" id="thursday-lesson-1" data-module-id="5">
+                        <div class="lesson-icon"><i class="far fa-file-excel text-success"></i></div>
+                        <div class="lesson-title">Database Management</div>
+                        <div class="lesson-time">⏰ 3:00 PM - 4:30 PM</div>
+                    </div>
                 </div>
             </div>
     
             <!-- Friday -->
             <div class="lesson-column" id="friday-column">
-                <h5 class="lesson-day">Friday <span class="lesson-date" id="friday-date"></span></h5>
-                <div class="lesson-card" id="friday-lesson-1" data-module-id="1">
-                    <div class="lesson-icon"><i class="far fa-file-powerpoint text-warning"></i></div>
-                    <div class="lesson-title">Web Development</div>
-                    <div class="lesson-time">⏰ 4:00 PM - 5:30 PM</div>
-                </div>
-                <div class="lesson-card" id="friday-lesson-2" data-module-id="1">
-                    <div class="lesson-icon"><i class="far fa-file-archive text-secondary"></i></div>
-                    <div class="lesson-title">Software Engineering</div>
-                    <div class="lesson-time">⏰ 5:00 PM - 6:30 PM</div>
+                <h5 class="lesson-day no-drag">Friday <span class="lesson-date" id="friday-date"></span></h5>
+                <div class="lesson-list" id="friday-lessons">
+                    <div class="lesson-card" id="friday-lesson-1" data-module-id="6">
+                        <div class="lesson-icon"><i class="far fa-file-powerpoint text-warning"></i></div>
+                        <div class="lesson-title">Web Development</div>
+                        <div class="lesson-time">⏰ 4:00 PM - 5:30 PM</div>
+                    </div>
+                    <div class="lesson-card" id="friday-lesson-2" data-module-id="7">
+                        <div class="lesson-icon"><i class="far fa-file-archive text-secondary"></i></div>
+                        <div class="lesson-title">Software Engineering</div>
+                        <div class="lesson-time">⏰ 5:00 PM - 6:30 PM</div>
+                    </div>
                 </div>
             </div>
     
             <!-- Saturday -->
             <div class="lesson-column" id="saturday-column">
-                <h5 class="lesson-day">Saturday <span class="lesson-date" id="saturday-date"></span></h5>
+                <h5 class="lesson-day no-drag">Saturday <span class="lesson-date" id="saturday-date"></span></h5>
+                <div class="lesson-list" id="saturday-lessons"></div>
             </div>
         </div>
-    </div>
+      </div>
+    
     
     </div>
 
@@ -942,25 +995,33 @@
     </script>
 
   {% if is_teacher %}
-    <script>
+      <script>
         document.addEventListener("DOMContentLoaded", function () {
           const days = [
               "sunday", "monday", "tuesday", "wednesday",
               "thursday", "friday", "saturday"
           ];
       
-          // Initialize SortableJS for each day's column
-          days.forEach((day) => {
-              const column = document.querySelector(`.lesson-column:nth-child(${days.indexOf(day) + 1})`);
-              if (column) {
-                  new Sortable(column, {
-                      animation: 150,
-                      ghostClass: "sortable-ghost",
-                      onEnd: function (evt) {
-                          console.log(`Moved lesson from index ${evt.oldIndex} to ${evt.newIndex}`);
-                      }
-                  });
-              }
+          // Prevent dragging the lesson-day headers
+          document.querySelectorAll(".lesson-day").forEach((header) => {
+              header.setAttribute("draggable", "false");
+              header.style.pointerEvents = "none"; // Prevents mouse interactions
+          });
+      
+          // Enable sorting only for lesson cards inside each lesson-list
+          document.querySelectorAll(".lesson-list").forEach((list) => {
+              new Sortable(list, {
+                  animation: 200,
+                  ghostClass: "sortable-ghost", // Add ghost effect while dragging
+                  group: "lessons", // Allows dragging between different lesson lists
+                  onStart: function (evt) {
+                      evt.item.style.borderColor = "#28a745"; // Green outline while dragging
+                  },
+                  onEnd: function (evt) {
+                      evt.item.style.borderColor = "#ddd"; // Reset border color
+                      console.log(`Moved lesson from index ${evt.oldIndex} to ${evt.newIndex}`);
+                  }
+              });
           });
       
           // Add click event for lesson cards to redirect to viewModuleCM
@@ -968,7 +1029,13 @@
               card.addEventListener("click", function () {
                   const moduleId = this.dataset.moduleId; // Get module ID from dataset
                   if (moduleId) {
-                      window.location.href = `/viewModuleCM/${moduleId}/`; // Redirect to viewModuleCM
+                      this.style.borderColor = "#ffc107"; // Yellow border on click
+                      this.style.boxShadow = "0px 0px 12px rgba(255, 193, 7, 0.5)";
+                      setTimeout(() => {
+                          this.style.borderColor = "#007bff"; // Reset after animation
+                          this.style.boxShadow = "none";
+                          window.location.href = `/viewModuleCM/${moduleId}/`; // Redirect to viewModuleCM
+                      }, 200);
                   }
               });
           });
@@ -984,8 +1051,9 @@
       
               document.getElementById(`${day}-date`).innerText = `(${formattedDate})`;
           });
-        });
-    </script>
+      });
+      
+      </script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
           const today = new Date();

@@ -2301,14 +2301,21 @@ class GradeIndividualEssayView(View):
                     'student_question': student_question,
                     'error': f"Score cannot exceed {max_score}",
                 })
-            student_question.score = score
-            student_question.status = True
-            student_question.save()
-
+            
             student_activity, created = StudentActivity.objects.get_or_create(
                 student=student_question.student,
                 activity=activity
             )
+
+            # Check if the student already has a score
+            previous_score = student_question.score if student_question.score else 0
+
+            # Remove old score from total_score
+            student_activity.total_score -= previous_score  # Subtract old score
+
+            student_question.score = score
+            student_question.status = True
+            student_question.save()
 
             # Update the total_score in the StudentActivity
             student_activity.total_score += score

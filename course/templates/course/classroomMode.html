@@ -438,11 +438,13 @@
                     lessonCard.style.cursor = "pointer"; // Indicate it's clickable
 
                     let icon = getModuleIcon(lesson.type);
+                    let activityCount = lesson.activities.length;
 
                     lessonCard.innerHTML = `
                         <div class="lesson-icon">${icon}</div>
                         <div class="lesson-title">${lesson.lesson}</div>
                         <div class="lesson-time">⏰ ${day.time || 'N/A'}</div>
+                        <div class="activity-count text-muted" style="font-size: 14px;">(${activityCount} activities)</div>
                     `;
 
                     // Add click event for redirection

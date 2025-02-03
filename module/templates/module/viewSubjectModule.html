@@ -95,57 +95,66 @@
               <h4 class="text-success fw-bold mb-3"><i class="fas fa-tasks"></i> Activities</h4>
 
               <!-- Assignments Section -->
-              <h5 class="text-primary"><i class="fas fa-file-alt"></i> Assignments</h5>
-              <ul class="list-group list-group-flush mb-3">
-                {% for assignment in assignments %}
-                  <li class="list-group-item border-0 bg-transparent d-flex justify-content-between">
-                    <span class="text-dark">{{ assignment.activity_name }}</span>
-                    <a href="{% url 'activity_detailCM' assignment.id %}" class="btn btn-sm btn-outline-primary">View</a>
-                  </li>
-                {% empty %}
-                  <li class="list-group-item border-0 bg-transparent text-muted text-center">No assignments available</li>
-                {% endfor %}
-              </ul>
+              {% if assignments %}
+                <h5 class="text-primary"><i class="fas fa-file-alt"></i> Assignments</h5>
+                <ul class="list-group list-group-flush mb-3">
+                  {% for assignment in assignments %}
+                    <li class="list-group-item border-0 bg-transparent d-flex justify-content-between">
+                      <span class="text-dark">{{ assignment.activity_name }}</span>
+                      <a href="{% url 'activity_detailCM' assignment.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                    </li>
+                  {% empty %}
+                    <li class="list-group-item border-0 bg-transparent text-muted text-center">No assignments available</li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
 
               <!-- Quizzes Section -->
-              <h5 class="text-danger"><i class="fas fa-question-circle"></i> Quizzes</h5>
-              <ul class="list-group list-group-flush mb-3">
-                {% for quiz in quizzes %}
-                  <li class="list-group-item border-0 bg-transparent d-flex justify-content-between">
-                    <span class="text-dark">{{ quiz.activity_name }}</span>
-                    <a href="{% url 'activity_detailCM' quiz.id %}" class="btn btn-sm btn-outline-primary">View</a>
-                  </li>
-                {% empty %}
-                  <li class="list-group-item border-0 bg-transparent text-muted text-center">No quizzes available</li>
-                {% endfor %}
-              </ul>
+              {% if quizzes %}
+                <h5 class="text-danger"><i class="fas fa-question-circle"></i> Quizzes</h5>
+                <ul class="list-group list-group-flush mb-3">
+                  {% for quiz in quizzes %}
+                    <li class="list-group-item border-0 bg-transparent d-flex justify-content-between">
+                      <span class="text-dark">{{ quiz.activity_name }}</span>
+                      <a href="{% url 'activity_detailCM' quiz.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                    </li>
+                  {% empty %}
+                    <li class="list-group-item border-0 bg-transparent text-muted text-center">No quizzes available</li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
 
               <!-- Exams Section -->
-              <h5 class="text-info"><i class="fas fa-book"></i> Exams</h5>
-              <ul class="list-group list-group-flush mb-3">
-                {% for exam in exams %}
-                  <li class="list-group-item border-0 bg-transparent d-flex justify-content-between">
-                    <span class="text-dark">{{ exam.activity_name }}</span>
-                    <a href="{% url 'activity_detailCM' exam.id %}" class="btn btn-sm btn-outline-primary">View</a>
-                  </li>
-                {% empty %}
-                  <li class="list-group-item border-0 bg-transparent text-muted text-center">No exams available</li>
-                {% endfor %}
-              </ul>
+              {% if exams %}
+                <h5 class="text-info"><i class="fas fa-book"></i> Exams</h5>
+                <ul class="list-group list-group-flush mb-3">
+                  {% for exam in exams %}
+                    <li class="list-group-item border-0 bg-transparent d-flex justify-content-between">
+                      <span class="text-dark">{{ exam.activity_name }}</span>
+                      <a href="{% url 'activity_detailCM' exam.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                    </li>
+                  {% empty %}
+                    <li class="list-group-item border-0 bg-transparent text-muted text-center">No exams available</li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
 
               <!-- Essays Section -->
-              <h5 class="text-warning"><i class="fas fa-file-signature"></i> Special Activity</h5>
-              <ul class="list-group list-group-flush mb-3">
-                {% for special_activities in special_activities %}
-                  <li class="list-group-item border-0 bg-transparent d-flex justify-content-between">
-                    <span class="text-dark">{{ special_activities.activity_name }}</span>
-                    <a href="{% url 'activity_detailCM' special_activities.id %}" class="btn btn-sm btn-outline-primary">View</a>
-                  </li>
-                {% empty %}
-                  <li class="list-group-item border-0 bg-transparent text-muted text-center">No special activities available</li>
-                {% endfor %}
-              </ul>
-
+              {% if special_activities %}
+                <h5 class="text-warning"><i class="fas fa-file-signature"></i> Special Activity</h5>
+                <ul class="list-group list-group-flush mb-3">
+                  {% for special_activities in special_activities %}
+                    <li class="list-group-item border-0 bg-transparent d-flex justify-content-between">
+                      <span class="text-dark">{{ special_activities.activity_name }}</span>
+                      <a href="{% url 'activity_detailCM' special_activities.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                    </li>
+                  {% empty %}
+                    <li class="list-group-item border-0 bg-transparent text-muted text-center">No special activities available</li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+              
+              {% if activities_with_grading_needed %}
               <h5 class="text-primary"><i class="fas fa-file-alt"></i> Activities to be graded</h5>
               <ul class="list-group list-group-flush mb-3">
                 {% for activity, count in activities_with_grading_needed %}
@@ -157,6 +166,8 @@
                   <li class="list-group-item border-0 bg-transparent text-muted text-center">No activities to be graded available</li>
                 {% endfor %}
               </ul>
+              {% endif %}
+              
             </div>
           </div>
         </div>

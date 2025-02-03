@@ -28,7 +28,6 @@ class scheduleForm(forms.ModelForm):
 
 class subjectForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
-        only_photo = kwargs.pop('only_photo', False)
         super(subjectForm, self).__init__(*args, **kwargs)
         teacher_role = Role.objects.get(name__iexact='teacher')
 
@@ -45,15 +44,10 @@ class subjectForm(forms.ModelForm):
                 id=self.instance.assign_teacher.id
             )
 
-        if only_photo:
-            for field in self.fields:
-                if field != 'subject_photo':  # Allow only subject_photo to be editable
-                    self.fields[field].widget.attrs['readonly'] = True
-                    self.fields[field].widget.attrs['disabled'] = True
-
     class Meta:
         model = Subject
-        exclude = ['allow_substitute_teacher']
+        # exclude = ['allow_substitute_teacher']
+        fields = '__all__'
         widgets = {
             'subject_name': forms.TextInput(attrs={'class': 'form-control'}),
             'subject_short_name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -80,10 +74,10 @@ class subjectForm(forms.ModelForm):
 
 
 class subjectPhotoForm(forms.ModelForm):
-    """ Form specifically for updating only the subject photo """
+    """ Form specifically for updating the subject photo and the allow substitute teacher"""
     class Meta:
         model = Subject
-        fields = ['subject_photo']
+        fields = ['subject_photo', 'allow_substitute_teacher']
 
 
 

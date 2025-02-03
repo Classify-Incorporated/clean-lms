@@ -9,6 +9,7 @@ urlpatterns = [
     path('updateModuleCM/<int:pk>/', updateModuleCM, name='updateModuleCM'),
     path('viewModule/<int:pk>/', viewModule, name='viewModule'),
     path('viewModuleCM/<int:pk>/', viewModuleCM, name='viewModuleCM'),
+    path('viewSubjectModule/<int:pk>/', viewSubjectModule, name='viewSubjectModule'),
     path('deleteModule/<int:pk>/', deleteModule, name='deleteModule'),
     path('module_progress/', module_progress, name='module_progress'),
     path('activityProgress/module/<int:activity_id>/', detailActivityProgress, name='activityProgress'),

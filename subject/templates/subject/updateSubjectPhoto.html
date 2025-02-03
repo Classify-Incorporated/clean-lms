@@ -19,7 +19,10 @@
             {{ form.subject_photo.label_tag }}
             {{ form.subject_photo }}
           </div>
-          <button type="submit" class="btn btn-primary">Update Photo</button>
+          <div class="form-group">
+            {{ form.allow_substitute_teacher.label_tag }} {{ form.allow_substitute_teacher }}
+          </div>
+          <button type="submit" class="btn btn-primary">Update</button>
         </form>
       </div>
     </div>

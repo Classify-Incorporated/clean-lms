@@ -94,7 +94,7 @@
                               {% endif %}  
                               {% if request.user.profile.role.name|lower == "teacher" %}
                                 <a class="dropdown-item" href="{% url 'updateSubjectPhoto' subject.id %}">
-                                  <i class="fas fa-edit"></i> Change Subject Photo
+                                  <i class="fas fa-edit"></i> Update
                                 </a>         
                               {% endif %}  
                             </div>
@@ -153,6 +153,7 @@
   </div>
   <div id="editModalBackdrop" class="custom-modal-backdrop"></div>
 
+
   <!-- Custom Scripts for Modal and SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
@@ -197,6 +198,8 @@
       document.getElementById('editModal').classList.remove('show')
       document.getElementById('editModalBackdrop').classList.remove('show')
     })
+
+
 	function getCSRFToken() {
       return document.querySelector('[name=csrfmiddlewaretoken]').value;
   }      

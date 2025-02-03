@@ -2255,6 +2255,24 @@ class GradeEssayView(View):
             'student_questions': student_questions,
         })
 
+@method_decorator(login_required, name='dispatch')
+class GradeEssayViewCM(View):
+    def get(self, request, activity_id):
+        activity = get_object_or_404(Activity, id=activity_id)
+        subject = activity.subject
+        subject = subject_id = activity.subject.id
+        subject = get_object_or_404(Subject, id=subject_id)
+        student_questions = StudentQuestion.objects.filter(
+            activity_question__activity=activity,
+            activity_question__quiz_type__name__in=['Essay', 'Document'],
+            status=True, 
+            score=0 
+        )
+        return render(request, 'activity/grade/gradeEssayCM.html', {
+            'activity': activity,
+            'student_questions': student_questions,
+            'subject': subject,
+        })
 
 # Grade student individual essay
 @method_decorator(login_required, name='dispatch')
@@ -2283,6 +2301,60 @@ class GradeIndividualEssayView(View):
                     'student_question': student_question,
                     'error': f"Score cannot exceed {max_score}",
                 })
+            
+            student_activity, created = StudentActivity.objects.get_or_create(
+                student=student_question.student,
+                activity=activity
+            )
+
+            # Check if the student already has a score
+            previous_score = student_question.score if student_question.score else 0
+
+            # Remove old score from total_score
+            student_activity.total_score -= previous_score  # Subtract old score
+
+            student_question.score = score
+            student_question.status = True
+            student_question.save()
+
+            # Update the total_score in the StudentActivity
+            student_activity.total_score += score
+            student_activity.save()
+
+        # Redirect to the subject detail page after grading
+        messages.success(request, 'Successfully graded.')
+        return redirect('grade_essays', activity_id=activity_id)
+
+@method_decorator(login_required, name='dispatch')
+class GradeIndividualEssayViewCM(View):
+    def get(self, request, activity_id, student_question_id):
+        activity = get_object_or_404(Activity, id=activity_id)
+        student_question = get_object_or_404(StudentQuestion, id=student_question_id)
+        subject = activity.subject
+        subject = subject_id = activity.subject.id
+        subject = get_object_or_404(Subject, id=subject_id)
+
+        return render(request, 'activity/grade/gradeIndividualEssayCM.html', {
+            'activity': activity,
+            'student_question': student_question,
+            'subject': subject,
+        })
+
+    def post(self, request, activity_id, student_question_id):
+        activity = get_object_or_404(Activity, id=activity_id)
+        student_question = get_object_or_404(StudentQuestion, id=student_question_id)
+
+        score = request.POST.get('score')
+        max_score = student_question.activity_question.score
+
+        if score:
+            score = float(score)
+            if score > max_score:
+                return render(request, 'activity/grade/gradeIndividualEssayCM.html', {
+                    'activity': activity,
+                    'student_question': student_question,
+                    'error': f"Score cannot exceed {max_score}",
+                })
             student_question.score = score
             student_question.status = True
             student_question.save()
@@ -2298,8 +2370,7 @@ class GradeIndividualEssayView(View):
 
         # Redirect to the subject detail page after grading
         messages.success(request, 'Successfully graded.')
-        return redirect('grade_essays', activity_id=activity_id)
-
+        return redirect('grade_essaysCM', activity_id=activity_id)
 
 @login_required
 def studentQuizzesExams(request):

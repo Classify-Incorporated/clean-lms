@@ -17,6 +17,7 @@ urlpatterns = [
     path('grade_essays/<int:activity_id>/', GradeEssayView.as_view(), name='grade_essays'),
     path('grade_essaysCM/<int:activity_id>/', GradeEssayViewCM.as_view(), name='grade_essaysCM'),
     path('grade_individual_essay/<int:activity_id>/<int:student_question_id>/', GradeIndividualEssayView.as_view(), name='grade_individual_essay'),
+    path('grade_individual_essayCM/<int:activity_id>/<int:student_question_id>/', GradeIndividualEssayViewCM.as_view(), name='grade_individual_essayCM'),
     path('save_all_questions/<int:activity_id>/', SaveAllQuestionsView.as_view(), name='save_all_questions'),
     path('save_all_questionsCM/<int:activity_id>/', SaveAllQuestionsViewCM.as_view(), name='save_all_questionsCM'),
     path('UpdateActivity/<int:activity_id>/', UpdateActivity, name='UpdateActivity'),

@@ -47,37 +47,30 @@
     </div>
 
     <!-- Main Content -->
-    <div class="container classroom-container fade-in">
-      <script type="text/javascript">
-        window.MathJax = {
-            tex: {
-                inlineMath: [['\\(', '\\)'], ['$', '$']],
-                displayMath: [['\\[', '\\]'], ['$$', '$$']]
-            },
-            options: {
-                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
-            }
-        };
-    </script>
-      <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-
-      
+    <div class="classroom-container fade-in">
+      <!-- Page Header -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary fw-bold"><i class="fas fa-edit"></i> {{ activity.activity_name }}</h2>
+        <a href="javascript:history.back()" class="btn btn-outline-secondary shadow-sm">
+          <i class="fas fa-arrow-left"></i> Back
+        </a>
+      </div>
+    
       {% if is_teacher %}
-          <!-- Display only questions and correct answers for teachers -->
+        <!-- Teacher View: Display Questions & Correct Answers -->
+        <div class="card shadow-sm rounded-3 border-0 p-4" style="background: #fef6e4;">
+          <h4 class="text-dark fw-bold mb-3"><i class="fas fa-eye"></i> View Questions</h4>
+          
           {% for question in questions %}
-            <div class="form-group">
-
-              {% if question.quiz_type.name == 'Calculated Numeric' %}
-                <label>{{ forloop.counter }}. \( {{ question.question_text|safe }} \) <span class="text-muted">(Max Score: {{ question.score }})</span></label>
-              {% else %}
-                <label>{{ forloop.counter }}. {{ question.question_text }} <span class="text-muted">(Max Score: {{ question.score }})</span> </label>
-              {% endif %}
+            <div class="p-3 mb-3 bg-white rounded shadow-sm">
+              <p class="fw-bold">{{ forloop.counter }}. {{ question.question_text }} <span class="text-muted">(Max Score: {{ question.score }})</span></p>
+              
               {% if question.quiz_type.name == 'Multiple Choice' %}
-                <p>Correct Answer: {{ question.correct_answer }}</p>
+                <p class="text-success fw-bold">Correct Answer: {{ question.correct_answer }}</p>
               {% elif question.quiz_type.name == 'True/False' %}
-                <p>Correct Answer: {{ question.correct_answer }}</p>
+                <p class="text-success fw-bold">Correct Answer: {{ question.correct_answer }}</p>
               {% elif question.quiz_type.name == 'Essay' %}
-                <p>Essay Question (No specific correct answer displayed)</p>
+                <p class="text-muted">Essay Question (No specific correct answer displayed)</p>
               {% elif question.quiz_type.name == 'Matching Type' %}
                 <ul>
                   {% for pair in question.pairs %}
@@ -85,110 +78,103 @@
                   {% endfor %}
                 </ul>
               {% elif question.quiz_type.name == 'Calculated Numeric' %}
-                <p>Correct Answer: \( {{ question.correct_answer|safe }} \)</p>
+                <p class="text-success fw-bold">Correct Answer: \( {{ question.correct_answer|safe }} \)</p>
               {% elif question.quiz_type.name == 'Document' %}
-                <p>
-                  Uploaded Document: <a href="{{ question.correct_answer.url }}" target="_blank">View Document</a>
-                </p>
+                <p>Uploaded Document: <a href="{{ question.correct_answer.url }}" target="_blank" class="btn btn-sm btn-info">View Document</a></p>
               {% else %}
-                <p>Correct Answer: {{ question.correct_answer }}</p>
+                <p class="text-success fw-bold">Correct Answer: {{ question.correct_answer }}</p>
               {% endif %}
             </div>
           {% endfor %}
-          <a href="javascript:history.back()" class="btn btn-secondary">Back</a>
-        {% elif is_student %}
-        
-
-        {% if not can_retake %}
-            <!-- Show the message if the student has no more retakes -->
-            <p class="text-danger">You have reached the maximum number of retakes for this activity.</p>
-            <a href="{% url 'studentActivityView' activity.id %}" class="btn btn-info">View Activity Summary</a>
-        {% else %}
-
-        {% if not has_answered %}
-        <div class="alert alert-warning">
-          <h4>Time Remaining: <span id="timer"></span></h4>
         </div>
-          <!-- Display interactive form for students to answer the questions -->
-          <form method="post" action="{% url 'submit_answers' activity.id %}" enctype="multipart/form-data" id="activity-form">
-            {% csrf_token %}
-            {% for question in questions %}
-              <div class="form-group">
-                {% if question.quiz_type.name == 'Calculated Numeric' %}
-                  <label>{{ forloop.counter }}. \( {{ question.question_text|safe }} \) <span class="text-muted">(Max Score: {{ question.score }})</span></label>
-                {% else %}
-                  <label>{{ forloop.counter }}. {{ question.question_text }} <span class="text-muted">(Max Score: {{ question.score }})</span></label>
-                {% endif %}
-                {% if question.quiz_type.name == 'Multiple Choice' %}
-                  {% for choice in question.choices.all %}
-                    <div class="form-check">
-                      <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="choice_{{ choice.id }}" value="{{ choice.choice_text }}" {% if not can_retake %}disabled{% endif %} />
-                      <label class="form-check-label" for="choice_{{ choice.id }}">{{ choice.choice_text }}</label>
-                    </div>
-                  {% endfor %}
-                {% elif question.quiz_type.name == 'True/False' %}
-                  <div class="form-check">
-                    <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="true_{{ question.id }}" value="True" {% if not can_retake %}disabled{% endif %} />
-                    <label class="form-check-label" for="true_{{ question.id }}">True</label>
-                  </div>
-                  <div class="form-check">
-                    <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="false_{{ question.id }}" value="False" {% if not can_retake %}disabled{% endif %} />
-                    <label class="form-check-label" for="false_{{ question.id }}">False</label>
-                  </div>
-                {% elif question.quiz_type.name == 'Essay' %}
-                  <textarea name="question_{{ question.id }}" class="form-control"></textarea>
-                {% elif question.quiz_type.name == 'Matching Type' %}
-                  <div class="form-group">
-                    <label>Match the pairs:</label>
-                    {% for pair in question.pairs %}
-                      <div class="input-group mb-3">
-                        <!-- Left side -->
-                        <input type="text" class="form-control" value="{{ pair.left }}" readonly />
-                        
-                        <!-- Dropdown for right-side matching -->
-                        <select name="matching_right_{{ question.id }}_{{ forloop.counter0 }}" class="form-control" required>
-                          <option value="" disabled selected>Select a match</option>
-                          {% for right_term in question.shuffled_right_terms %}
-                            <option value="{{ right_term }}">{{ right_term }}</option>
-                          {% endfor %}
-                        </select>
-                        <input type="hidden" name="matching_left_{{ question.id }}_{{ forloop.counter0 }}" value="{{ pair.left }}" />
+        
+      {% elif is_student %}
+    
+        {% if not can_retake %}
+          <div class="alert alert-danger">You have reached the maximum number of retakes for this activity.</div>
+          <a href="{% url 'studentActivityView' activity.id %}" class="btn btn-info">View Activity Summary</a>
+        {% else %}
+    
+          {% if not has_answered %}
+            <div class="alert alert-warning">
+              <h4>Time Remaining: <span id="timer"></span></h4>
+            </div>
+    
+            <!-- Student Activity Form -->
+            <form method="post" action="{% url 'submit_answers' activity.id %}" enctype="multipart/form-data" id="activity-form">
+              {% csrf_token %}
+              
+              {% for question in questions %}
+                <div class="card shadow-sm rounded-3 border-0 p-4 mb-3" style="background: #e5f4e3;">
+                  <p class="fw-bold">{{ forloop.counter }}. {{ question.question_text }} <span class="text-muted">(Max Score: {{ question.score }})</span></p>
+    
+                  {% if question.quiz_type.name == 'Multiple Choice' %}
+                    {% for choice in question.choices.all %}
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="choice_{{ choice.id }}" value="{{ choice.choice_text }}" {% if not can_retake %}disabled{% endif %} />
+                        <label class="form-check-label" for="choice_{{ choice.id }}">{{ choice.choice_text }}</label>
                       </div>
                     {% endfor %}
-                  </div>
+    
+                  {% elif question.quiz_type.name == 'True/False' %}
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="true_{{ question.id }}" value="True" />
+                      <label class="form-check-label" for="true_{{ question.id }}">True</label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="false_{{ question.id }}" value="False" />
+                      <label class="form-check-label" for="false_{{ question.id }}">False</label>
+                    </div>
+    
+                  {% elif question.quiz_type.name == 'Essay' %}
+                    <textarea name="question_{{ question.id }}" class="form-control" rows="4" placeholder="Write your answer here..."></textarea>
+    
+                  {% elif question.quiz_type.name == 'Matching Type' %}
+                    <div class="form-group">
+                      <label>Match the pairs:</label>
+                      {% for pair in question.pairs %}
+                        <div class="input-group mb-2">
+                          <input type="text" class="form-control" value="{{ pair.left }}" readonly />
+                          <select name="matching_right_{{ question.id }}_{{ forloop.counter0 }}" class="form-control">
+                            <option value="" disabled selected>Select a match</option>
+                            {% for right_term in question.shuffled_right_terms %}
+                              <option value="{{ right_term }}">{{ right_term }}</option>
+                            {% endfor %}
+                          </select>
+                          <input type="hidden" name="matching_left_{{ question.id }}_{{ forloop.counter0 }}" value="{{ pair.left }}" />
+                        </div>
+                      {% endfor %}
+                    </div>
+    
                   {% elif question.quiz_type.name == 'Calculated Numeric' %}
-                  <div class="form-group">
-                        <input type="text" name="question_{{ question.id }}" class="form-control mathjax-input" data-preview="preview_{{ question.id }}" {% if not can_retake %}disabled{% endif %} />
-                        <div id="preview_{{ question.id }}" class="mathjax-preview"></div>
-                  </div>
-                {% elif question.quiz_type.name == 'Document' %}
-                  <div class="form-group">
-                    <label for="document_file_{{ question.id }}">Upload Document:</label>
-                    <input type="file" id="document_file_{{ question.id }}" name="question_{{ question.id }}" class="form-control" {% if not can_retake %}disabled{% endif %}  />
-                  </div>
-                {% else %}
-                  <input type="text" name="question_{{ question.id }}" class="form-control"  {% if not can_retake %}disabled{% endif %} />
-                {% endif %}
-              </div>
-            {% endfor %}
-            {% if can_retake %}
-              <button type="submit" class="btn btn-primary">Submit</button>
-            {% endif %}
-          </form>
+                    <input type="text" name="question_{{ question.id }}" class="form-control mathjax-input" data-preview="preview_{{ question.id }}" />
+                    <div id="preview_{{ question.id }}" class="mathjax-preview"></div>
+    
+                  {% elif question.quiz_type.name == 'Document' %}
+                    <input type="file" name="question_{{ question.id }}" class="form-control" />
+    
+                  {% else %}
+                    <input type="text" name="question_{{ question.id }}" class="form-control" />
+                  {% endif %}
+                </div>
+              {% endfor %}
+    
+              <button type="submit" class="btn btn-success w-100"><i class="fas fa-paper-plane"></i> Submit Answers</button>
+            </form>
+          
           {% else %}
-
-      <p>You have already answered this activity.</p>
-      
-      {% if is_student and can_retake and has_answered %}
-        <form method="post" action="{% url 'retake_activity' activity.id %}">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-warning">Retake Activity</button>
-        </form>
+            <div class="alert alert-info">You have already answered this activity.</div>
+            
+            {% if can_retake and has_answered %}
+              <form method="post" action="{% url 'retake_activity' activity.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-warning w-100"><i class="fas fa-redo"></i> Retake Activity</button>
+              </form>
+            {% endif %}
+          {% endif %}
+        {% endif %}
       {% endif %}
-      {% endif %}
-    {% endif %}
     </div>
-
     
     <script type="text/javascript">
       document.addEventListener('DOMContentLoaded', function () {
@@ -197,6 +183,19 @@
         })
       })
     </script>
+
+    <script type="text/javascript">
+      window.MathJax = {
+          tex: {
+              inlineMath: [['\\(', '\\)'], ['$', '$']],
+              displayMath: [['\\[', '\\]'], ['$$', '$$']]
+          },
+          options: {
+              skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+          }
+      };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
     <script>
       document.addEventListener('DOMContentLoaded', function () {
@@ -281,6 +280,5 @@
     <script src="{% static 'js/classroom-mode-full-screen.js' %}"></script>
     <script src="{% static 'js/file-validation.js' %}"></script>
     <script src="{% static 'js/modal.js' %}"></script>
-    {% endif %}
   </body>
 </html>

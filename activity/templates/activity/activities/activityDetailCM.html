@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="{% static 'assets/dist/css/settings.css' %}" />
     <link rel="stylesheet" href="{% static 'css/subject_details.css' %}" />
-    <link rel="icon" type="image/png" href="{% static 'favicon.ico' %}">
+    <link rel="icon" type="image/png" href="{% static 'favicon.ico' %}" />
   </head>
   <body class="bg-light">
     <!-- Classroom Header -->
@@ -21,16 +21,20 @@
 
     <!-- Main Content -->
     <div class="classroom-container fade-in">
+      <!-- Page Header -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary fw-bold"><i class="fas fa-tasks"></i> Activity Details</h2>
+        <a href="{% url 'viewSubjectModule' activity.module.id %}" class="btn btn-outline-secondary shadow-sm"><i class="fas fa-arrow-left"></i> Back to Subject</a>
+      </div>
+
       <div class="row justify-content-center">
-        <div class="col-md-8">
-          <!-- Activity Card -->
-          <div class="card shadow-lg mb-5">
-            <div class="card-header bg-success text-white text-center">
-              <h3 class="mb-0">{{ activity.activity_name }}</h3>
-            </div>
+        <div class="col-lg-8 col-md-12">
+          <!-- Activity Details Card -->
+          <div class="card shadow-sm rounded-3 border-0" style="background: #fef6e4;">
             <div class="card-body">
+              <h3 class="text-dark fw-bold mb-3"><i class="fas fa-file-alt"></i> {{ activity.activity_name }}</h3>
               <div class="row">
-                <div class="col-md-6 mb-3">
+                <div class="col-md-6">
                   <p>
                     <strong>Activity Type:</strong> {{ activity.activity_type.name }}
                   </p>
@@ -41,7 +45,7 @@
                     <strong>Term:</strong> {{ activity.term.term_name }}
                   </p>
                 </div>
-                <div class="col-md-6 mb-3">
+                <div class="col-md-6">
                   <p>
                     <strong>Start Time:</strong> {{ activity.start_time|date:'d M Y, H:i' }}
                   </p>
@@ -49,40 +53,40 @@
                     <strong>End Time:</strong> {{ activity.end_time|date:'d M Y, H:i' }}
                   </p>
                 </div>
-                <div class="col-12 text-center">
-                  <a href="{% url 'viewModuleCM' activity.module.id %}" class="btn btn-primary btn-lg"><i class="fas fa-book"></i> View Lesson</a>
-                </div>
               </div>
             </div>
-            <div class="card-footer text-center bg-light">
+          </div>
+
+          <!-- Action Panel -->
+          <div class="card shadow-sm rounded-3 border-0 mt-4" style="background: #e5f4e3;">
+            <div class="card-body text-center">
               {% if is_teacher %}
                 {% if activity_ended %}
-                       <a href="{% url 'DisplayQuestionsViewCM' activity.id %}" class="btn btn-warning btn-lg mx-2"><i class="fas fa-eye"></i> View Result</a>
-                    {% else %}
-                      <a href="{% url 'DisplayQuestionsViewCM' activity.id %}" class="btn btn-warning btn-lg mx-2"><i class="fas fa-eye"></i> View Activity</a>
-                    {% endif %}
+                  <a href="{% url 'DisplayQuestionsViewCM' activity.id %}" class="btn btn-warning btn-lg mx-2"><i class="fas fa-eye"></i> View Result</a>
+                {% else %}
+                  <a href="{% url 'DisplayQuestionsViewCM' activity.id %}" class="btn btn-warning btn-lg mx-2"><i class="fas fa-eye"></i> View Activity</a>
                 {% endif %}
+              {% endif %}
 
               {% if is_student %}
                 {% if is_absent %}
-                  <p class="text-danger">You were marked as absent and cannot participate in this activity.</p>
+                  <p class="text-danger fw-bold">You were marked as absent and cannot participate in this activity.</p>
                 {% elif is_present %}
-                  <p class="text-warning">You are marked as present. Please wait for further instructions.</p>
+                  <p class="text-warning fw-bold">You are marked as present. Please wait for further instructions.</p>
                 {% else %}
                   {% if activity_ended %}
                     <a href="{% url 'DisplayQuestionsViewCM' activity.id %}" class="btn btn-info btn-lg mx-2"><i class="fas fa-eye"></i> View Result</a>
                   {% else %}
                     <a href="{% url 'DisplayQuestionsViewCM' activity.id %}" class="btn btn-success btn-lg mx-2" onclick="return confirmActivityStart();"><i class="fas fa-pencil-alt"></i> Answer Activity</a>
-
                   {% endif %}
                 {% endif %}
               {% endif %}
             </div>
           </div>
 
-          <!-- Back Button -->
-          <div class="text-center">
-            <a href="{% url 'viewSubjectModule' activity.module.id %}" class="btn btn-outline-secondary btn-lg"><i class="fas fa-arrow-left"></i> Back to Subject</a>
+          <!-- Back Button (for smaller screens) -->
+          <div class="text-center mt-4 d-md-none">
+            <a href="{% url 'viewSubjectModule' activity.module.id %}" class="btn btn-lg btn-outline-secondary shadow-sm"><i class="fas fa-arrow-left"></i> Back to Subject</a>
           </div>
         </div>
       </div>

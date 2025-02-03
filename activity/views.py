@@ -2318,6 +2318,52 @@ class GradeIndividualEssayView(View):
         messages.success(request, 'Successfully graded.')
         return redirect('grade_essays', activity_id=activity_id)
 
+@method_decorator(login_required, name='dispatch')
+class GradeIndividualEssayViewCM(View):
+    def get(self, request, activity_id, student_question_id):
+        activity = get_object_or_404(Activity, id=activity_id)
+        student_question = get_object_or_404(StudentQuestion, id=student_question_id)
+        subject = activity.subject
+        subject = subject_id = activity.subject.id
+        subject = get_object_or_404(Subject, id=subject_id)
+
+        return render(request, 'activity/grade/gradeIndividualEssayCM.html', {
+            'activity': activity,
+            'student_question': student_question,
+            'subject': subject,
+        })
+
+    def post(self, request, activity_id, student_question_id):
+        activity = get_object_or_404(Activity, id=activity_id)
+        student_question = get_object_or_404(StudentQuestion, id=student_question_id)
+
+        score = request.POST.get('score')
+        max_score = student_question.activity_question.score
+
+        if score:
+            score = float(score)
+            if score > max_score:
+                return render(request, 'activity/grade/gradeIndividualEssayCM.html', {
+                    'activity': activity,
+                    'student_question': student_question,
+                    'error': f"Score cannot exceed {max_score}",
+                })
+            student_question.score = score
+            student_question.status = True
+            student_question.save()
+
+            student_activity, created = StudentActivity.objects.get_or_create(
+                student=student_question.student,
+                activity=activity
+            )
+
+            # Update the total_score in the StudentActivity
+            student_activity.total_score += score
+            student_activity.save()
+
+        # Redirect to the subject detail page after grading
+        messages.success(request, 'Successfully graded.')
+        return redirect('grade_essaysCM', activity_id=activity_id)
 
 @login_required
 def studentQuizzesExams(request):

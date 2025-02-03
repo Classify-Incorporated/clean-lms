@@ -100,7 +100,7 @@
                 {% for assignment in assignments %}
                   <li class="list-group-item border-0 bg-transparent d-flex justify-content-between">
                     <span class="text-dark">{{ assignment.activity_name }}</span>
-                    <a href="#" class="btn btn-sm btn-outline-primary">View</a>
+                    <a href="{% url 'activity_detailCM' assignment.id %}" class="btn btn-sm btn-outline-primary">View</a>
                   </li>
                 {% empty %}
                   <li class="list-group-item border-0 bg-transparent text-muted text-center">No assignments available</li>
@@ -113,7 +113,7 @@
                 {% for quiz in quizzes %}
                   <li class="list-group-item border-0 bg-transparent d-flex justify-content-between">
                     <span class="text-dark">{{ quiz.activity_name }}</span>
-                    <a href="#" class="btn btn-sm btn-outline-primary">View</a>
+                    <a href="{% url 'activity_detailCM' quiz.id %}" class="btn btn-sm btn-outline-primary">View</a>
                   </li>
                 {% empty %}
                   <li class="list-group-item border-0 bg-transparent text-muted text-center">No quizzes available</li>
@@ -126,7 +126,7 @@
                 {% for exam in exams %}
                   <li class="list-group-item border-0 bg-transparent d-flex justify-content-between">
                     <span class="text-dark">{{ exam.activity_name }}</span>
-                    <a href="#" class="btn btn-sm btn-outline-primary">View</a>
+                    <a href="{% url 'activity_detailCM' exam.id %}" class="btn btn-sm btn-outline-primary">View</a>
                   </li>
                 {% empty %}
                   <li class="list-group-item border-0 bg-transparent text-muted text-center">No exams available</li>
@@ -139,7 +139,7 @@
                 {% for special_activities in special_activities %}
                   <li class="list-group-item border-0 bg-transparent d-flex justify-content-between">
                     <span class="text-dark">{{ special_activities.activity_name }}</span>
-                    <a href="#" class="btn btn-sm btn-outline-primary">View</a>
+                    <a href="{% url 'activity_detailCM' special_activities.id %}" class="btn btn-sm btn-outline-primary">View</a>
                   </li>
                 {% empty %}
                   <li class="list-group-item border-0 bg-transparent text-muted text-center">No special activities available</li>

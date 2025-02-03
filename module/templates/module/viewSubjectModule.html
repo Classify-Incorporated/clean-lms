@@ -188,19 +188,20 @@
 
     <script>
       document.addEventListener('DOMContentLoaded', function () {
-        // Fullscreen function for PDFs (iframe inside container)
+        // Fullscreen function for PDFs
         const pdfContainer = document.getElementById('pdf-container')
+        const pdfFile = document.getElementById('pdf-file')
         const pdfFullscreenBtn = document.getElementById('pdf-fullscreen-btn')
       
         if (pdfFullscreenBtn) {
           pdfFullscreenBtn.addEventListener('click', function () {
             if (!document.fullscreenElement) {
-              if (pdfContainer.requestFullscreen) {
-                pdfContainer.requestFullscreen()
-              } else if (pdfContainer.webkitRequestFullscreen) {
-                pdfContainer.webkitRequestFullscreen()
-              } else if (pdfContainer.msRequestFullscreen) {
-                pdfContainer.msRequestFullscreen()
+              if (pdfFile.requestFullscreen) {
+                pdfFile.requestFullscreen()
+              } else if (pdfFile.webkitRequestFullscreen) {
+                pdfFile.webkitRequestFullscreen()
+              } else if (pdfFile.msRequestFullscreen) {
+                pdfFile.msRequestFullscreen()
               }
               pdfFullscreenBtn.innerHTML = '<i class="fas fa-compress"></i> Exit Fullscreen'
             } else {
@@ -212,17 +213,18 @@
       
         // Fullscreen function for Images
         const imageContainer = document.getElementById('image-container')
+        const imageFile = document.getElementById('image-file')
         const imageFullscreenBtn = document.getElementById('image-fullscreen-btn')
       
         if (imageFullscreenBtn) {
           imageFullscreenBtn.addEventListener('click', function () {
             if (!document.fullscreenElement) {
-              if (imageContainer.requestFullscreen) {
-                imageContainer.requestFullscreen()
-              } else if (imageContainer.webkitRequestFullscreen) {
-                imageContainer.webkitRequestFullscreen()
-              } else if (imageContainer.msRequestFullscreen) {
-                imageContainer.msRequestFullscreen()
+              if (imageFile.requestFullscreen) {
+                imageFile.requestFullscreen()
+              } else if (imageFile.webkitRequestFullscreen) {
+                imageFile.webkitRequestFullscreen()
+              } else if (imageFile.msRequestFullscreen) {
+                imageFile.msRequestFullscreen()
               }
               imageFullscreenBtn.innerHTML = '<i class="fas fa-compress"></i> Exit Fullscreen'
             } else {

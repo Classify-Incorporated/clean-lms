@@ -16,6 +16,8 @@ from django.http import HttpResponse
 from course.models import Term
 from collections import defaultdict
 import re
+from django.db.models import Q
+from activity.models import ActivityQuestion, StudentQuestion
 # Create your views here.
 
 #Module List
@@ -406,17 +408,46 @@ def viewModule(request, pk):
 @permission_required('module.view_module', raise_exception=True)
 def viewSubjectModule(request, pk):
     module = get_object_or_404(Module, pk=pk)
-    subject = module.subject
-    subject = subject_id = module.subject.id
-    subject = get_object_or_404(Subject, id=subject_id)
+    subject = module.subject  # No need to fetch again
 
+    exams = Activity.objects.filter(module=module, activity_type__name__iexact="Exam")
+    assignments = Activity.objects.filter(module=module, activity_type__name__iexact="Assignment")
+    quizzes = Activity.objects.filter(module=module, activity_type__name__iexact="Quiz")
+    special_activities = Activity.objects.filter(module=module, activity_type__name__iexact="Special Activity")
+
+    activities_with_grading_needed = []
+    ungraded_items_count = 0
+
+    for activity in Activity.objects.filter(module=module):
+        questions_requiring_grading = ActivityQuestion.objects.filter(
+            activity=activity,
+            quiz_type__name__in=['Essay', 'Document']
+        )
+
+        ungraded_items = StudentQuestion.objects.filter(
+            Q(activity_question__in=questions_requiring_grading),
+            Q(student_answer__isnull=False) | Q(uploaded_file__isnull=False),
+            status=True,  # Active responses
+            score=0  # Not yet graded
+        )
+
+        if ungraded_items.exists():
+            activities_with_grading_needed.append((activity, ungraded_items.count()))
+            ungraded_items_count += ungraded_items.count()
 
     context = {
         'module': module,
         'subject': subject,
+        'exams': exams,
+        'assignments': assignments,
+        'quizzes': quizzes,
+        'special_activities': special_activities,
+        'activities_with_grading_needed': activities_with_grading_needed,
+        'ungraded_items_count': ungraded_items_count,
     }
 
     return render(request, 'module/viewSubjectModule.html', context)
+
 
 # View Module
 @login_required

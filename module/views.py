@@ -410,10 +410,10 @@ def viewSubjectModule(request, pk):
     module = get_object_or_404(Module, pk=pk)
     subject = module.subject  # No need to fetch again
 
-    exams = Activity.objects.filter(module=module, activity_type__name__iexact="Exam")
-    assignments = Activity.objects.filter(module=module, activity_type__name__iexact="Assignment")
-    quizzes = Activity.objects.filter(module=module, activity_type__name__iexact="Quiz")
-    special_activities = Activity.objects.filter(module=module, activity_type__name__iexact="Special Activity")
+    exams = Activity.objects.filter(module=module, status=True, activity_type__name__iexact="Exam")
+    assignments = Activity.objects.filter(module=module, status=True, activity_type__name__iexact="Assignment")
+    quizzes = Activity.objects.filter(module=module, status=True, activity_type__name__iexact="Quiz")
+    special_activities = Activity.objects.filter(module=module, status=True,  activity_type__name__iexact="Special Activity")
 
     activities_with_grading_needed = []
     ungraded_items_count = 0
@@ -445,6 +445,34 @@ def viewSubjectModule(request, pk):
         'activities_with_grading_needed': activities_with_grading_needed,
         'ungraded_items_count': ungraded_items_count,
     }
+
+    if module.file:
+        # Determine the file type and prepare context accordingly
+        if module.file.name.endswith('.pdf'):
+            context['is_pdf'] = True
+        elif module.file.name.endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
+            context['is_image'] = True
+        elif module.file.name.endswith(('.mp4', '.avi', '.mov', '.mkv')):
+            context['is_video'] = True
+        else:
+            context['is_unknown'] = True
+    elif module.url:
+        if 'youtube.com' in module.url:
+            embed_url = module.url.replace("watch?v=", "embed/")
+            context['is_youtube'] = True
+            context['embed_url'] = embed_url
+        elif 'vimeo.com' in module.url:
+            vimeo_id = module.url.split('/')[-1]
+            embed_url = f"https://player.vimeo.com/video/{vimeo_id}"
+            context['is_vimeo'] = True
+            context['embed_url'] = embed_url
+        elif "sway.cloud.microsoft" in module.url:
+            context['is_sway'] = True
+            context['sway_embed_url'] = module.url
+        elif module.url.endswith(('.mp4', '.webm', '.ogg')):
+            context['is_video_url'] = True
+        else:
+            context['is_url'] = True
 
     return render(request, 'module/viewSubjectModule.html', context)
 
@@ -524,7 +552,7 @@ def module_progress(request):
         progress_record, created = StudentProgress.objects.get_or_create(
             student=student,
             module=module,
-            defaults={'last_page': last_page}  # Set last_page when creating
+            defaults={'last_page': last_page, 'progress': progress_value, 'time_spent': 0}
         )
 
         now = timezone.now()

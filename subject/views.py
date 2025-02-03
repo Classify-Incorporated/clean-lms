@@ -917,7 +917,7 @@ class ScheduleAPI(APIView):
                         lessons_for_date = []
                         for module in modules:
                             if module.start_date.date() <= date and module.end_date.date() >= date:
-                                activities = Activity.objects.filter(module=module).order_by('order')
+                                activities = Activity.objects.filter(module=module, status=True).order_by('order')
 
                                 activities_list = [
                                     {
@@ -1084,7 +1084,7 @@ class Classroom_Mode_ScheduleAPI(APIView):
                             if module.start_date.date() <= date and module.end_date.date() >= date:
                                 if module.id not in unique_modules:
                                     unique_modules.add(module.id)
-                                    activities = Activity.objects.filter(module=module).order_by('order')
+                                    activities = Activity.objects.filter(module=module, status=True).order_by('order')
 
                                     activities_list = [
                                         {
@@ -1169,6 +1169,8 @@ class Classroom_Mode_ScheduleAPI(APIView):
             'schedule_data': formatted_schedule,
             'available_evaluations': evaluations_list 
         }, status=200)
+
+
 
 def get_file_type(module):
     """ Determines the file type based on extension or URL """

@@ -31,7 +31,59 @@
               </p>
               <p class="mt-3 text-dark">{{ module.description }}</p>
               <!-- Static Embedded Content (PDF, Image, Video) -->
-              <iframe src="https://example.com/sample.pdf" width="100%" height="500px" class="rounded border"></iframe>
+
+              <!-- Sway Viewer -->
+              {% if module.iframe_code %}
+                <div class="embed-responsive embed-responsive-16by9">
+                  {{ module.iframe_code|safe }} <!-- Allow rendering of stored iframe -->
+                </div>
+              {% endif %}
+
+              {% if is_pdf and module.file %}
+                <div id="pdf-container" class="pdf-viewer shadow-sm rounded mx-auto p-2" style="width: 100%; max-width: 800px; position: relative;">
+                  <iframe id="pdf-file" src="{{ module.file.url }}" width="100%" height="500px" class="rounded border"></iframe>
+
+                  <!-- Fullscreen Button -->
+                  <button id="pdf-fullscreen-btn" class="btn btn-dark btn-sm position-absolute" style="top: 10px; right: 10px;"><i class="fas fa-expand"></i> Fullscreen</button>
+                </div>
+              {% endif %}
+
+              <!-- Image Viewer -->
+              {% if is_image and module.file %}
+                <div id="image-container" class="image-viewer shadow-sm rounded mx-auto p-2" style="width: 100%; max-width: 800px; position: relative;">
+                  <img id="image-file" src="{{ module.file.url }}" class="img-fluid rounded" alt="Image" />
+
+                  <!-- Fullscreen Button -->
+                  <button id="image-fullscreen-btn" class="btn btn-dark btn-sm position-absolute" style="top: 10px; right: 10px;"><i class="fas fa-expand"></i> Fullscreen</button>
+                </div>
+              {% endif %}
+
+              <!-- Video Viewer -->
+              {% if is_video and module.file %}
+                <div class="video-viewer shadow-sm rounded mx-auto p-2" style="width: 100%; max-width: 800px;">
+                  <video controls class="w-100">
+                    <source src="{{ module.file.url }}" type="video/mp4" />Your browser does not support the video tag.
+                  </video>
+                </div>
+              {% endif %}
+
+              <!-- External Video (YouTube, Vimeo) -->
+              {% if is_youtube or is_vimeo %}
+                <div class="embed-responsive embed-responsive-16by9 shadow-sm rounded mx-auto p-2" style="width: 100%; max-width: 800px;">
+                  <iframe class="embed-responsive-item" src="{{ embed_url }}" allowfullscreen></iframe>
+                </div>
+              {% endif %}
+
+              <!-- External Link -->
+              {% if is_url %}
+                <div class="text-center mt-3">
+                  <a href="{{ module.url }}" target="_blank" class="btn btn-outline-primary">Open {{ module.file_name }}</a>
+                </div>
+              {% endif %}
+
+              {% if is_unknown %}
+                <p class="text-danger">Unsupported file format. Unable to display the content.</p>
+              {% endif %}
             </div>
           </div>
         </div>
@@ -110,8 +162,12 @@
         </div>
       </div>
 
+      <div class="text-left mt-4">
+        <a href="{% url 'classroom_mode' subject.id %}" class="btn btn-secondary mb-2">Back</a>
+      </div>
+
       <!-- Additional Resources Section -->
-      <div class="row mt-4">
+      {% comment %} <div class="row mt-4">
         <div class="col-md-12">
           <div class="card shadow-sm rounded-3 p-4 border-0" style="background: #f6e5ff;">
             <div class="card-body">
@@ -127,14 +183,61 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> {% endcomment %}
     </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        // Fullscreen function for PDFs (iframe inside container)
+        const pdfContainer = document.getElementById('pdf-container')
+        const pdfFullscreenBtn = document.getElementById('pdf-fullscreen-btn')
+      
+        if (pdfFullscreenBtn) {
+          pdfFullscreenBtn.addEventListener('click', function () {
+            if (!document.fullscreenElement) {
+              if (pdfContainer.requestFullscreen) {
+                pdfContainer.requestFullscreen()
+              } else if (pdfContainer.webkitRequestFullscreen) {
+                pdfContainer.webkitRequestFullscreen()
+              } else if (pdfContainer.msRequestFullscreen) {
+                pdfContainer.msRequestFullscreen()
+              }
+              pdfFullscreenBtn.innerHTML = '<i class="fas fa-compress"></i> Exit Fullscreen'
+            } else {
+              document.exitFullscreen()
+              pdfFullscreenBtn.innerHTML = '<i class="fas fa-expand"></i> Fullscreen'
+            }
+          })
+        }
+      
+        // Fullscreen function for Images
+        const imageContainer = document.getElementById('image-container')
+        const imageFullscreenBtn = document.getElementById('image-fullscreen-btn')
+      
+        if (imageFullscreenBtn) {
+          imageFullscreenBtn.addEventListener('click', function () {
+            if (!document.fullscreenElement) {
+              if (imageContainer.requestFullscreen) {
+                imageContainer.requestFullscreen()
+              } else if (imageContainer.webkitRequestFullscreen) {
+                imageContainer.webkitRequestFullscreen()
+              } else if (imageContainer.msRequestFullscreen) {
+                imageContainer.msRequestFullscreen()
+              }
+              imageFullscreenBtn.innerHTML = '<i class="fas fa-compress"></i> Exit Fullscreen'
+            } else {
+              document.exitFullscreen()
+              imageFullscreenBtn.innerHTML = '<i class="fas fa-expand"></i> Fullscreen'
+            }
+          })
+        }
+      })
+    </script>
 
     <script src="{% static 'assets/plugins/jquery/jquery.min.js' %}"></script>
     <script src="{% static 'assets/plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
     <script src="{% static 'assets/plugins/chart.js/Chart.min.js' %}"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     {% comment %}classroom_mode code{% endcomment %}
     <script src="{% static 'js/classroom-mode.js' %}"></script>
     <script src="{% static 'js/classroom-mode-full-screen.js' %}"></script>

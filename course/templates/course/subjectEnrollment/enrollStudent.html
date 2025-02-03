@@ -70,7 +70,7 @@
                 <label for="subject_ids" class="text-dark font-weight-bold">Select Subjects:</label>
                 <select name="subject_ids" id="subject_ids" class="form-control selectpicker" data-actions-box="true" data-style="btn-outline-secondary" data-none-selected-text="Select a subject" multiple required>
                   {% for subject in subjects %}
-                    <option value="{{ subject.id }}">{{ subject.subject_name }}</option>
+                    <option value="{{ subject.id }}">{{ subject.subject_name }} - ( {{ subject.assign_teacher }})</option>
                   {% endfor %}
                 </select>
               </div>

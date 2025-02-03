@@ -2255,6 +2255,24 @@ class GradeEssayView(View):
             'student_questions': student_questions,
         })
 
+@method_decorator(login_required, name='dispatch')
+class GradeEssayViewCM(View):
+    def get(self, request, activity_id):
+        activity = get_object_or_404(Activity, id=activity_id)
+        subject = activity.subject
+        subject = subject_id = activity.subject.id
+        subject = get_object_or_404(Subject, id=subject_id)
+        student_questions = StudentQuestion.objects.filter(
+            activity_question__activity=activity,
+            activity_question__quiz_type__name__in=['Essay', 'Document'],
+            status=True, 
+            score=0 
+        )
+        return render(request, 'activity/grade/gradeEssayCM.html', {
+            'activity': activity,
+            'student_questions': student_questions,
+            'subject': subject,
+        })
 
 # Grade student individual essay
 @method_decorator(login_required, name='dispatch')

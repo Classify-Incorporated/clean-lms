@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {% load static %}
+    <title>Classroom Mode - {{ subject.subject_name }}</title>
+    <link rel="stylesheet" href="{% static 'assets/plugins/fontawesome-free/css/all.min.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/dist/css/adminlte.min.css' %}" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="{% static 'assets/dist/css/settings.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/subject_details.css' %}" />
+  </head>
+  <body>
+    <!-- Classroom Header -->
+    <div class="classroom-header fade-in mb-4">
+      <div class="header-content">
+        <h1>Classroom Mode: {{ subject.subject_name }}</h1>
+        <a href="{% url 'subjectDetail' subject.id %}" class="btn btn-light">Exit Classroom Mode</a>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container fade-in">
+      <!-- Page Title -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-primary fw-bold"><i class="fas fa-file-signature"></i> Essay Submissions</h3>
+        <a href="{% url 'classroom_mode' activity.subject.id %}" class="btn btn-outline-secondary shadow-sm"><i class="fas fa-arrow-left"></i> Back to Subject</a>
+      </div>
+
+      <!-- Error Message -->
+      {% if error %}
+        <div class="alert alert-danger text-center">{{ error }}</div>
+      {% endif %}
+
+      <!-- Submissions Container -->
+      <div class="row">
+        {% for student_question in student_questions %}
+          <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card shadow-sm rounded-3 border-0 p-3" style="background: #fef6e4;">
+              <div class="card-body">
+                <h5 class="text-dark fw-bold"><i class="fas fa-user"></i> {{ student_question.student.first_name }} {{ student_question.student.last_name }}</h5>
+                <p class="text-muted mb-2">
+                  <i class="fas fa-file-alt text-primary"></i> {{ student_question.activity_question.quiz_type.name }}
+                </p>
+
+                <div class="d-flex justify-content-between">
+                  <a href="{% url 'grade_individual_essay' activity.id student_question.id %}" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i> View Answer</a>
+                  <button class="btn btn-sm btn-outline-success"><i class="fas fa-check-circle"></i> Mark as Graded</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% empty %}
+          <div class="col-md-12 text-center">
+            <p class="text-muted">No submissions yet.</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <script src="{% static 'assets/plugins/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'assets/plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'assets/plugins/chart.js/Chart.min.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    {% comment %}classroom_mode code{% endcomment %}
+    <script src="{% static 'js/classroom-mode.js' %}"></script>
+    <script src="{% static 'js/classroom-mode-full-screen.js' %}"></script>
+    <script src="{% static 'js/file-validation.js' %}"></script>
+    <script src="{% static 'js/modal.js' %}"></script>
+  </body>
+</html>

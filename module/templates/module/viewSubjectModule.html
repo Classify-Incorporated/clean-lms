@@ -27,9 +27,9 @@
             <div class="card-body">
               <h3 class="text-primary fw-bold mb-3"><i class="fas fa-book-open"></i> {{ module }}</h3>
               <p class="text-muted">
-                Published on: <span class="text-dark fw-bold"> {{ module.start_date }}</span>
+                Published on: <span class="text-dark fw-bold">{{ module.start_date }}</span>
               </p>
-              <p class="mt-3 text-dark"> {{ module.description }}</p>
+              <p class="mt-3 text-dark">{{ module.description }}</p>
               <!-- Static Embedded Content (PDF, Image, Video) -->
               <iframe src="https://example.com/sample.pdf" width="100%" height="500px" class="rounded border"></iframe>
             </div>
@@ -49,11 +49,9 @@
                   <li class="list-group-item border-0 bg-transparent d-flex justify-content-between">
                     <span class="text-dark">{{ assignment.activity_name }}</span>
                     <a href="#" class="btn btn-sm btn-outline-primary">View</a>
-                 </li>
-                   {% empty %}
-                  <li class="list-group-item border-0 bg-transparent text-muted text-center">
-                      No assignments available
                   </li>
+                {% empty %}
+                  <li class="list-group-item border-0 bg-transparent text-muted text-center">No assignments available</li>
                 {% endfor %}
               </ul>
 
@@ -64,11 +62,9 @@
                   <li class="list-group-item border-0 bg-transparent d-flex justify-content-between">
                     <span class="text-dark">{{ quiz.activity_name }}</span>
                     <a href="#" class="btn btn-sm btn-outline-primary">View</a>
-                 </li>
-                   {% empty %}
-                  <li class="list-group-item border-0 bg-transparent text-muted text-center">
-                      No quizzes available
                   </li>
+                {% empty %}
+                  <li class="list-group-item border-0 bg-transparent text-muted text-center">No quizzes available</li>
                 {% endfor %}
               </ul>
 
@@ -79,11 +75,9 @@
                   <li class="list-group-item border-0 bg-transparent d-flex justify-content-between">
                     <span class="text-dark">{{ exam.activity_name }}</span>
                     <a href="#" class="btn btn-sm btn-outline-primary">View</a>
-                 </li>
-                   {% empty %}
-                  <li class="list-group-item border-0 bg-transparent text-muted text-center">
-                      No exams available
                   </li>
+                {% empty %}
+                  <li class="list-group-item border-0 bg-transparent text-muted text-center">No exams available</li>
                 {% endfor %}
               </ul>
 
@@ -94,28 +88,23 @@
                   <li class="list-group-item border-0 bg-transparent d-flex justify-content-between">
                     <span class="text-dark">{{ special_activities.activity_name }}</span>
                     <a href="#" class="btn btn-sm btn-outline-primary">View</a>
-                 </li>
-                   {% empty %}
-                  <li class="list-group-item border-0 bg-transparent text-muted text-center">
-                      No special activities available
                   </li>
+                {% empty %}
+                  <li class="list-group-item border-0 bg-transparent text-muted text-center">No special activities available</li>
                 {% endfor %}
               </ul>
 
               <h5 class="text-primary"><i class="fas fa-file-alt"></i> Activities to be graded</h5>
               <ul class="list-group list-group-flush mb-3">
-                  {% for activity, count in activities_with_grading_needed %} 
-                      <li class="list-group-item border-0 bg-transparent d-flex justify-content-between">
-                          <span class="text-dark">{{ activity.activity_name }} ({{ count }})</span>  
-                          <a href="{% url 'grade_essays' activity.id %}" class="btn btn-sm btn-outline-primary">View</a>
-                      </li>
-                  {% empty %}
-                      <li class="list-group-item border-0 bg-transparent text-muted text-center">
-                          No activities to be graded available
-                      </li>
-                  {% endfor %}
+                {% for activity, count in activities_with_grading_needed %}
+                  <li class="list-group-item border-0 bg-transparent d-flex justify-content-between">
+                    <span class="text-dark">{{ activity.activity_name }} ({{ count }})</span>
+                    <a href="{% url 'grade_essaysCM' activity.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                  </li>
+                {% empty %}
+                  <li class="list-group-item border-0 bg-transparent text-muted text-center">No activities to be graded available</li>
+                {% endfor %}
               </ul>
-
             </div>
           </div>
         </div>

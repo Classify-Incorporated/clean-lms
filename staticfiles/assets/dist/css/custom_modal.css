@@ -1,33 +1,34 @@
 /* Custom Modal Styles */
 .custom-modal {
-  position: fixed;
-  z-index: 1050;
-  right: 0;
-  top: 0;
-  height: 100%;
-  width: 100%;
-  max-width: 420px;
-  background-color: #fff;
-  box-shadow: -2px 0 15px rgba(0, 0, 0, 0.15);
-  transform: translateX(100%);
-  opacity: 0;
-  transition: transform 0.3s ease, opacity 0.3s ease;
-  border-radius: 0 20px 20px 0;
-}
-
-@media (min-width: 1024px) {
-  .custom-modal {
-    width: 600px;
-    border-radius: 0 15px 15px 0;
+    position: fixed;
+    z-index: 1050;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 100%; /* Full width for mobile */
+    max-width: 340px; /* Adjust max-width for larger screens like iPad */
+    background-color: white;
+    box-shadow: -2px 0 5px rgba(0,0,0,0.5);
+    transform: translateX(100%);
+    opacity: 0;
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
   }
-}
 
-@media (min-width: 1280px) {
-  .custom-modal {
-    width: 700px;
+  @media (min-width: 1024px) {
+    /* Adjust modal width for larger tablets and desktop screens */
+    .custom-modal {
+      width: calc(100% - 400px); /* Adjust according to your sidebar width */
+      max-width: 800px; /* Max width for tablet and desktop view */
+    }
   }
-}
 
+  @media (min-width: 1280px) {
+    /* For very large screens (desktop or large tablets like iPad Pro) */
+    .custom-modal {
+      width: calc(100% - 300px); /* Adjust further based on sidebar width */
+      max-width: 1000px; /* Larger max width for big screens */
+    }
+  }
 .custom-modal.show {
   transform: translateX(0);
   opacity: 1;

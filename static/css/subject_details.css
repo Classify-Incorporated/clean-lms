@@ -272,6 +272,7 @@
     position: relative;
     box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.1);
     margin-right: 10px;
+    margin-bottom: 10px;
   }
   
   /* --- BUTTON COLORS (PASTEL THEME) --- */
@@ -343,23 +344,44 @@ border: 2px solid #ccc;
 
 /* 📅 Weekly Lessons Container */
 .lesson-container {
-display: flex;
-flex-wrap: nowrap;  /* Ensure all days are in one row */
-overflow-x: auto;   /* Enable scrolling if content overflows */
-gap: 10px;
-padding: 10px;
-justify-content: center;
+  display: flex;
+  flex-wrap: wrap;  /* Allow wrapping into multiple rows */
+  gap: 10px;
+  padding: 10px;
+  justify-content: center;
 }
 
-/* 🎨 Lesson Column with Pastel Colors */
+/* 🎨 Lesson Column */
 .lesson-column {
-flex: 1;
-min-width: 180px; /* Ensures uniform width */
-text-align: center;
-border-radius: 10px;
-padding: 15px;
-box-shadow: 2px 4px 6px rgba(0, 0, 0, 0.1);
-border: 2px solid rgba(200, 200, 200, 0.3);
+  flex: 1;
+  min-width: 200px; /* Ensures uniform width */
+  max-width: 300px; /* Prevents columns from becoming too wide */
+  text-align: center;
+  border-radius: 10px;
+  padding: 15px;
+  box-shadow: 2px 4px 6px rgba(0, 0, 0, 0.1);
+  border: 2px solid rgba(200, 200, 200, 0.3);
+}
+
+/* 🌐 Media Query for Tablets (768px and below) */
+@media (max-width: 768px) {
+  .lesson-container {
+      justify-content: space-around;
+  }
+  .lesson-column {
+      min-width: 45%; /* Display two columns per row */
+  }
+}
+
+/* 📱 Media Query for Mobile (576px and below) */
+@media (max-width: 576px) {
+  .lesson-container {
+      flex-direction: column; /* Stack lessons in a single column */
+      align-items: center; /* Center them */
+  }
+  .lesson-column {
+      width: 90%; /* Make each lesson column take up most of the screen */
+  }
 }
 
 /* 🌈 Soft Pastel Background Colors */
@@ -373,23 +395,51 @@ border: 2px solid rgba(200, 200, 200, 0.3);
 
 /* 🏷 Lesson Day Header */
 .lesson-day {
-font-weight: bold;
-background: rgba(0, 0, 0, 0.1);
-color: #333;
-padding: 8px;
-border-radius: 5px;
-margin-bottom: 10px;
+  font-weight: bold;
+  background: rgba(0, 0, 0, 0.1);
+  color: #333;
+  padding: 8px;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  font-size: 1.2rem; /* Default size */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 /* 📅 Lesson Date */
 .lesson-date {
-font-size: 12px;
-color: #666;
-background: rgba(0, 0, 0, 0.1);
-padding: 3px 6px;
-border-radius: 4px;
-margin-left: 5px;
+  font-size: 0.9rem;
+  color: #666;
+  background: rgba(0, 0, 0, 0.1);
+  padding: 3px 6px;
+  border-radius: 4px;
+  margin-left: 5px;
 }
+
+/* 🌐 Tablet Screens (max-width: 768px) */
+@media (max-width: 768px) {
+  .lesson-day {
+      font-size: 1rem; /* Reduce size for tablets */
+  }
+  .lesson-date {
+      font-size: 0.85rem;
+  }
+}
+
+/* 📱 Mobile Screens (max-width: 576px) */
+@media (max-width: 576px) {
+  .lesson-day {
+      font-size: 0.9rem; /* Reduce further for mobile */
+      padding: 6px;
+  }
+  .lesson-date {
+      font-size: 0.8rem;
+      padding: 2px 5px;
+  }
+}
+
 
 /* 🚫 Prevent dragging the lesson headers */
 .lesson-day.no-drag {
@@ -404,31 +454,24 @@ min-height: 50px; /* Prevent collapse when empty */
 
 /* 🎯 Lesson Card - Clickable & Draggable */
 .lesson-card {
-cursor: grab;
-user-select: none;
-background: white;
-padding: 15px;
-border: 3px solid #ddd;
-border-radius: 10px;
-margin-bottom: 10px;
-box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.15);
-transition: background 0.3s, transform 0.2s, border-color 0.3s, box-shadow 0.3s;
-
-/* 📏 Set Consistent Size */
-width: 220px;  /* Fixed width for all lesson cards */
-height: 160px; /* Fixed height for all lesson cards */
-display: flex;
-flex-direction: column;
-justify-content: center;
-align-items: center;
+  cursor: grab;
+  user-select: none;
+  background: white;
+  padding: 15px;
+  border: 3px solid #ddd;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.15);
+  transition: background 0.3s, transform 0.2s, border-color 0.3s, box-shadow 0.3s;
+  width: 100%; /* Make cards fill available space */
 }
 
 /* 🔥 Hover Effect - More visibility */
 .lesson-card:hover {
-background: #f8f9fa;
-border-color: #007bff;
-box-shadow: 4px 6px 12px rgba(0, 123, 255, 0.3);
-transform: translateY(-2px);
+  background: #f8f9fa;
+  border-color: #007bff;
+  box-shadow: 4px 6px 12px rgba(0, 123, 255, 0.3);
+  transform: translateY(-2px);
 }
 
 /* ✋ Dragging Effect - Clearer Feedback */

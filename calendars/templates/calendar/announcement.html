@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+  Announcement List
+{% endblock %}
+{% block content %}
+  {% load static %}
+  <div class="row mb-2">
+    <div class="col-sm-6">
+      <h3 class="m-0">Announcement List</h3>
+    </div>
+    <div class="col-sm-6">
+      <ol class="breadcrumb float-sm-right"></ol>
+    </div>
+  </div>
+
+  <div class="card shadow mb-4">
+    <div class="card-header py-3 bg-success">
+      <button class="btn btn-primary" id="openAddModalBtn">Add Announcement</button>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table mb-0 data-table table-hover table-bordered fs-10" data-datatables="data-datatables" id="dataTable">
+          <thead class="bg-primary">
+            <tr>
+              <th>#</th>
+              <th>Title</th>
+              <th>Description</th>
+              <th>Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody class="text-center">
+            <!-- Data will be inserted here dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Announcement Modal -->
+  <div id="addModal" class="custom-modal">
+    <div class="custom-modal-header">
+      <button class="close-btn" id="closeAddModalBtn"></button>
+      <h5>Add Announcement</h5>
+    </div>
+    <div class="custom-modal-body">
+      <form id="addAnnouncementForm" method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="newAnnouncementTitle">Title</label>
+          <input type="text" class="form-control" id="newAnnouncementTitle" name="title" required />
+        </div>
+
+        <div class="form-group">
+          <label for="newAnnouncementDescription">Description</label>
+          <textarea class="form-control tinymce" id="newAnnouncementDescription" name="description" required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="newAnnouncementDate">Date</label>
+          <input type="date" class="form-control" id="newAnnouncementDate" name="date" required />
+        </div>
+
+        <button type="submit" class="btn btn-success mt-2">Create</button>
+      </form>
+    </div>
+  </div>
+  <div id="addModalBackdrop" class="custom-modal-backdrop"></div>
+
+  <!-- Update Announcement Modal (Sidebar Style) -->
+  <div id="editModal" class="custom-modal">
+    <div class="custom-modal-header">
+      <button class="close-btn" id="close_update_modal"></button>
+      <h5>Update Announcement</h5>
+    </div>
+    <div class="custom-modal-body" id="editModalBody">
+      <form id="updateAnnouncementForm" method="POST">
+        {% csrf_token %}
+        <input type="hidden" id="announcementId" name="id" />
+
+        <div class="form-group">
+          <label for="announcementTitle">Title</label>
+          <input type="text" class="form-control" id="announcementTitle" name="title" required />
+        </div>
+
+        <div class="form-group">
+          <label for="announcementDescription">Description</label>
+          <textarea class="form-control tinymce" id="announcementDescription" name="description" required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="announcementDate">Date</label>
+          <input type="date" class="form-control" id="announcementDate" name="date" required />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Update</button>
+      </form>
+    </div>
+  </div>
+  <div id="editModalBackdrop" class="custom-modal-backdrop"></div>
+  <script src="{% static 'js/event_and_announcement/announcement.js' %}"></script>
+  <!-- JavaScript for TinyMCE and Select2 -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Initialize TinyMCE
+      tinymce.init({
+        selector: 'textarea.tinymce',
+        menubar: false,
+        plugins: 'lists link code',
+        toolbar: 'bold italic | alignleft aligncenter alignright | bullist numlist | link code',
+        setup: function (editor) {
+          editor.on('change', function () {
+            editor.save() // Ensures the content is saved to textarea
+          })
+        }
+      })
+    
+      // Initialize Select2
+      $('#recipient_id').select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Select Friend',
+        allowClear: true,
+        width: '100%',
+        dropdownParent: $('#sendMessageModal'),
+        multiple: true
+      })
+    
+      // Handle form submission to fix the double-click issue
+      document.getElementById('messageForm').addEventListener('submit', function (event) {
+        event.preventDefault() // Prevent default for debugging
+    
+        tinyMCE.triggerSave() // Ensure TinyMCE saves content to textarea
+        const form = this
+    
+        if (form.checkValidity()) {
+          form.submit() // Submit only if form is valid
+        } else {
+          form.classList.add('was-validated') // Show validation messages
+        }
+      })
+    })
+  </script>
+{% endblock %}
+

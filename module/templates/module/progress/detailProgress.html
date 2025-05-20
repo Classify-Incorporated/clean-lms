@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}
+  {{ activity_name }} - Progress Details
+{% endblock %}
+{% block content %}
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0">{{ activity_name }} - Progress Details</h1>
+          </div>
+          <!-- Breadcrumb Navigation -->
+          <div class="col-sm-6"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="card shadow mb-4">
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-bordered table-striped" id="dataTable" width="100%" cellspacing="0">
+                <thead class="text-center bg-primary">
+                  <tr>
+                    <th>Student Name</th>
+                    <th>Progress</th>
+                    <th>First Access</th>
+                    <th>Last Access</th>
+                  </tr>
+                </thead>
+                <tbody class="text-center">
+                  {% for progress in progress_list %}
+                    <tr>
+                      <td>{{ progress.student }}</td>
+                      <td>
+                        <div class="progress" style="height: 25px;">
+                          <div class="progress-bar bg-success" role="progressbar" style="width: {{ progress.progress }}%;" aria-valuenow="{{ progress.progress }}" aria-valuemin="0" aria-valuemax="100">
+                            <span>{{ progress.progress }}%</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td>{{ progress.first_accessed|date:'Y-m-d H:i:s' }}</td>
+                      <td>{{ progress.last_accessed|date:'Y-m-d H:i:s' }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="mt-4 text-end">
+          <a href="{% url 'progressList' %}" class="btn btn-secondary">Back</a> <!-- URL to the previous or specific page -->
+        </div>
+      </div>
+    </section>
+  </div>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+  Staff and Admin List
+{% endblock %}
+{% block content %}
+  <!-- Content Header -->
+  <div class="row mb-2">
+    <div class="col-sm-6">
+      <h3>Staff and Admin List</h3>
+    </div>
+  </div>
+  <!-- Main Content -->
+  {% comment %} <div class="card shadow-sm mb-3">
+    <div class="card-body">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-center">
+        <!-- Search Form -->
+        <form method="GET" action="" class="d-flex w-100 w-md-auto">
+          <input type="text" name="search" class="form-control mr-2" placeholder="Search by name or ID" value="{{ search_query }}" />
+          <button type="submit" class="btn btn-primary ml-2"><i class="fas fa-search"></i></button>
+        </form>
+      </div>
+    </div>
+  </div> {% endcomment %}
+
+  <div class="card shadow mb-4">
+    <div class="card-header bg-success text-white">
+      <h5 class="mb-0">Admin and Staff Master Data</h5>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table mb-0 data-table fs-10 table-bordered" data-datatables="data-datatables">
+          <thead class="bg-primary">
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Identification</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+              {% for admin_and_staff in admin_and_staff %}
+                <tr>
+                  <!-- Numbering -->
+                  <td>{{ forloop.counter }}</td>
+
+                  <!-- Name -->
+                  <td>{{ admin_and_staff.first_name }} {{ admin_and_staff.last_name }}</td>
+
+                  <!-- Email -->
+                  <td>{{ admin_and_staff.user.email }}</td>
+
+                  <!-- Identification -->
+                  <td>{{ admin_and_staff.identification|default:'--' }}</td>
+
+                  <!-- Action Buttons -->
+                  <td class="align-middle white-space-nowrap text-end">
+                    <div class="font-sans-serif position-static d-inline-block">
+                      <button class="btn btn-link text-600 btn-sm dropdown-toggle btn-reveal d-inline-flex align-items-center" type="button" id="dropdown-admin-{{ admin_and_staff.id }}" data-bs-toggle="dropdown" data-boundary="window" aria-haspopup="true" aria-expanded="false" data-bs-reference="parent"><span class="fas fa-ellipsis-h fs-10"></span></button>
+                      <div class="dropdown-menu dropdown-menu-end border py-2" aria-labelledby="dropdown-admin-{{ admin_and_staff.id }}">
+                        <a href="{% url 'profile_view' admin_and_staff.id %}" class="dropdown-item"><i class="fas fa-eye"></i> View</a>
+                        <a href="javascript:void(0);" class="dropdown-item" onclick="openEditModal({{ admin_and_staff.id }})"><i class="fas fa-edit"></i> Update</a>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Admin or Staff Profile Modal -->
+  <div id="editModal" class="custom-modal">
+    <div class="custom-modal-header">
+      <button class="close-btn" id="closeEditModalBtn"></button>
+      <h5>Update Admin or Staff Profile</h5>
+    </div>
+    <div class="custom-modal-body" id="editModalBody">
+      <!-- The content will be loaded dynamically here -->
+    </div>
+  </div>
+  <div id="editModalBackdrop" class="custom-modal-backdrop"></div>
+
+  <!-- JavaScript for Modal and Selectpicker -->
+  <script>
+    function openEditModal(profileId) {
+      const userRole = '{{ role|lower }}'
+      let fetchUrl
+      if (userRole === 'admin') {
+        fetchUrl = `/admin_update_admin_and_staff_profile/${profileId}/`
+      } else if (userRole === 'registrar') {
+        fetchUrl = `/updateRegistrarStudent/${profileId}/`
+      }
+    
+      fetch(fetchUrl)
+        .then((response) => response.text())
+        .then((html) => {
+          document.getElementById('editModalBody').innerHTML = html
+          document.getElementById('editModal').classList.add('show')
+          document.getElementById('editModalBackdrop').classList.add('show')
+          $('.selectpicker').selectpicker('refresh')
+        })
+    }
+    
+    // Ensure you're correctly targeting the close button for the edit modal
+    document.getElementById('closeEditModalBtn').addEventListener('click', function () {
+      document.getElementById('editModal').classList.remove('show')
+      document.getElementById('editModalBackdrop').classList.remove('show')
+    })
+  </script>
+  <style>
+    @media (max-width: 768px) {
+      .custom-modal {
+        width: 90%;
+        max-width: none;
+      }
+    
+      .table-responsive {
+        overflow-x: auto;
+      }
+    
+      .btn {
+        font-size: 14px;
+      }
+    
+      input.form-control {
+        font-size: 14px;
+      }
+    }
+  </style>
+{% endblock %}

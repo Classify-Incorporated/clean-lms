@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Enrolled Subjects for {{ student_profile.first_name }} {{ student_profile.last_name }}</h4>
+        </div>
+        <div class="card-body">
+            {% if enrolled_subjects %}
+                <!-- Display Semester Above the Table -->
+                <h5 class="text-secondary">
+                    Semester: {{ enrolled_subjects.0.semester.semester_name }}
+                </h5>
+
+                <table class="table table-bordered mt-3">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Subject Name</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for enrollment in enrolled_subjects %}
+                            <tr>
+                                <td>{{ enrollment.subject.subject_name }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="text-muted text-center">No enrolled subjects found.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

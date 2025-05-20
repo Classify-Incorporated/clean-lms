@@ -1,0 +1,81 @@
+<form method="post" action="{% url 'copy_lessons' subject.id %}" id="copy-lessons-form">
+  {% csrf_token %}
+  <div class="form-group">
+    <label>Select Lessons to Copy:</label>
+
+    {% for semester, terms in modules_by_semester.items %}
+      <div>
+        <strong>Semester: {{ semester.semester_name }}</strong>
+      </div>
+      {% for term, modules in terms.items %}
+        <div>
+          <strong>Term: {{ term.term_name }}</strong>
+        </div>
+        {% for module in modules %}
+          <div id="lesson-item-{{ module.id }}">
+            <label for="module_{{ module.id }}">
+              <input type="checkbox" class="lesson-checkbox" id="module_{{ module.id }}" name="selected_modules" value="{{ module.id }}" />
+              {{ module.file_name }}
+              <span id="duplicate-warning-{{ module.id }}" class="text-danger" style="display:none;">(Already exists in current semester)</span>
+            </label>
+          </div>
+        {% endfor %}
+      {% endfor %}
+    {% endfor %}
+  </div>
+  <button type="submit" class="btn btn-primary mt-3">Copy Selected Lessons</button>
+</form>
+
+<script>
+  document.getElementById('copy-lessons-form').addEventListener('submit', function (event) {
+    let hasDuplicates = false
+
+    // Check if any duplicate warning is visible
+    document.querySelectorAll('.lesson-checkbox').forEach((checkbox) => {
+      let warningElement = document.getElementById(`duplicate-warning-${checkbox.value}`)
+      if (warningElement && warningElement.style.display === 'inline') {
+        hasDuplicates = true
+      }
+    })
+
+    // If duplicates are found, prevent form submission
+    if (hasDuplicates) {
+      event.preventDefault()
+      alert('Some lessons already exist in the current semester and cannot be copied.')
+    }
+  })
+
+  // Initialize the lesson checkboxes for AJAX duplicate check
+  function initializeLessonCheckboxes(subjectId) {
+    document.querySelectorAll('.lesson-checkbox').forEach((checkbox) => {
+      checkbox.addEventListener('change', function () {
+        let lessonId = this.value
+
+        // Make AJAX request to check if the lesson exists in the current semester
+        fetch(`/subject/${subjectId}/check_lesson_exists/?lesson_id=${lessonId}`, {
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            let warningElement = document.getElementById(`duplicate-warning-${lessonId}`)
+
+            if (data.exists) {
+              // If the lesson already exists, show the warning message and disable the checkbox
+              warningElement.style.display = 'inline'
+              checkbox.disabled = true
+            } else {
+              // If the lesson doesn't exist, hide the warning message and enable the checkbox
+              warningElement.style.display = 'none'
+              checkbox.disabled = false
+            }
+          })
+          .catch((error) => console.error('Error:', error))
+      })
+    })
+  }
+
+  // Call this function once the page is ready to initialize the checkboxes
+  initializeLessonCheckboxes('{{ subject.id }}')
+</script>

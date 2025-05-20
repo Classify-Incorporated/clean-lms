@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+
+{% block title %} Edit Question {% endblock %}
+
+{% block content %}
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>Edit Question for {{ activity.activity_name }}</h2>
+            <a href="{% url 'list_activity_questions' activity.id %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </div>
+
+        <div class="card shadow">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="question_text" class="form-label">Question:</label>
+                        <textarea id="question_text" name="question_text" class="form-control" required>{{ question.question_text }}</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="score" class="form-label">Score:</label>
+                        <input type="number" id="score" name="score" class="form-control" value="{{ question.score }}" required min="1">
+                    </div>
+
+                    {% if question.quiz_type.name == 'Multiple Choice' %}
+                    <div id="choices">
+                        <label class="form-label">Choices:</label>
+                        {% for choice in question.choices.all %}
+                        <div class="input-group mb-2">
+                            <div class="input-group-text">
+                                <input type="radio" name="correct_answer" value="{{ choice.choice_text }}" {% if choice.choice_text == question.correct_answer %}checked{% endif %}>
+                            </div>
+                            <input type="text" name="choices" class="form-control" value="{{ choice.choice_text }}" required>
+                            <button type="button" class="btn btn-danger btn-sm remove-choice">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" class="btn btn-outline-primary mt-2" onclick="addChoice()">
+                        <i class="fas fa-plus"></i> Add Choice
+                    </button>
+
+                    {% elif question.quiz_type.name == 'Matching Type' %}
+                    <div id="matching_pairs">
+                        <label class="form-label">Matching Pairs:</label>
+                        {% for left, right in matching_pairs %}
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-5">
+                                <input type="text" name="matching_left" class="form-control" value="{{ left.choice_text }}" required>
+                            </div>
+                            <div class="col-md-5">
+                                <input type="text" name="matching_right" class="form-control" value="{{ right.choice_text }}" required>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div id="additional_right_options">
+                        <label class="form-label">Additional Right Side Options (Distractors):</label>
+                        {% for extra in extra_right_choices %}
+                        <div class="input-group mb-2">
+                            <input type="text" name="extra_right" class="form-control" value="{{ extra.choice_text }}">
+                            <button type="button" class="btn btn-danger btn-sm remove-right">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    {% elif question.quiz_type.name == 'True/False' %}
+                    <div class="mb-3">
+                        <label for="correct_answer" class="form-label">Correct Answer:</label>
+                        <select id="correct_answer" name="correct_answer" class="form-select">
+                            <option value="True" {% if question.correct_answer == 'True' %}selected{% endif %}>True</option>
+                            <option value="False" {% if question.correct_answer == 'False' %}selected{% endif %}>False</option>
+                        </select>
+                    </div>
+
+                    {% elif question.quiz_type.name == "Calculated Numeric" or question.quiz_type.name == "Fill in the Blank" %}
+                    <div class="mb-3">
+                        <label for="correct_answer" class="form-label">Correct Answer:</label>
+                        <input type="text" id="correct_answer" name="correct_answer" class="form-control" value="{{ question.correct_answer }}" required>
+                    </div>
+                    {% endif %}
+
+                    <div class="mt-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update Question
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+
+<script>
+    function addChoice() {
+        const choiceContainer = document.createElement('div');
+        choiceContainer.classList.add('input-group', 'mb-2');
+    
+        // Create the radio button container
+        const radioWrapper = document.createElement('div');
+        radioWrapper.classList.add('input-group-text');
+    
+        const radioInput = document.createElement('input');
+        radioInput.type = 'radio';
+        radioInput.name = 'correct_answer';
+        radioInput.value = '';
+    
+        radioWrapper.appendChild(radioInput);
+    
+        // Create the text input field
+        const textInput = document.createElement('input');
+        textInput.type = 'text';
+        textInput.name = 'choices';
+        textInput.classList.add('form-control');
+        textInput.required = true;
+        textInput.placeholder = 'Enter choice text...';
+    
+        // Update radio button value dynamically
+        textInput.addEventListener('input', function () {
+            radioInput.value = textInput.value;
+        });
+    
+        // Create the delete button
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.classList.add('btn', 'btn-danger', 'btn-sm');
+        deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
+        deleteButton.onclick = function () {
+            choiceContainer.remove();
+        };
+    
+        // Append elements to the choice container
+        choiceContainer.appendChild(radioWrapper);
+        choiceContainer.appendChild(textInput);
+        choiceContainer.appendChild(deleteButton);
+    
+        // Append the new choice to the choices container
+        document.getElementById('choices').appendChild(choiceContainer);
+    }    
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.remove-choice').forEach(button => {
+            button.addEventListener('click', function () {
+                this.parentElement.remove();
+            });
+        });
+
+        document.querySelectorAll('.remove-right').forEach(button => {
+            button.addEventListener('click', function () {
+                this.parentElement.remove();
+            });
+        });
+    });
+</script>
+{% endblock %}

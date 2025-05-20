@@ -1,0 +1,67 @@
+<div id="customModal" class="custom-modal">
+    <div class="custom-modal-header">
+        <button class="close-btn" id="closeModalBtn"></button>
+        <h5>Add Semester</h5>
+    </div>
+    <div class="custom-modal-body">
+        <form method="post" action="{% url 'createSemester' %}">
+            {% csrf_token %}
+
+          <!-- Semester Name Field -->
+            <div class="form-group">
+                <label for="id_semester_name">Semester Name</label>
+                {{ form.semester_name }}
+                {% if form.semester_name.errors %}
+                    <div class="text-danger">{{ form.semester_name.errors }}</div>
+                {% endif %}
+            </div>
+
+          <!-- Base Grade -->
+            <div class="form-group">
+                <label for="id_base_grade">Base Grade</label>
+                {{ form.base_grade }}
+                {% if form.base_grade.errors %}
+                    <div class="text-danger">{{ form.base_grade.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="id_passing_grade">Passing Grade</label>
+                {{ form.passing_grade }}
+                {% if form.passing_grade.errors %}
+                    <div class="text-danger">{{ form.passing_grade.errors }}</div>
+                {% endif %}
+            </div>
+
+
+            <div class="form-group">
+                <label for="id_grade_calculation_method">Grade Calculation Method</label>
+                {{ form.grade_calculation_method }}
+                {% if form.grade_calculation_method.errors %}
+                    <div class="text-danger">{{ form.grade_calculation_method.errors }}</div>
+                {% endif %}
+            </div>
+
+          <!-- Start Date Field -->
+            <div class="form-group">
+                <label for="id_start_date">Start Date</label>
+                {{ form.start_date }}
+                {% if form.start_date.errors %}
+                    <div class="text-danger">{{ form.start_date.errors }}</div>
+                {% endif %}
+            </div>
+
+          <!-- End Date Field -->
+            <div class="form-group">
+                <label for="id_end_date">End Date</label>
+                {{ form.end_date }}
+                {% if form.end_date.errors %}
+                    <div class="text-danger">{{ form.end_date.errors }}</div>
+                {% endif %}
+            </div>
+
+          <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+    </div>
+</div>

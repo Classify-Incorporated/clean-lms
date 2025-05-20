@@ -1,0 +1,27 @@
+<div id="customModal" class="custom-modal">
+  <div class="custom-modal-header">
+    <button class="close-btn" id="closeModalBtn"></button>
+    <h5>Add Activity Type</h5>
+  </div>
+  <div class="custom-modal-body">
+    <form method="post" action="{% url 'createActivityType' %}" class="needs-validation" novalidate>
+      {% csrf_token %}
+
+      <!-- Activity Type Name -->
+      <div class="form-group">
+        <label for="id_semester_name">Activity Type Name</label>
+        {{ form.name }}
+        <div class="invalid-feedback">Please provide a valid activity type name.</div>
+        {% if form.name.errors %}
+          <div class="text-danger">{{ form.name.errors }}</div>
+        {% endif %}
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+  </div>
+</div>
+
+<!-- Custom Modal Backdrop -->
+<div id="customModalBackdrop" class="custom-modal-backdrop"></div>

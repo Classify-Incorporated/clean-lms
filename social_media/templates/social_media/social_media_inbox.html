@@ -1,0 +1,2696 @@
+{% extends 'base.html' %}
+{% load static %}
+ 
+{% block title %}
+  Chat
+{% endblock %}
+ 
+{% block content %}
+<div class="card card-chat overflow-hidden">
+    <div class="card-body d-flex p-0 h-100">
+        <div class="chat-sidebar d-flex flex-column">
+
+            <div class="d-flex gap-2 m-2">
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createGroupModal">
+                    <i class="fas fa-users me-1"></i> Create Group
+                </button>
+
+                <a href="{% url 'social_media_friends' %}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-user-friends me-1"></i> My Friends
+                </a>
+            </div>
+
+
+            <!-- Contacts List -->
+            <div class="contacts-list scrollbar-overlay flex-grow-1">
+                <div class="nav nav-tabs border-0 flex-column" id="chat-list">
+                    <p class="text-center mt-4">Loading chats...</p>
+                </div>
+            </div>
+        
+            <!-- Search Bar (Fixed at Bottom) -->
+            <form class="contacts-search-wrapper border-top">
+                <div class="form-group mb-0 position-relative w-100">
+                    <input class="form-control form-control-sm chat-contacts-search border-0 h-100"
+                        type="text" placeholder="Search contacts..." id="contactSearchInput"
+                        onkeyup="searchContacts()">
+                    <span class="fas fa-search contacts-search-icon position-absolute top-50 start-0 translate-middle-y ms-2"></span>
+                </div>
+            </form>
+        </div>
+  
+      <!-- Chat Messages Panel -->
+      <div class="tab-content card-chat-content" id="chat-panel">
+        <p class="text-center mt-4">Select a conversation</p>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="modal fade" id="createGroupModal" tabindex="-1" aria-labelledby="createGroupModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <form id="createGroupForm" onsubmit="event.preventDefault(); createGroupChat();">
+          <div class="modal-header">
+            <h5 class="modal-title" id="createGroupModalLabel">Create New Group</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+                <label for="groupPhoto" class="form-label">Group Photo</label>
+                <input type="file" class="form-control" id="groupPhoto" accept="image/*">
+              </div>              
+              <div class="mb-3">
+                  <label for="groupName" class="form-label">Group Name</label>
+                  <input type="text" class="form-control" id="groupName" required>
+              </div>
+              <div class="mb-3">
+                  <label for="groupMembers" class="form-label">Select Members</label>
+                  <div id="groupMembersList" class="form-check-group">
+                      <!-- Dynamically load friends as checkboxes here -->
+                      <p>Loading friends...</p>
+                  </div>
+              </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-success">Create Group</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+<!-- Group Chat Info Offcanvas -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="groupChatInfoOffcanvas" aria-labelledby="groupChatInfoOffcanvasLabel">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title" id="groupChatInfoOffcanvasLabel">Group Chat Info</h5>
+      <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+      <p><strong>Members:</strong></p>
+      <div id="groupChatMembersList">
+        <p class="text-muted">Loading members...</p>
+      </div>
+    </div>
+  </div>
+  
+  
+
+  <script>
+    // Function to get CSRF token for AJAX requests
+    document.addEventListener("DOMContentLoaded", function () {
+        loadChatList();
+
+
+        document.getElementById("createGroupModal").addEventListener("show.bs.modal", () => {
+            const membersList = document.getElementById("groupMembersList");
+            membersList.innerHTML = "<p>Loading friends...</p>";
+        
+            fetch('/social/friend/friends/')
+                .then(response => response.json())
+                .then(friends => {
+                    if (!friends.length) {
+                        membersList.innerHTML = "<p class='text-muted'>No friends available.</p>";
+                        return;
+                    }
+        
+                    membersList.innerHTML = friends.map(friend => `
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="${friend.id}" id="member-${friend.id}">
+                            <label class="form-check-label" for="member-${friend.id}">
+                                ${friend.name}
+                            </label>
+                        </div>
+                    `).join("");
+                })
+                .catch(() => {
+                    membersList.innerHTML = "<p class='text-danger'>Failed to load friends.</p>";
+                });
+        });
+        
+
+        const localChatId = localStorage.getItem('activeChatId');
+        const localChatName = localStorage.getItem('activeChatName');
+        const localChatPhoto = localStorage.getItem('activeChatPhoto');
+
+        if (localChatId && localChatName) {
+            openChatPanel(parseInt(localChatId), localChatName, localChatPhoto, localStorage.getItem('activeIsGroup') === 'true');
+        }
+
+        if ("Notification" in window && Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
+
+        // 🔄 Periodically ping all WebSocket connections
+        setInterval(() => {
+            for (const userId in activeSockets) {
+                const socket = activeSockets[userId];
+                if (!socket) {
+                    console.warn(`[Ping] No active socket for ${userId}`);
+                    continue;  // Skip undefined sockets
+                }
+                if (socket.readyState === WebSocket.OPEN) {
+                    try {
+                        socket.send(JSON.stringify({ type: "ping" }));
+                    } catch (err) {
+                        console.warn(`[Ping] Failed to send ping to user ${userId}:`, err);
+                    }
+                } else {
+                    console.warn(`[Ping] Socket not open for ${userId}`);
+                }
+            }
+        }, 60000);        
+
+        document.body.addEventListener("click", function (e) {
+            if (e.target.closest('.contacts-list-show')) {
+                localStorage.removeItem('activeChatId');
+                localStorage.removeItem('activeChatName');
+                localStorage.removeItem('activeChatPhoto');
+            }
+        });
+    });
+    
+    let activeSockets = {};
+    const CURRENT_USER_ID = {{ request.user.id }};  
+    let pendingReadReceipts = new Set();
+    let userPresence = {};
+    let activePolling = {};
+    let readThrottleTimeouts = {};
+    let scrollDebounce = false;
+    let chatScrollPage = {};
+    let chatMessageCount = {};
+    const presenceInfo = {};
+    const scrollHandlers = {};
+    let chatPagination = {};
+    let renderedMessageIds = new Set();
+    let editingMessageId = null;
+
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text.replace(/[&<>"']/g, function(m) {
+            return ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            })[m];
+        });
+    }
+
+    function throttleReadReceipt(userId) {
+        console.log(`[📩 ReadReceipt] Triggered for user ${userId}`);
+    
+        if (readThrottleTimeouts[userId]) return;
+    
+        readThrottleTimeouts[userId] = setTimeout(() => {
+            readThrottleTimeouts[userId] = null;
+        }, 1000);
+    
+        const isGroup = localStorage.getItem('activeIsGroup') === 'true';
+        const socketKey = isGroup ? `group_${userId}` : userId;
+        const socket = activeSockets[socketKey];
+    
+        if (!socket) {
+            console.warn(`[📩 ReadReceipt] No socket found for user ${userId}, retrying in 1s...`);
+    
+            // 🛠 retry once after 1 second
+            setTimeout(() => {
+                const retrySocket = activeSockets[socketKey];
+                if (retrySocket && retrySocket.readyState === WebSocket.OPEN) {
+                    try {
+                        retrySocket.send(JSON.stringify({ type: "read_receipt" }));
+                        console.log(`[📩 ReadReceipt] Successfully sent after retry for user ${userId}`);
+                    } catch (error) {
+                        console.warn(`[📩 ReadReceipt] Error after retry for user ${userId}:`, error);
+                    }
+                } else {
+                    console.warn(`[📩 ReadReceipt] Still no socket for user ${userId} after retry.`);
+                }
+            }, 1000);
+    
+            return;
+        }
+    
+        if (socket.readyState !== WebSocket.OPEN) {
+            console.warn(`[📩 ReadReceipt] Socket not open for user ${userId}, skipping.`);
+            return;
+        }
+    
+        try {
+            socket.send(JSON.stringify({ type: "read_receipt" }));
+        } catch (error) {
+            console.warn(`[📩 ReadReceipt] Error sending read receipt for user ${userId}:`, error);
+        }
+    }
+
+    function truncateText(text, maxLength = 50) {
+        if (!text) return '';
+        return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+    }
+    // Function to load chat list and friends
+    function loadChatList() {
+        fetch('/social/friend/friends/')
+            .then(response => response.json())
+            .then(friends => {
+                const chatList = document.getElementById("chat-list");
+                chatList.innerHTML = ''; // Clear existing content
+    
+                if (friends.length === 0) {
+                    chatList.innerHTML = '<p class="text-center mt-4">No friends available.</p>';
+                    return;
+                }
+
+                // ✅ CONNECT TO EACH FRIEND VIA WEBSOCKET
+                friends.forEach(friend => {
+                    connectWebSocket(friend.id, () => throttleReadReceipt(friend.id), false);
+                });
+
+                let chatPromises = friends.map(friend =>
+                    Promise.all([
+                        fetch(`/social/chat/last_message/?receiver=${friend.id}`).then(res => res.json()),
+                        Promise.resolve({ is_online: false, last_seen: null })  // Stubbed presence
+                    ])
+                    .then(([lastMessage, presence]) => {
+
+                        if (lastMessage.message === undefined && lastMessage.file === undefined) {
+                            return null;
+                        }
+                        const senderName = lastMessage.sender_name || ''; 
+                        
+                        const lastSeenDate = presence.last_seen ? new Date(presence.last_seen) : null;
+                        let presenceText = "Offline";
+
+                        if (presence.is_online) {
+                            presenceText = "Active now";
+                        } else if (lastSeenDate) {
+                            const diffMs = Date.now() - lastSeenDate.getTime();
+                            const diffMin = Math.round(diffMs / 60000);
+
+                            if (diffMin < 1) {
+                                presenceText = "Last seen just now";
+                            } else if (diffMin < 60) {
+                                presenceText = `Last seen ${diffMin} min${diffMin > 1 ? "s" : ""} ago`;
+                            } else {
+                                const hours = Math.floor(diffMin / 60);
+                                presenceText = `Last seen ${hours} hour${hours > 1 ? "s" : ""} ago`;
+                            }
+                        }
+
+                        presenceInfo[friend.id] = {
+                            last_seen: lastSeenDate,
+                            is_online: presence.is_online
+                        };
+                        
+                        
+
+                        return {
+                            id: friend.id,
+                            name: friend.name,
+                            photo: friend.photo || '/static/assets/img/def_user.jpg',
+                            is_online: presence.is_online,
+                            presenceText: presenceText,
+                            
+                            lastMessageText: (lastMessage.message && lastMessage.message.trim() !== "")
+                                ? `${parseInt(lastMessage.sender_id) === CURRENT_USER_ID ? 'You' : senderName}: ${lastMessage.message}`
+                                : (lastMessage.file
+                                    ? (/\.(jpg|jpeg|png|gif|webp)$/i.test(lastMessage.file)
+                                        ? `${parseInt(lastMessage.sender_id) === CURRENT_USER_ID ? 'You' : senderName}: <i class="fas fa-image text-primary me-1"></i> Image sent`
+                                        : `${parseInt(lastMessage.sender_id) === CURRENT_USER_ID ? 'You' : senderName}: <i class="fas fa-paperclip text-info me-1"></i> File sent`)
+                                    : "No messages yet"),
+                            lastMessageTime: lastMessage.created_at 
+                                ? new Date(lastMessage.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+                                : "",
+                            lastMessageTimestamp: lastMessage.created_at 
+                                ? new Date(lastMessage.created_at).getTime() 
+                                : 0
+                        };
+                    })
+                    .catch(error => {
+                        console.error("Error loading chat or presence for", friend.name, error);
+                        return null;
+                    })
+                );
+                
+                // 👇 Fetch group chats
+                const groupChatsPromise = fetch('/social/group_chat/')
+                .then(res => res.json())
+                .then(response => {
+                    const groups = response.results || []; // use paginated 'results'
+                    return groups.map(group => ({
+                        id: group.id,
+                        name: group.name,
+                        photo: group.photo || '/static/assets/img/def_user.jpg',
+                        is_group: true,
+                        lastMessageText: group.last_message
+                            ? group.last_message.is_deleted
+                                ? `${group.last_message.deleted_by_name || 'Someone'}: Unsent a message`
+                                : group.last_message.message?.trim()
+                                    ? `${group.last_message.sender_name}: ${group.last_message.message}`
+                                    : group.last_message.file
+                                        ? `${group.last_message.sender_name}: ` +
+                                            (/\.(jpg|jpeg|png|gif|webp)$/i.test(group.last_message.file)
+                                                ? "🖼️ Image"
+                                                : "📎 File")
+                                        : `${group.last_message.sender_name}: No message`
+                            : "No messages yet",
+                        lastMessageTime: group.last_message?.formatted_time || "",
+                        lastMessageTimestamp: group.last_message?.created_at
+                            ? new Date(group.last_message.created_at).getTime()
+                            : 0
+                    }));
+                })
+
+    
+                Promise.all([Promise.all(chatPromises), groupChatsPromise]).then(([chats, groupChats]) => {
+                    groupChats.forEach(group => {
+                        connectWebSocket(group.id, null, true); // true = isGroup
+                    });
+                    chats = chats.filter(chat => chat !== null);
+                    const allChats = [...chats, ...groupChats].sort((a, b) => b.lastMessageTimestamp - a.lastMessageTimestamp);
+    
+                    allChats.forEach((chat, index) => {
+                        const chatItem = document.createElement("div");
+                        chatItem.classList.add("hover-actions-trigger", "chat-contact", "nav-item");
+                        if (index === 0) chatItem.classList.add("active"); // default first item as active
+                        chatItem.setAttribute("role", "tab");
+                        chatItem.setAttribute("id", `chat-link-${index}`);
+                        chatItem.setAttribute("data-bs-toggle", "tab");
+                        chatItem.setAttribute("data-bs-target", `#chat-${index}`);
+                        chatItem.setAttribute("aria-controls", `chat-${index}`);
+                        chatItem.setAttribute("aria-selected", index === 0 ? "true" : "false");
+                        chatItem.setAttribute("data-user-id", chat.id);
+                        chatItem.setAttribute("data-is-group", chat.is_group ? "true" : "false");
+    
+                        chatItem.innerHTML = `
+                            <div class="d-md-none d-lg-block">
+                                <div class="dropdown dropdown-active-trigger dropdown-chat">
+                                    <button class="hover-actions btn btn-link btn-sm text-400 dropdown-caret-none dropdown-toggle end-0 fs-9 mt-4 me-1 z-1 pb-2 mb-n2"
+                                        type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <span class="fas fa-cog" data-fa-transform="shrink-3 down-4"></span>
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-end border py-2 rounded-2">
+                                        <a class="dropdown-item" href="#">Mute</a>
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item" href="#">Archive</a>
+                                        <a class="dropdown-item text-danger" href="#" onclick="deleteConversation(${chat.id}, ${chat.is_group})">Delete</a>
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item" href="#">Mark as Unread</a>
+                                        <a class="dropdown-item" href="#">Something's Wrong</a>
+                                        <a class="dropdown-item" href="#">Ignore Messages</a>
+                                        <a class="dropdown-item" href="#">Block Messages</a>
+                                    </div>
+                                </div>
+                            </div>
+    
+                            <div class="d-flex p-3">
+                                <div class="avatar avatar-xl ${!chat.is_group ? (chat.is_online ? 'status-online' : 'status-offline') : ''}">
+                                    <img class="rounded-circle" src="${chat.photo}" alt="${chat.name}" />
+                                </div>
+                                <div class="flex-1 chat-contact-body ms-2 d-md-none d-lg-block">
+                                    <div class="d-flex justify-content-between">
+                                        <h6 class="mb-0 chat-contact-title">${chat.name}</h6>
+                                        <span class="message-time fs-11">${chat.lastMessageTime}</span>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="chat-contact-content pe-3">${chat.lastMessageText}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+    
+                        chatItem.addEventListener("click", function () {
+                            openChatPanel(chat.id, chat.name, chat.photo, chat.is_group || false);
+                        });
+    
+                        chatList.appendChild(chatItem);
+                    });
+
+ 
+
+                    const activeId = localStorage.getItem('activeChatId');
+                    const activeName = localStorage.getItem('activeChatName');
+                    const activePhoto = localStorage.getItem('activeChatPhoto');
+                    const isGroup = localStorage.getItem('activeIsGroup') === 'true';
+
+                    if (activeId && activeName) {
+                        // Slight delay to make sure chat DOM and WebSocket are ready
+                        setTimeout(() => {
+                            openChatPanel(parseInt(activeId), activeName, activePhoto, isGroup);
+                        }, 100);
+                    }
+
+                    setInterval(() => {
+                        for (let userId in presenceInfo) {
+                            fetch(`/social/presence/?user_id=${userId}`)
+                                .then(res => res.json())
+                                .then(presence => {
+                                    presenceInfo[userId] = {
+                                        last_seen: presence.last_seen,
+                                        is_online: presence.is_online
+                                    };
+                    
+                                    const headerStatus = document.getElementById(`status-text-${userId}`);
+                                    const contactItem = document.querySelector(`.chat-contact[data-user-id="${userId}"]`);
+                                    const avatar = contactItem?.querySelector(".avatar");
+                    
+                                    let presenceText = "";
+                    
+                                    if (presence.is_online) {
+                                        presenceText = "Active now";
+                                        if (headerStatus) {
+                                            headerStatus.textContent = presenceText;
+                                            headerStatus.classList.add("text-success");
+                                            headerStatus.classList.remove("text-muted");
+                                        }
+                                        if (avatar) {
+                                            avatar.classList.add("status-online");
+                                            avatar.classList.remove("status-offline");
+                                        }
+                                    } else if (presence.last_seen) {
+                                        const now = new Date();
+                                        const diffMs = now - new Date(presence.last_seen);
+                                        const diffMin = Math.round(diffMs / 60000);
+                    
+                                        if (diffMin < 1) {
+                                            presenceText = "Last seen just now";
+                                        } else if (diffMin < 60) {
+                                            presenceText = `Last seen ${diffMin} min${diffMin > 1 ? "s" : ""} ago`;
+                                        } else {
+                                            const hours = Math.floor(diffMin / 60);
+                                            presenceText = `Last seen ${hours} hour${hours > 1 ? "s" : ""} ago`;
+                                        }
+                    
+                                        if (headerStatus) {
+                                            headerStatus.textContent = presenceText;
+                                            headerStatus.classList.remove("text-success");
+                                            headerStatus.classList.add("text-muted");
+                                        }
+                    
+                                        if (avatar) {
+                                            avatar.classList.remove("status-online");
+                                            avatar.classList.add("status-offline");
+                                        }
+                                    }
+                                })
+                                .catch(err => console.error(`Error updating presence for user ${userId}:`, err));
+                        }
+                    }, 60000);                    
+                    
+
+                });
+            })
+            .catch(error => {
+                console.error("Error loading friends:", error);
+                document.getElementById("chat-list").innerHTML = '<p class="text-center mt-4">Error loading chats.</p>';
+            });
+
+            
+    }
+    // Function to open a chat conversation (fully matching inbox design)
+    function openChatPanel(userId, userName, userPhoto = null, isGroup = false) {
+
+        renderedMessageIds.clear()
+        // Save current chat in localStorage
+        localStorage.setItem('activeChatId', userId);
+        localStorage.setItem('activeChatName', userName);
+        localStorage.setItem('activeChatPhoto', userPhoto || '/static/assets/img/def_user.jpg');
+        localStorage.setItem('activeIsGroup', isGroup ? 'true' : 'false');
+
+        const messageWrapperId = isGroup ? `groupMessages-${userId}` : `chatMessages-${userId}`;
+        const messageListId = isGroup ? `groupMessagesList-${userId}` : `chatMessagesList-${userId}`;
+
+
+        const chatPanel = document.getElementById("chat-panel");
+        chatPanel.innerHTML = `
+            <div class="tab-pane card-chat-pane active d-flex flex-column h-100" id="chat-${userId}" role="tabpanel" aria-labelledby="chat-link-${userId}">
+                <div class="chat-content-header">
+                    <div class="row flex-between-center">
+                        <div class="col-6 col-sm-8 d-flex align-items-center">
+                            <a class="pe-3 text-700 d-md-none contacts-list-show" href="#!">
+                                <div class="fas fa-chevron-left"></div>
+                            </a>
+                            <div class="min-w-0">
+                                <h5 class="mb-0 text-truncate fs-9">${userName}</h5>
+                                ${!isGroup ? `<div class="fs-11 text-400" id="status-text-${userId}">Loading status...</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-sm btn-falcon-primary me-2" type="button" data-index="${userId}" data-bs-toggle="tooltip" data-bs-placement="top" title="Start a Call">
+                                <span class="fas fa-phone"></span>
+                            </button>
+                            <button class="btn btn-sm btn-falcon-primary me-2" type="button" data-index="${userId}" data-bs-toggle="tooltip" data-bs-placement="top" title="Start a Video Call">
+                                <span class="fas fa-video"></span>
+                            </button>
+                            <button class="btn btn-sm btn-falcon-primary btn-chat-info" type="button" data-index="${userId}" data-bs-toggle="tooltip" data-bs-placement="top" title="Conversation Information">
+                                <span class="fas fa-cog"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Messages Area -->
+                <div class="chat-messages flex-grow-1 scrollbar scrollbar-overlay" id="${messageWrapperId}">
+                    <div class="text-center text-muted" id="chat-loading-spinner-${userId}" style="display: none;">
+                        <small>Loading more messages...</small>
+                    </div>
+                    <div id="${messageListId}"></div>
+                    <div id="typing-indicator-${userId}" class="text-muted py-1 my-2" style="display: none; font-size: 12px;">
+                        <em>${userName} is typing...</em>
+                    </div>
+                    <div id="scrollToBottomBtn-${userId}" 
+                        class="position-absolute bottom-0 end-0 m-3 d-none"
+                        style="z-index: 10; background: #2C7BE5; color: white; border-radius: 50%; width: 36px; height: 36px; display: flex; justify-content: center; align-items: center; cursor: pointer;"
+                        onclick="scrollToLatest('${userId}')">
+                        <i class="fas fa-arrow-down"></i>
+                    </div>
+                </div>
+
+
+                <!-- Chat Input -->
+                <form class="chat-editor-area d-flex align-items-center p-2 gap-2" 
+                    onsubmit="event.preventDefault(); sendMessage(${userId}, '${userName}')">
+                    
+                    <!-- File Upload Button -->
+                    <label for="chat-file-upload-${userId}" class="chat-file-upload text-muted fs-9 mb-0 cursor-pointer">
+                        <span class="fas fa-paperclip"></span>
+                    </label>
+                    <input class="d-none" type="file" id="chat-file-upload-${userId}" />
+
+                    <!-- Combined Container Styled Like a Message Bubble -->
+                    <div class="chat-bubble-wrapper d-flex align-items-center px-3 py-2 rounded-pill bg-light text-dark gap-2 flex-wrap flex-grow-1" style="min-height: 38px;">
+                        <div id="file-preview-${userId}" class="file-preview-box d-inline-flex align-items-center gap-2 px-2 py-1 me-2" style="display: none;"></div>
+
+                        <div id="chatInput-${userId}" 
+                            class="chat-input emojiarea-editor"
+                            contenteditable="true"
+                            data-placeholder="Type your message...">
+                        </div>
+
+                    <!-- Emoji Picker Button -->
+                    <button type="button" class="btn btn-link emoji-icon text-muted fs-9 mb-0 p-0" id="emoji-btn-${userId}">
+                        <span class="far fa-laugh-beam"></span>
+                    </button>
+
+                    <!-- Floating Emoji Picker -->
+                    <div class="custom-emoji-picker shadow-sm border bg-white p-2 rounded d-none" id="custom-emoji-picker-${userId}" style="position: absolute; bottom: 60px; right: 70px; z-index: 9999;">
+                        <span class="emoji fs-5 cursor-pointer" data-emoji="😀">😀</span>
+                        <span class="emoji fs-5 cursor-pointer" data-emoji="😂">😂</span>
+                        <span class="emoji fs-5 cursor-pointer" data-emoji="😍">😍</span>
+                        <span class="emoji fs-5 cursor-pointer" data-emoji="👍">👍</span>
+                        <span class="emoji fs-5 cursor-pointer" data-emoji="🔥">🔥</span>
+                    </div>
+
+
+                    <!-- Send Button -->
+                    <button class="btn btn-sm btn-falcon-primary px-4 py-2 rounded-pill fw-semibold d-flex align-items-center" type="submit">
+                        <i class="fas fa-paper-plane me-2"></i> Send
+                    </button>
+                </form>
+            </div>
+        `;
+
+        chatMessageCount[userId] = 0;
+
+        if (isGroup) {
+            loadChatMessages(userId, null, false, true); // ✅ pass isGroup = true
+            setupScrollHandler(userId, true); // also add this if it’s missing
+        } else {
+            fetch(`/social/chat/mark_read/?receiver=${userId}`, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": getCSRFToken()
+                }
+            }).then(() => {
+                loadChatMessages(userId, null, false, false); // ✅ pass isGroup = false
+                setupScrollHandler(userId, false);
+            });
+        }
+
+        // Infinite scroll on top
+        function setupScrollHandler(userId, isGroup) {
+            const chatMessagesDiv = document.getElementById(isGroup ? `groupMessages-${userId}` : `chatMessages-${userId}`);
+
+            if (!chatMessagesDiv) {
+                console.warn(`[setupScrollHandler] Element not found for userId ${userId}`);
+                return;
+            }
+        
+            if (scrollHandlers[userId]) {
+                chatMessagesDiv.removeEventListener("scroll", scrollHandlers[userId]);
+            }
+        
+            const newScrollHandler = () => {
+                const nearTopThreshold = 10;
+                const scrollBtn = document.getElementById(`scrollToBottomBtn-${userId}`);
+                const isNearBottom = chatMessagesDiv.scrollTop + chatMessagesDiv.clientHeight >= chatMessagesDiv.scrollHeight - 50;
+        
+                if (!scrollDebounce && chatMessagesDiv.scrollTop <= nearTopThreshold && chatPagination[userId] !== null) {
+                    scrollDebounce = true;
+                    loadChatMessages(userId, chatPagination[userId], true, isGroup);
+                    setTimeout(() => scrollDebounce = false, 300);
+                }
+        
+                requestAnimationFrame(() => {
+                    const newIsNearBottom = Math.abs(chatMessagesDiv.scrollTop + chatMessagesDiv.clientHeight - chatMessagesDiv.scrollHeight) < 5;
+                
+                    if (newIsNearBottom) {
+                        chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+                        const scrollBtn = document.getElementById(`scrollToBottomBtn-${userId}`);
+                        if (scrollBtn) scrollBtn.classList.add("d-none");
+                    } else {
+                        showScrollToBottomButton(userId);
+                    }
+                });
+                
+            };
+        
+            chatMessagesDiv.addEventListener("scroll", newScrollHandler);
+            scrollHandlers[userId] = newScrollHandler;
+        }
+
+
+        const chatInput = document.getElementById(`chatInput-${userId}`);
+        const emojiBtn = document.getElementById(`emoji-btn-${userId}`);
+
+        const emojiPicker = document.getElementById(`custom-emoji-picker-${userId}`);
+
+        if (emojiPicker && !document.body.contains(emojiPicker)) {
+            document.body.appendChild(emojiPicker);
+        }
+
+        // Toggle picker on button click
+        emojiBtn.addEventListener("click", (e) => {
+            e.stopPropagation(); // prevent closing from outside click
+            emojiPicker.classList.toggle("d-none");
+        });
+
+        // Insert emoji on emoji click
+        emojiPicker.addEventListener("click", (e) => {
+            if (e.target.classList.contains("emoji")) {
+                insertEmojiIntoContentEditable(chatInput, e.target.dataset.emoji);
+                emojiPicker.classList.add("d-none"); // hide after selection
+            }
+        });
+
+        // Close emoji picker when clicking outside
+        document.addEventListener("click", (e) => {
+            if (!emojiPicker.contains(e.target) && !emojiBtn.contains(e.target)) {
+                emojiPicker.classList.add("d-none");
+            }
+        });
+
+            
+        
+        window.addEventListener("focus", () => {
+            // Optional: also trigger when browser window gets focused
+            if (activeSockets[userId]) {
+                throttleReadReceipt(userId);
+            }
+        });
+        
+
+        connectWebSocket(userId, () => throttleReadReceipt(userId), isGroup);
+        
+
+        const chatInputDiv = document.getElementById(`chatInput-${userId}`);
+
+        // ✅ Add this block immediately after chatInputDiv
+        const fileInput = document.getElementById(`chat-file-upload-${userId}`);
+        const filePreview = document.getElementById(`file-preview-${userId}`);
+
+        fileInput.addEventListener("change", function () {
+            const file = this.files[0];
+            const filePreview = document.getElementById(`file-preview-${userId}`);
+            const filePreviewContainer = filePreview.parentElement;
+
+            if (!file) {
+                filePreview.innerHTML = "";
+                filePreview.style.display = "none";
+                return;
+            }
+
+            const forbiddenExtensions = ['exe', 'bat', 'sh', 'cmd', 'js', 'jar', 'msi'];
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+
+            if (forbiddenExtensions.includes(fileExtension)) {
+                alert(`❌ The file type .${fileExtension} is not allowed.`);
+                this.value = ""; // clear the file input
+                filePreview.innerHTML = "";
+                filePreview.style.display = "none";
+                return;
+            }
+
+            filePreview.style.display = "flex";
+
+            if (file) {
+                const isImage = file.type.startsWith("image/");
+                const icon = isImage ? "fa-image text-primary" : "fa-paperclip text-secondary";
+            
+                filePreview.innerHTML = `
+                    <div class="file-preview-box d-inline-flex align-items-center gap-2 px-2 py-1">
+                        <span class="fas ${icon}"></span>
+                        <span class="file-name small text-truncate">${file.name}</span>
+                        <span class="text-danger cursor-pointer" onclick="clearFilePreview('${userId}')">
+                            <i class="fas fa-times-circle"></i>
+                        </span>
+                    </div>
+                `;
+            } else {
+                filePreview.innerHTML = `
+                <div class="file-preview-box d-inline-flex align-items-center gap-2 px-2 py-1">
+                    <span class="fas fa-paperclip text-secondary"></span>
+                    <span class="file-name small text-truncate">${file.name}</span>
+                    <span class="text-danger cursor-pointer" onclick="clearFilePreview('${userId}')">
+                        <i class="fas fa-times-circle"></i>
+                    </span>
+                </div>
+            `;
+            }
+        });
+
+        chatInputDiv.addEventListener("keydown", function (event) {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault(); // Avoid line break
+                sendMessage(userId, userName);
+            }
+
+        let typingTimeout = null;
+        chatInputDiv.addEventListener("input", () => {
+            const isGroup = localStorage.getItem("activeIsGroup") === 'true'; 
+            const socketKey = isGroup ? `group_${userId}` : userId;        
+            const socket = activeSockets[socketKey];
+        
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: "typing" }));
+        
+                if (typingTimeout) clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(() => {
+                    if (socket.readyState === WebSocket.OPEN) {
+                        socket.send(JSON.stringify({ type: "stop_typing" }));
+                    }
+                }, 1000);
+            }
+        });
+                
+
+        });
+
+        // ✅ After rendering the chat panel, set initial status from contact avatar
+        setTimeout(() => {
+            const contactItem = document.querySelector(`.chat-contact[data-user-id="${userId}"]`);
+            const headerStatus = document.getElementById(`status-text-${userId}`);
+            if (contactItem && headerStatus) {
+                const avatar = contactItem.querySelector(".avatar");
+                if (avatar?.classList.contains("status-online")) {
+                    headerStatus.textContent = "Active now";
+                    headerStatus.classList.add("text-success");
+                    headerStatus.classList.remove("text-muted");
+                } else {
+                    headerStatus.textContent = "Offline";
+                    headerStatus.classList.add("text-muted");
+                    headerStatus.classList.remove("text-success");
+                }
+            }
+        }, 100);
+        
+        
+    }
+    // Function to clear file preview and reset the input field
+    function clearFilePreview(userId) {
+        const fileInput = document.getElementById(`chat-file-upload-${userId}`);
+        const filePreview = document.getElementById(`file-preview-${userId}`);
+        fileInput.value = "";
+        filePreview.innerHTML = "";
+    }
+    // Function to truncate text to a specified length  
+    function searchContacts() {
+        let input = document.getElementById("contactSearchInput").value.toLowerCase();
+        let chatList = document.getElementById("chat-list");
+        let chatItems = document.querySelectorAll(".chat-contact");
+    
+        if (input === "") {
+            const chatList = document.getElementById("chat-list");
+            chatList.innerHTML = "";  // Clear existing contacts
+            loadChatList();           // Then reload the original list
+            return;
+        }
+    
+        let hasResults = false;
+        chatItems.forEach(item => {
+            let contactName = item.querySelector(".chat-contact-title").textContent.toLowerCase();
+    
+            if (contactName.includes(input)) {
+                item.style.display = "block";
+                hasResults = true;
+            } else {
+                item.style.display = "none";
+            }
+        });
+    
+        if (!hasResults) {
+            chatList.innerHTML = `<p class="text-center mt-4 text-muted">No contacts found</p>`;
+        }
+    }
+    // Function to search chat contact in the list
+    function renderChatContact(chat) {
+        return `
+        <div class="hover-actions-trigger chat-contact nav-item p-2 border-bottom">
+            <div class="d-flex p-3">
+                <div class="avatar avatar-xl status-online">
+                    <img class="rounded-circle" src="${chat.photo}" alt="${chat.name}" />
+                </div>
+                <div class="flex-1 chat-contact-body ms-2 d-md-none d-lg-block">
+                    <div class="d-flex justify-content-between">
+                        <h6 class="mb-0 chat-contact-title">${chat.name}</h6>
+                        <span class="message-time fs-11">${chat.lastMessageTime}</span>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="chat-contact-content pe-3">${chat.lastMessageText}</div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }
+    // Function to load old messages when scrolling to the top
+    let isLoadingOldMessages = false;
+    // Function to scroll to the latest message in the chat
+    function scrollToRepliedMessage(messageId) {
+        const el = document.querySelector(`.chat-message-content[data-message-id="${messageId}"]`);
+    
+        if (el) {
+            // Delay slightly to ensure DOM is fully rendered
+            setTimeout(() => {
+                el.scrollIntoView({ behavior: "smooth", block: "center" });
+                el.classList.add("border", "border-info", "shadow");
+    
+                setTimeout(() => {
+                    el.classList.remove("border", "border-info", "shadow");
+                }, 2000);
+            }, 100);
+        } else {
+            // If not found, fetch and render
+            fetch(`/social/chat/single_message/?message_id=${messageId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data || !data.id) return;
+    
+                    const chatMessagesList = document.getElementById(`chatMessagesList-${data.sender_id}`);
+                    const messageDiv = document.createElement("div");
+    
+                    const isSent = parseInt(data.sender_id) === CURRENT_USER_ID;
+    
+                    messageDiv.className = "chat-message-wrapper d-flex align-items-end mb-2 ms-4 me-4 mt-2";
+                    messageDiv.classList.add(isSent ? "justify-content-end" : "justify-content-start");
+                    messageDiv.style.position = "relative";
+    
+                    const userPhoto = data.sender_photo || '/static/assets/img/def_user.jpg';
+    
+                    messageDiv.innerHTML = `
+                        <div class="d-flex ${isSent ? 'flex-row-reverse' : 'flex-row'} align-items-end gap-2 mb-2">
+                            ${!isSent ? `<img class="profile-image rounded-circle me-2" src="${userPhoto}" alt="Profile" style="width: 32px; height: 32px; object-fit: cover;">` : ''}
+                            <div class="d-flex flex-column ${isSent ? 'align-items-end' : 'align-items-start'}">
+                                <div class="chat-message-content" data-message-id="${data.id}" oncontextmenu="showReactionPicker(event, ${message.id})"
+                                    style="border-radius: 12px; padding: 10px 14px; max-width: 75%;
+                                    background-color: ${isSent ? '#2C7BE5' : '#232E3C'};
+                                    color: ${isSent ? '#FFFFFF' : '#9DA9BB'};">
+                                    <div class="chat-message-text">${escapeHtml(data.message).replace(/\n/g, '<br>')}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+    
+                    chatMessagesList.prepend(messageDiv);
+    
+                    // Scroll to the newly inserted message
+                    setTimeout(() => {
+                        const el = document.querySelector(`.chat-message-content[data-message-id="${messageId}"]`);
+                        if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "center" });
+                            el.classList.add("border", "border-info", "shadow");
+                            setTimeout(() => {
+                                el.classList.remove("border", "border-info", "shadow");
+                            }, 2000);
+                        }
+                    }, 200);
+                })
+                .catch(err => console.error("Failed to fetch replied message:", err));
+        }
+    }
+    // Function to load chat messages with pagination
+    function loadChatMessages(userId, nextUrl = null, prepend = false, isGroup = false) {
+        if (prepend && isLoadingOldMessages) return; 
+        if (prepend) isLoadingOldMessages = true;  
+
+        if (prepend) {
+            if (!chatScrollPage[userId]) {
+                chatScrollPage[userId] = 2; // first pagination scroll means you're now on page 2
+            } else {
+                chatScrollPage[userId]++;
+            }
+        } else {
+            // Reset to 1 on fresh load
+            chatScrollPage[userId] = 1;
+        }        
+
+        const chatMessagesList = document.getElementById(isGroup ? `groupMessagesList-${userId}` : `chatMessagesList-${userId}`);
+        if (!chatMessagesList) {
+            console.warn(`[loadChatMessages] Message list not found for userId ${userId}`);
+            return;
+        }
+
+        const chatMessagesDiv = document.getElementById(isGroup ? `groupMessages-${userId}` : `chatMessages-${userId}`);
+        const spinner = document.getElementById(`chat-loading-spinner-${userId}`);
+    
+        const url = nextUrl || (
+            isGroup 
+                ? `/social/group_chat/messages/?group_id=${userId}`
+                : `/social/chat/?receiver=${userId}`
+        );
+    
+        // Show spinner only when loading older messages (prepend mode)
+        if (prepend && spinner) spinner.style.display = 'block';
+    
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+
+                chatPagination[userId] = data.next || null;
+
+                messages = Array.isArray(data.results) ? data.results : Array.isArray(data) ? data : [];
+
+                if (!prepend) {
+                    messages = messages.reverse();
+                }
+
+                if (!chatMessageCount[userId]) {
+                    chatMessageCount[userId] = 0;
+                }
+                chatMessageCount[userId] += messages.length;
+
+                if (!messages.length && prepend) {
+                    const noMoreMsg = document.createElement("div");
+                    noMoreMsg.className = "text-center text-muted small mb-2";
+                    noMoreMsg.innerText = "No more messages";
+                    chatMessagesList.prepend(noMoreMsg);
+                    return;
+                }                
+
+                if (!messages.length) {
+                    console.warn("No messages loaded");
+                    return;
+                }
+    
+                const oldScrollHeight = chatMessagesList.scrollHeight;
+    
+                messages.forEach(message => {
+
+                    if (renderedMessageIds.has(message.id)) return;
+                    renderedMessageIds.add(message.id);
+
+                    const isSent = typeof message.is_sent !== 'undefined'
+                        ? message.is_sent
+                        : parseInt(message.sender_id) === CURRENT_USER_ID;
+                    const userPhoto = message.sender_photo || '/static/assets/img/def_user.jpg';
+
+                    const messageDiv = document.createElement("div");
+                    messageDiv.className = "chat-message-wrapper d-flex align-items-end mb-2 ms-4 me-4 mt-2";
+                    messageDiv.classList.add(isSent ? "justify-content-end" : "justify-content-start");
+                    messageDiv.style.position = "relative";
+
+                    const repliedHtml = message.reply_to ? `
+                        <div class="reply-bubble px-3 py-2 mb-2 rounded" 
+                            data-scroll-to="${message.reply_to.id}"
+                            onclick="scrollToRepliedMessage(${message.reply_to.id})"
+                            style="cursor: pointer;">
+                            <strong class="reply-sender-name">${escapeHtml(message.reply_to.sender_name)}</strong><br>
+                            <span class="reply-message-text">${truncateText(escapeHtml(message.reply_to.message), 40)}</span>
+                        </div>
+                    ` : '';
+
+
+                    messageDiv.innerHTML = `
+                        <div class="d-flex ${isSent ? 'flex-row-reverse' : 'flex-row'} align-items-end gap-2 mb-2">
+                            ${!isSent ? `
+                                <img class="profile-image rounded-circle me-2" 
+                                    src="${userPhoto || '/static/assets/img/def_user.jpg'}" 
+                                    alt="Profile" style="width: 32px; height: 32px; object-fit: cover;">
+                                ` : ''}
+                            <div class="d-flex flex-column ${isSent ? 'align-items-end' : 'align-items-start'}">
+                                <div class="chat-message-content" data-message-id="${message.id}" oncontextmenu="showReactionPicker(event, ${message.id})"
+                                    style="border-radius: 12px; padding: 10px 14px;
+                                    display: inline-block; white-space: normal;
+                                    max-width: 75%; word-break: break-word;
+                                    background-color: ${message.is_deleted ? '#f0f0f0' : (isSent ? '#2C7BE5' : '#232E3C')};
+                                    color: ${message.is_deleted ? '#6c757d' : (isSent ? '#FFFFFF' : '#9DA9BB')}; font-style: ${message.is_deleted ? 'italic' : 'normal'};">
+                                    <div class="chat-message-text">
+                                        ${repliedHtml}
+                                        ${(!isSent && isGroup) 
+                                            ? `<strong class="d-block mb-1 text-info">${escapeHtml(message.sender_name)}</strong>` 
+                                            : ''}
+                                        ${
+                                            message.file
+                                                ? (
+                                                    /\.(jpg|jpeg|png|gif|webp)$/i.test(message.file)
+                                                    ? `<a href="${message.file}" target="_blank">
+                                                            <img src="${message.file}" alt="Image" class="chat-img mb-2">
+                                                    </a>`
+                                                    : /\.(mp4|webm|ogg)$/i.test(message.file)
+                                                    ? `<video controls class="chat-video mb-2">
+                                                            <source src="${message.file}" type="video/${message.file.split('.').pop()}">
+                                                            Your browser does not support the video tag.
+                                                    </video>`
+                                                    : `<a href="${message.file}" download class="text-decoration-underline text-light">
+                                                            📎 Download ${message.file.split('/').pop()}
+                                                    </a><br>`
+                                                )
+                                                : ''
+                                        }
+                                        ${message.is_deleted 
+                                            ? 'This message was unsent' 
+                                            : `${escapeHtml(message.message)}`
+                                        }
+
+                                        ${!message.is_deleted 
+                                        ? `
+                                            <i class="fas fa-reply text-primary cursor-pointer reply-button ms-2"
+                                                    onclick="prepareReply(${message.id}, decodeURIComponent('${encodeURIComponent(message.message)}'), decodeURIComponent('${encodeURIComponent(message.sender_name)}'))"
+                                                    title="Reply">
+                                                </i>
+                                            `
+                                            : ''
+                                        }
+                                        
+
+                                    </div>
+                                    <div class="d-flex ${isSent ? 'justify-content-end' : 'justify-content-start'}">
+                                    </div>
+                                </div>
+                                    <div class="reaction-bubble-container mt-1 d-flex ${isSent ? 'justify-content-end' : 'justify-content-start'} pe-2" id="reaction-display-${message.id}"></div>
+                                <small class="chat-timestamp text-500 mt-1 d-flex align-items-center gap-2" style="font-size: 10px;">
+                                    ${message.is_edited ? `<span class="text-secondary ms-1">(edited)</span>` : ''}
+                                    ${message.formatted_time}
+                                    ${message.is_sent 
+                                        ? (
+                                            (message.is_read 
+                                                ? `<i class="fas fa-check-double text-primary read-check" data-read="true" data-message-id="${message.id}"></i>`
+                                                : `<i class="fas fa-check text-muted read-check" data-read="false" data-message-id="${message.id}"></i>`)
+                                            + (
+                                                !message.is_deleted 
+                                                ? ` 
+                                                    ${!message.file ? `
+                                                        <span class="text-primary ms-2 cursor-pointer edit-icon" title="Edit"
+                                                            onclick="editMessagePrompt(${message.id}, '${escapeHtml(message.message)}')">
+                                                            <i class="fas fa-edit"></i>
+                                                        </span>
+                                                    ` : ''}
+                                                    <span class="text-danger ms-2 cursor-pointer delete-icon" title="Delete"
+                                                        onclick="if (confirm('Are you sure you want to unsend this message?')) deleteMessage(${message.id})">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </span>`
+                                                : ''
+                                            )
+                                        ) 
+                                        : ''
+                                    }
+                                ${!message.is_deleted 
+                                    ? `
+                                        <span class="text-warning ms-2 cursor-pointer reaction-icon" 
+                                            title="React" onclick="showReactionPicker(event, ${message.id})">
+                                            <i class="fas fa-smile-beam"></i>
+                                        </span>
+                                    `
+                                    : ''
+                                }
+                                </small>
+                            </div>
+                        </div>
+                    `;
+
+                    const reactionDisplay = messageDiv.querySelector(`#reaction-display-${message.id}`);
+                    if (reactionDisplay && message.reactions && message.reactions.length > 0) {
+                        // Group reactions by emoji
+                        const emojiCounts = {};
+                        message.reactions.forEach(reaction => {
+                            if (!emojiCounts[reaction.emoji]) {
+                                emojiCounts[reaction.emoji] = { count: 1, users: [reaction.user_id] };
+                            } else {
+                                emojiCounts[reaction.emoji].count++;
+                                emojiCounts[reaction.emoji].users.push(reaction.user_id);
+                            }
+                        });
+
+                        // Render grouped badges
+                        for (const emoji in emojiCounts) {
+                            const badge = document.createElement("div");
+                            badge.className = "reaction-badge";
+                            badge.setAttribute("data-emoji", emoji);
+                            badge.setAttribute("data-users", emojiCounts[emoji].users.join(','));
+                            badge.textContent = `${emoji} ${emojiCounts[emoji].count}`;
+                            reactionDisplay.appendChild(badge);
+                        }
+
+                    }
+    
+                    if (prepend) {
+                        chatMessagesList.prepend(messageDiv);
+                    } else {
+                        chatMessagesList.appendChild(messageDiv);
+                    }
+                });
+
+                document.querySelectorAll(".read-check[data-read='false']").forEach(icon => {
+                    const messageId = parseInt(icon.getAttribute("data-message-id"));
+                    if (pendingReadReceipts.has(messageId)) {
+                        icon.classList.remove("fa-check", "text-muted");
+                        icon.classList.add("fa-check-double", "text-primary");
+                        icon.setAttribute("data-read", "true");
+                        pendingReadReceipts.delete(messageId);
+                    }
+                });
+
+                if (prepend) {
+                    const prevScrollHeight = chatMessagesDiv.scrollHeight;
+                    const prevScrollTop = chatMessagesDiv.scrollTop;
+                
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            const newScrollHeight = chatMessagesDiv.scrollHeight;
+                            chatMessagesDiv.scrollTop = newScrollHeight - prevScrollHeight + prevScrollTop;
+                        });
+                    });
+                } else {
+                    chatMessagesDiv.style.scrollBehavior = 'auto';
+                    chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+                
+                    // Restore smooth scroll after
+                    setTimeout(() => {
+                        chatMessagesDiv.style.scrollBehavior = 'smooth';
+                    }, 50);
+                }                           
+            })
+            .catch(error => {
+                console.error("Error loading messages:", error);
+            })
+            .finally(() => {
+                if (spinner) spinner.style.display = 'none';
+                if (prepend) isLoadingOldMessages = false;
+                scrollDebounce = false; // ✅ Important for allowing new scroll events
+            });            
+    }
+    // Function to show the reaction picker
+    function toggleTimestamp(messageElement) {
+        // Hide all other timestamps first
+        document.querySelectorAll(".chat-timestamp").forEach(timestamp => {
+            timestamp.classList.add("hidden");
+        });
+    
+        // Toggle the clicked timestamp
+        const timestamp = messageElement.querySelector(".chat-timestamp");
+        if (timestamp) {
+            timestamp.classList.toggle("hidden");
+        }
+    }
+    // Function to escape HTML characters in a string
+    function getCleanedMessage(chatInput) {
+        if (!chatInput) return '';
+        let html = chatInput.innerHTML;
+    
+        // Step 1: Normalize <div> and <br> tags
+        html = html.replace(/<div><br><\/div>/g, '\n') // treat empty div as newline
+                   .replace(/<div>/g, '\n')
+                   .replace(/<\/div>/g, '')
+                   .replace(/<br>/g, '\n')
+                   .replace(/&nbsp;/g, ' ')
+                   .replace(/&#x200B;/g, '');
+    
+        // Step 2: Collapse unnecessary newlines for short text
+        const lines = html.split('\n').map(line => line.trim()).filter(Boolean);
+        if (lines.length <= 3 && lines.join('').length <= 10) {
+            return lines.join(' '); // join small multi-line inputs into a single line
+        }
+    
+        return lines.join('\n'); // keep line breaks for proper messages
+    }
+    // Function to insert emoji into contentEditable element
+    function insertEmojiIntoContentEditable(contentEditableElement, emoji) {
+        if (!contentEditableElement) return;
+    
+        // Force focus back to the input before inserting
+        contentEditableElement.focus();
+    
+        const selection = window.getSelection();
+        const range = selection.getRangeAt(0);
+    
+        const emojiNode = document.createTextNode(emoji);
+        range.deleteContents();  // Optional: if you want to replace selection
+        range.insertNode(emojiNode);
+    
+        // Move caret after inserted emoji
+        range.setStartAfter(emojiNode);
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }    
+    // Function to send a message
+    function sendMessage(userId, userName) {
+        const chatInput = document.getElementById(`chatInput-${userId}`);
+        const messageText = getCleanedMessage(chatInput);
+        const fileInput = document.getElementById(`chat-file-upload-${userId}`);
+        const file = fileInput.files[0];
+        const isGroup = localStorage.getItem("activeIsGroup") === 'true';
+    
+        if (!messageText && !file) return;
+    
+        const clearInput = () => {
+            chatInput.innerText = "";
+            fileInput.value = "";
+            document.getElementById(`file-preview-${userId}`).innerHTML = "";
+            editingMessageId = null;
+            cancelEdit();
+            cancelReply();
+            delete chatInput.dataset.replyTo;
+        };
+        
+        const replyTo = chatInput.dataset.replyTo ? parseInt(chatInput.dataset.replyTo) : null;
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                const base64File = event.target.result;
+    
+                const filePayload = {
+                    message: messageText || "",
+                    file: {
+                        name: file.name,
+                        type: file.type,
+                        data: base64File
+                    }
+                };
+    
+                if (editingMessageId) {
+                    filePayload.type = "edit_message";
+                    filePayload.message_id = editingMessageId;
+                }
+
+                if (replyTo) {
+                    filePayload.reply_to = replyTo;
+                }
+    
+                sendViaWebSocket(userId, filePayload, isGroup);
+                setTimeout(() => scrollToBottom(userId), 100);
+                clearInput();
+            };
+            reader.readAsDataURL(file);
+        } else {
+            const payload = editingMessageId ? {
+                type: "edit_message",
+                message_id: editingMessageId,
+                message: messageText
+            } : {
+                message: messageText
+            };
+
+            if (replyTo) {
+                payload.reply_to = replyTo;
+            }
+    
+            sendViaWebSocket(userId, payload, isGroup);
+            setTimeout(() => scrollToBottom(userId), 100);
+            clearInput();
+        }
+    }
+    // Function to scroll to the bottom of the chat messages
+    function scrollToBottom(userId) {
+        const isGroup = localStorage.getItem("activeIsGroup") === 'true';
+        const wrapperId = isGroup ? `groupMessages-${userId}` : `chatMessages-${userId}`;
+        const chatMessagesDiv = document.getElementById(wrapperId);
+    
+        if (chatMessagesDiv) {
+            requestAnimationFrame(() => {
+                chatMessagesDiv.scrollTo({
+                    top: chatMessagesDiv.scrollHeight,
+                    behavior: 'smooth'
+                });
+            });
+        }
+    }
+    // Function to hide all reaction pickers
+    document.addEventListener("click", function () {
+        hideAllReactionPickers();
+    });
+    // Function to send data via WebSocket
+    function sendViaWebSocket(userId, data, isGroup = null) {
+        if (isGroup === null) {
+            isGroup = localStorage.getItem("activeIsGroup") === "true"; 
+        }
+    
+        const socketKey = isGroup ? `group_${userId}` : userId;
+        const socket = activeSockets[socketKey];
+
+        console.log("[📤 Sending message]", JSON.stringify(data, null, 2));
+    
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify(data));
+        } else {
+            console.warn(`[WebSocket] ❗ WebSocket not ready for ${isGroup ? 'group' : 'user'} ${userId}`);
+        }
+    }
+    // Function to delete a conversation
+    function deleteConversation(userId) {
+        if (!confirm("Are you sure you want to delete this conversation?")) return;
+    
+        const isGroup = localStorage.getItem("activeIsGroup") === "true";
+        const endpoint = isGroup
+            ? "/social/group_chat/delete_conversation/"
+            : "/social/chat/delete_conversation/";
+    
+        const body = isGroup
+            ? { id: userId }  // for group chat
+            : { receiver: userId };  // for private chat
+    
+        fetch(endpoint, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCSRFToken()
+            },
+            body: JSON.stringify(body)
+        })
+        .then(res => res.json())
+        .then(data => {
+            console.log(data.message);
+    
+            alert("Conversation deleted. It will reappear when a new message is sent.");
+    
+            // Clear active chat
+            localStorage.removeItem('activeChatId');
+            localStorage.removeItem('activeChatName');
+            localStorage.removeItem('activeChatPhoto');
+            localStorage.removeItem('activeIsGroup');
+    
+            // Refresh chat list and reset panel
+            loadChatList();
+    
+            const chatPanel = document.getElementById("chat-panel");
+            if (chatPanel) {
+                chatPanel.innerHTML = `<p class="text-center mt-4">Select a conversation</p>`;
+            }
+        })
+        .catch(err => console.error("Failed to delete conversation:", err));
+    }
+    // Function to connect to WebSocket for chat messages
+    function connectWebSocket(userId, onReady = null, isGroup = false) {
+        const socketKey = isGroup ? `group_${userId}` : userId;
+        const ids = [CURRENT_USER_ID, userId].sort((a, b) => a - b);
+        const roomName = `chat_${ids[0]}_${ids[1]}`;
+        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const socketUrl = isGroup 
+            ? `${protocol}://${window.location.host}/ws/group/${userId}/`
+            : `${protocol}://${window.location.host}/ws/chat/${userId}/`;
+
+        if (activeSockets[socketKey]) {
+            if (activeSockets[socketKey].readyState === WebSocket.OPEN && onReady) {
+                onReady();
+            }
+            return;
+        }
+    
+        const socket = new WebSocket(socketUrl);
+        activeSockets[socketKey] = socket;
+    
+        socket.onopen = () => {
+            if (onReady) onReady();  // ✅ Safe to run after connected
+        };
+    
+    
+        socket.onmessage = function (e) {
+            const data = JSON.parse(e.data);
+
+            console.log("[📥 Received WebSocket data]", JSON.stringify(data, null, 2));
+
+            // 👇 INSERT HERE: PRESENCE UPDATE HANDLING
+            if (data.type === "presence_update") {
+                const userId = parseInt(data.user_id);
+                userPresence[userId] = data.is_online;
+
+                const contactItem = document.querySelector(`.chat-contact[data-user-id="${userId}"]`);
+                const avatar = contactItem?.querySelector(".avatar");
+
+                if (avatar) {
+                    if (data.is_online) {
+                        avatar.classList.add("status-online");
+                        avatar.classList.remove("status-offline");
+                    } else {
+                        avatar.classList.remove("status-online");
+                        avatar.classList.add("status-offline");
+                    }
+                }
+                
+                
+
+                // Optionally update chat header status
+                const headerStatus = document.getElementById(`status-text-${userId}`);
+                if (headerStatus) {
+                    if (data.is_online) {
+                        headerStatus.textContent = "Active now";
+                        headerStatus.classList.add("text-success");
+                        headerStatus.classList.remove("text-muted");
+                    } else {
+                        const lastSeenDate = new Date(data.last_seen);
+                        const now = new Date();
+                        const diffMs = now - lastSeenDate;
+                        const diffMin = Math.round(diffMs / 60000);
+                
+                        if (diffMin < 1) {
+                            headerStatus.textContent = "Last seen just now";
+                        } else if (diffMin < 60) {
+                            headerStatus.textContent = `Last seen ${diffMin} min${diffMin > 1 ? 's' : ''} ago`;
+                        } else {
+                            const hours = Math.floor(diffMin / 60);
+                            headerStatus.textContent = `Last seen ${hours} hour${hours > 1 ? 's' : ''} ago`;
+                        }
+                
+                        headerStatus.classList.remove("text-success");
+                        headerStatus.classList.add("text-muted");
+                    }
+                }
+
+
+                return; // ✅ Done processing this type
+            }
+
+            // Reaction added/removed
+            if (data.type === "reaction_added") {
+                if (data.is_deleted) return;
+                const displayDiv = document.getElementById(`reaction-display-${data.message_id}`);
+                if (!displayDiv) return;
+            
+                // Remove previous emoji from this user
+                const existingBadges = displayDiv.querySelectorAll(".reaction-badge");
+                existingBadges.forEach(badge => {
+                    const users = badge.getAttribute("data-users")?.split(',') || [];
+                    const index = users.indexOf(String(data.user_id));
+                    if (index > -1) {
+                        users.splice(index, 1);
+                        badge.setAttribute("data-users", users.join(','));
+            
+                        // Decrement or remove badge
+                        let count = parseInt(badge.textContent.split(' ')[1]) || 1;
+                        if (count <= 1) {
+                            badge.remove();
+                        } else {
+                            badge.textContent = `${badge.getAttribute("data-emoji")} ${count - 1}`;
+                        }
+                    }
+                });
+            
+                // Add new or increment badge for new emoji
+                let badge = displayDiv.querySelector(`.reaction-badge[data-emoji="${data.emoji}"]`);
+                if (badge) {
+                    let count = parseInt(badge.textContent.split(' ')[1]) || 0;
+                    badge.textContent = `${data.emoji} ${count + 1}`;
+                    let users = badge.getAttribute("data-users")?.split(',') || [];
+                    users.push(String(data.user_id));
+                    badge.setAttribute("data-users", users.join(','));
+                } else {
+                    badge = document.createElement("div");
+                    badge.className = "reaction-badge";
+                    badge.setAttribute("data-emoji", data.emoji);
+                    badge.setAttribute("data-users", String(data.user_id));
+                    badge.textContent = `${data.emoji} 1`;
+                    displayDiv.appendChild(badge);
+                }
+            }
+            
+            // When a message is delete
+            if (data.type === "message_deleted") {
+                const messageId = parseInt(data.message_id);
+                const isGroup = localStorage.getItem("activeIsGroup") === "true";
+                const targetId = parseInt(localStorage.getItem("activeChatId"));
+                const isCurrentUser = parseInt(data.deleter_id) === CURRENT_USER_ID;
+            
+                // ✅ Dynamic preview message
+                let previewText = "";
+            
+                if (isGroup) {
+                    previewText = isCurrentUser
+                        ? "You unsent a message"
+                        : `${data.deleted_by_name || "Someone"} unsent a message`;
+                } else {
+                    previewText = isCurrentUser
+                        ? "You unsent a message"
+                        : "This message was unsent";
+                }
+            
+                const allMessages = document.querySelectorAll(`.chat-message-content[data-message-id="${messageId}"]`);
+                allMessages.forEach(messageEl => {
+                    // Remove reaction display
+                    const reactionDiv = messageEl.querySelector(`#reaction-display-${messageId}`);
+                    if (reactionDiv) reactionDiv.remove();
+            
+                    // Remove edit/delete/reply icons
+                    const deleteIcon = messageEl.parentElement.querySelector(".delete-icon");
+                    if (deleteIcon) deleteIcon.remove();
+                    const editIcon = messageEl.parentElement.querySelector(".edit-icon");
+                    if (editIcon) editIcon.remove();
+                    const replyIcon = messageEl.parentElement.querySelector(".reply-button");
+                    if (replyIcon) replyIcon.remove();
+                    const reactIcon = messageEl.parentElement.querySelector(".reaction-icon");
+                    if (reactIcon) reactIcon.remove();
+            
+                    // Replace message content
+                    messageEl.innerHTML = `
+                        <div class="chat-message-text">${previewText}</div>
+                    `;
+                    messageEl.classList.add("unsent-message");
+                    messageEl.style.color = "#6c757d";
+                    messageEl.style.fontStyle = "italic";
+                    messageEl.style.backgroundColor = "#f0f0f0";
+                });
+
+                // ✅ Cancel reply if the deleted message is being replied to
+                const activeChatId = localStorage.getItem("activeChatId");
+                const chatInput = document.getElementById(`chatInput-${activeChatId}`);
+                if (chatInput && parseInt(chatInput.dataset.replyTo) === messageId) {
+                    cancelReply();  // remove reply box and clear the reply state
+                }
+
+                if (editingMessageId === messageId) {
+                    cancelEdit();
+                }
+            
+                // Update sidebar preview
+                const selector = isGroup
+                    ? `.chat-contact[data-user-id="${targetId}"][data-is-group="true"]`
+                    : `.chat-contact[data-user-id="${targetId}"]:not([data-is-group="true"])`;
+            
+                const contactItem = document.querySelector(selector);
+                if (contactItem) {
+                    const preview = contactItem.querySelector(".chat-contact-content");
+                    const time = contactItem.querySelector(".message-time");
+            
+                    if (preview) preview.textContent = previewText;
+                    if (time) time.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+                    if (contactItem.parentNode) {
+                        contactItem.parentNode.insertBefore(contactItem, contactItem.parentNode.firstChild);
+                    }
+                }
+            
+                return;
+            }
+
+            // Reply to Message
+            if (data.type === "message_edited") {
+                console.log("🔄 Received edited message:", data);  // ✅ Log the incoming payload
+
+                const messageEl = document.querySelector(`.chat-message-content[data-message-id="${data.message_id}"]`);
+                if (messageEl) {
+                    const isSender = parseInt(data.sender_id) === CURRENT_USER_ID;
+
+                    const repliedHtml = (data.reply_to && data.reply_to.message) ? `
+                        <div class="reply-preview px-3 py-2 mb-1 rounded cursor-pointer" 
+                            onclick="scrollToRepliedMessage(${data.reply_to.id})"
+                            style="background-color: rgba(255, 255, 255, 0.08); border-left: 4px solid #2C7BE5;">
+                            <strong class="text-primary">${escapeHtml(data.reply_to.sender_name)}</strong><br>
+                            <span class="text-muted small">${truncateText(escapeHtml(data.reply_to.message), 40)}</span>
+                        </div>
+                    ` : '';
+
+                    // Replace entire message content including reply preview and edit label
+                    messageEl.innerHTML = `
+                        <div class="chat-message-text">
+                            ${repliedHtml}
+                            ${escapeHtml(data.new_message)}
+                            <span class="edited-label text-muted ms-1" style="font-size: 10px;">(edited)</span>
+                        </div>
+                        <div class="reaction-display d-flex align-items-center mt-1 gap-1 justify-content-${isSender ? 'end' : 'start'}" id="reaction-display-${data.message_id}" style="min-height: 20px;">
+                            <!-- Reactions will be dynamically inserted here -->
+                        </div>
+                        <div class="d-flex align-items-center gap-2 mt-1">
+                            <i class="fas fa-reply text-primary cursor-pointer reply-button ms-2"
+                            onclick="prepareReply(${data.message_id}, '${escapeHtml(data.new_message)}', '${escapeHtml(data.sender_name)}')"
+                            title="Reply"></i>
+                            <span class="text-warning ms-2 cursor-pointer reaction-icon" 
+                            title="React" onclick="showReactionPicker(event, ${data.message_id})">
+                            <i class="fas fa-smile-beam"></i>
+                            </span>
+                        </div>
+                    `;
+                }
+
+                return;
+            }
+
+                                 
+                   
+
+            if (data.type === "typing") {
+                const typingIndicator = document.getElementById(`typing-indicator-${data.user_id}`);
+                if (typingIndicator) {
+                    typingIndicator.style.display = data.is_typing ? "block" : "none";
+            
+                    if (data.is_typing) {
+                        const chatMessagesDiv = document.getElementById(`chatMessages-${data.user_id}`);
+                        if (!chatMessagesDiv) return;
+                    
+                        const isNearBottom = Math.abs(chatMessagesDiv.scrollTop + chatMessagesDiv.clientHeight - chatMessagesDiv.scrollHeight) < 100;
+                    
+                        if (isNearBottom) {
+                            requestAnimationFrame(() => {
+                                chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+                            });
+                        }
+                    }
+                }
+                return;
+            }    
+
+            
+            if (data.type === "group_message") {
+            
+                const groupId = data.group_id; // make sure your backend sends this!
+                const activeGroupId = localStorage.getItem("activeChatId");
+                const activeIsGroup = localStorage.getItem("activeIsGroup") === 'true';
+
+                const groupItem = document.querySelector(`.chat-contact[data-user-id="${groupId}"][data-is-group="true"]`);
+
+                if (groupItem) {
+                    const preview = groupItem.querySelector(".chat-contact-content");
+                    const time = groupItem.querySelector(".message-time");
+
+                    if (preview) {
+                        let previewText = `${data.sender_name}: ${data.message}`;
+                        if (previewText.length > 50) {
+                            previewText = previewText.slice(0, 47) + '...';
+                        }
+                        preview.textContent = previewText;
+                    }
+
+                    if (time) {
+                        time.textContent = data.timestamp;  
+                    }
+
+                    // Move to top of sidebar
+                    if (groupItem.parentNode) {
+                        groupItem.parentNode.insertBefore(groupItem, groupItem.parentNode.firstChild);
+                    }
+
+                    // Optional: add .fw-bold to make it look unread
+                    if (!(activeIsGroup && parseInt(activeGroupId) === parseInt(groupId))) {
+                        groupItem.classList.add("fw-bold", "unread");
+                    }
+                }
+
+                if (!activeIsGroup || parseInt(activeGroupId) !== parseInt(groupId)) {
+                    return;
+                }
+
+                const chatMessagesDiv = document.getElementById(`groupMessages-${groupId}`);
+                const chatMessagesList = document.getElementById(`groupMessagesList-${groupId}`);
+
+
+            
+                const isSender = parseInt(data.sender_id) === CURRENT_USER_ID;
+
+                const messageDiv = document.createElement("div");
+                messageDiv.className = "chat-message-wrapper d-flex align-items-end mb-2 ms-4 me-4 mt-2";
+                messageDiv.classList.add(isSender ? "justify-content-end" : "justify-content-start");
+
+                messageDiv.innerHTML = `
+                    <div class="d-flex ${isSender ? 'flex-row-reverse' : 'flex-row'} align-items-end gap-2 mb-2">
+                        ${!isSender ? `
+                            <img class="profile-image rounded-circle me-2" 
+                                src="${data.sender_photo || '/static/assets/img/def_user.jpg'}" 
+                                alt="Profile" style="width: 32px; height: 32px; object-fit: cover;">
+                        ` : ''}
+                        <div class="d-flex flex-column ${isSender ? 'align-items-end' : 'align-items-start'}">
+                            <div class="chat-message-content" data-message-id="${data.message_id}" 
+                                oncontextmenu="showReactionPicker(event, ${data.message_id})"
+                                style="border-radius: 12px; padding: 10px 14px;
+                                display: inline-block; white-space: normal;
+                                max-width: 75%; word-break: break-word;
+                                background-color: ${isSender ? '#2C7BE5' : '#232E3C'}; color: ${isSender ? '#FFFFFF' : '#9DA9BB'};">
+                                <div class="chat-message-text">
+                                    ${data.reply_to ? `
+                                        <div class="reply-preview px-3 py-2 mb-1 rounded cursor-pointer" 
+                                            onclick="scrollToRepliedMessage(${data.reply_to.id})"
+                                            style="background-color: rgba(255, 255, 255, 0.08); border-left: 4px solid #2C7BE5;">
+                                            <strong class="text-primary">${escapeHtml(data.reply_to.sender_name)}:</strong>
+                                            <div class="small text-muted text-truncate" style="max-width: 220px;">
+                                                ${truncateText(escapeHtml(data.reply_to.message), 40)}
+                                            </div>
+                                        </div>
+                                    ` : ''}
+                                    ${!isSender ? `<strong class="text-info">${escapeHtml(data.sender_name)}</strong><br>` : ''}
+                                    ${escapeHtml(data.message).replace(/\n/g, '<br>')}
+                                    ${
+                                        data.file
+                                            ? (
+                                                /\.(jpg|jpeg|png|gif|webp)$/i.test(data.file)
+                                                ? `<a href="${data.file}" target="_blank">
+                                                        <img src="${data.file}" alt="Image" class="chat-img mb-2">
+                                                </a>`
+                                                : /\.(mp4|webm|ogg)$/i.test(data.file)
+                                                ? `<video controls class="chat-video mb-2">
+                                                        <source src="${data.file}" type="video/${data.file.split('.').pop()}">
+                                                        Your browser does not support the video tag.
+                                                </video>`
+                                                : `<a href="${data.file}" download class="text-decoration-underline text-light fw-semibold">
+                                                        📎 Download ${decodeURIComponent(data.file.split('/').pop())}
+                                                </a><br>`
+                                            )
+                                            : ''
+                                    }
+                                    ${!data.is_deleted ? `
+                                        <i class="fas fa-reply text-primary cursor-pointer reply-button ms-2"
+                                            onclick="prepareReply(${data.message_id}, decodeURIComponent('${encodeURIComponent(data.message)}'), decodeURIComponent('${encodeURIComponent(data.sender_name)}'))"
+                                            title="Reply">                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+                                        </i>
+                                    ` : ''}
+                                </div>
+                                <div class="d-flex ${isSender ? 'justify-content-end' : 'justify-content-start'}">
+                                    <div class="reaction-display pe-1" style="max-width: 70%;" id="reaction-display-${data.message_id}">
+                                        <!-- Reactions will show here -->
+                                    </div>
+                                </div>
+                            </div>
+                            <small class="chat-timestamp text-500 mt-1 d-flex align-items-center gap-2" style="font-size: 10px;">
+                                ${data.timestamp}
+                                ${isSender ? `
+                                    ${!data.file ? `
+                                        <span class="text-primary ms-2 cursor-pointer edit-icon" title="Edit"
+                                            onclick="editMessagePrompt(${data.message_id}, decodeURIComponent('${encodeURIComponent(data.message)}'))">
+                                            <i class="fas fa-edit"></i>
+                                        </span>
+                                    ` : ''}
+                                    <span class="text-danger ms-2 cursor-pointer delete-icon" title="Delete"
+                                        onclick="if (confirm('Are you sure you want to unsend this message?')) deleteMessage(${data.message_id})">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </span>
+                                ` : ''}
+                                ${!data.is_deleted ? `
+                                    <span class="text-warning ms-2 cursor-pointer reaction-icon" 
+                                        title="React" onclick="showReactionPicker(event, ${data.message_id})">
+                                        <i class="fas fa-smile-beam"></i>
+                                    </span>
+                                ` : ''}
+                            </small>
+                        </div>
+                    </div>
+                `;
+                
+
+            
+                if (chatMessagesList && chatMessagesDiv) {
+                    const existing = chatMessagesList.querySelector(`.chat-message-content[data-message-id="${data.message_id}"]`);
+                    if (existing) {
+                        const wrapper = existing.closest(".chat-message-wrapper");
+                        if (wrapper) {
+                            wrapper.replaceWith(messageDiv);
+                        }
+                    } else {
+                        chatMessagesList.appendChild(messageDiv);
+                    }
+                
+                    const isNearBottom = Math.abs(chatMessagesDiv.scrollTop + chatMessagesDiv.clientHeight - chatMessagesDiv.scrollHeight) < 5;
+                    if (isNearBottom) {
+                        requestAnimationFrame(() => {
+                            chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+                        });
+                    }
+                }
+                
+            
+                return;
+            }            
+
+
+            const isSent = parseInt(data.sender_id) === CURRENT_USER_ID;
+
+            if (data.type === "read_receipt_notify") {
+                console.log("[📬] Received read receipt:", data.read_ids);
+                const readIds = data.read_ids;
+            
+                readIds.forEach(id => {
+                    const icon = document.querySelector(`.read-check[data-message-id="${id}"]`);
+                    if (icon && icon.getAttribute("data-read") === "false") {
+                        icon.classList.remove("fa-check", "text-muted");
+                        icon.classList.add("fa-check-double", "text-primary");
+                        icon.setAttribute("data-read", "true");
+                    } else {
+                        pendingReadReceipts.add(id);  // 💡 save for later
+                    }
+                });
+                return;
+            }
+            
+    
+            let otherUserId = isSent ? parseInt(data.receiver_id) : parseInt(data.sender_id);
+            const chatMessagesDiv = document.getElementById(`chatMessages-${otherUserId}`);
+            const chatMessagesList = document.getElementById(`chatMessagesList-${otherUserId}`);
+
+            const isChatOpen = !!chatMessagesDiv;
+
+            const contactItem = document.querySelector(`.chat-contact[data-user-id="${otherUserId}"]`);
+            if (contactItem) {
+                const preview = contactItem.querySelector(".chat-contact-content");
+                if (preview) {
+                    const prefix = isSent ? "You: " : `${data.sender_name}: `;
+                    let previewText = `${prefix}${data.message}`;
+                    if (previewText.length > 50) {
+                        previewText = previewText.slice(0, 47) + '...';
+                    }
+                    preview.textContent = previewText;
+                }
+
+                const time = contactItem.querySelector(".message-time");
+                if (time) time.textContent = data.formatted_time;
+
+                // Only mark unread if chat is not currently open
+                if (!isChatOpen) {
+                    contactItem.classList.add("unread", "fw-bold");
+                    
+                    if (Notification.permission === "granted") {
+                        const title = `${data.sender_name} sent you a message`;
+                        const body = data.message?.slice(0, 50) || "New file received";
+                        const icon = data.sender_photo || "/static/assets/img/def_user.jpg";
+                
+                        new Notification(title, {
+                            body: body,
+                            icon: icon,
+                        });
+                    }                
+
+                }
+
+                // Move this chat to top of sidebar
+                if (contactItem.parentNode) {
+                    contactItem.parentNode.insertBefore(contactItem, contactItem.parentNode.firstChild);
+                }
+            }
+
+
+            const messageDiv = document.createElement("div");
+            messageDiv.className = "chat-message-wrapper d-flex align-items-end mb-2 ms-4 me-4 mt-2";
+            messageDiv.classList.add(isSent ? "justify-content-end" : "justify-content-start");
+            messageDiv.style.position = "relative";
+
+            const userPhoto = data.sender_photo || '/static/assets/img/def_user.jpg';
+
+            const repliedHtml = data.reply_to ? `
+                <div class="reply-preview px-3 py-2 mb-1 rounded cursor-pointer" 
+                    onclick="scrollToRepliedMessage(${data.reply_to.id})"
+                    style="background-color: rgba(255, 255, 255, 0.08); border-left: 4px solid #2C7BE5;">
+                    <strong class="text-primary">${escapeHtml(data.reply_to.sender_name)}:</strong>
+                    <div class="small text-muted text-truncate" style="max-width: 220px;">
+                        ${truncateText(escapeHtml(data.reply_to.message), 40)}
+                    </div>
+                </div>
+            ` : '';
+
+            messageDiv.innerHTML = `
+                <div class="d-flex ${isSent ? 'justify-content-end' : 'justify-content-start'} mb-2">
+
+                ${!isSent ? `
+                    <img class="profile-image rounded-circle me-2" 
+                        src="${userPhoto}" 
+                        alt="Profile" style="width: 32px; height: 32px; object-fit: cover;">
+                    ` : ''}
+
+                    <div class="d-flex flex-column ${isSent ? 'align-items-end' : 'align-items-start'}">
+                        <div class="chat-message-content" data-message-id="${data.message_id}"
+                            style="border-radius: 12px; padding: 10px 14px;
+                            display: inline-block; white-space: normal;
+                            max-width: 75%; word-break: break-word;
+                            background-color: ${isSent ? '#2C7BE5' : '#232E3C'};
+                            color: ${isSent ? '#FFFFFF' : '#9DA9BB'};">
+                            <div class="chat-message-text">
+                                ${repliedHtml}
+                                ${data.file
+                                        ? (
+                                            data.is_image
+                                            ? `<img src="${data.file}" alt="Image" class="chat-img mb-2">`
+                                            : /\.(mp4|webm|ogg)$/i.test(data.file)
+                                            ? `<video controls class="chat-video mb-2">
+                                                    <source src="${data.file}" type="video/${data.file.split('.').pop()}">
+                                                    Your browser does not support the video tag.
+                                            </video>`
+                                            : `<a href="${data.file}" download class="text-decoration-underline text-light">
+                                                    📎 Download ${data.file.split('/').pop()}
+                                            </a><br>`
+                                        )
+                                        : ''
+                                    }
+                                ${escapeHtml(data.message).replace(/\n/g, '<br>')}
+
+                                 ${!data.is_deleted ? `
+                                    <i class="fas fa-reply text-primary cursor-pointer reply-button ms-2"
+                                        onclick="prepareReply(${data.message_id}, '${escapeHtml(data.message).replace(/\n/g, '<br>')}', '${escapeHtml(data.sender_name)}')"
+                                        title="Reply">
+                                    </i>
+                                ` : ''}
+                            </div>
+                            <div class="reaction-display d-flex align-items-center mt-1 gap-1 justify-content-${isSent ? 'end' : 'start'}" id="reaction-display-${data.message_id}" style="min-height: 20px;">
+                                <!-- Reactions will be dynamically inserted here -->
+                            </div>
+                        </div>
+                        
+                        <small class="chat-timestamp text-500 mt-1 d-flex align-items-center gap-2" style="font-size: 10px;">
+                            ${data.is_edited ? `<span class="text-secondary">(edited)</span>` : ''}
+                            ${data.formatted_time}
+                            ${isSent 
+                            ? `${`<i class="fas fa-check read-check text-muted ms-1"
+                                        data-read="false"
+                                        data-message-id="${data.message_id}"></i>`}
+                                    ${!data.is_deleted 
+                                        ? `
+                                            ${!data.file ? `
+                                                <span class="text-primary ms-2 cursor-pointer edit-icon" title="Edit"
+                                                    onclick="editMessagePrompt(${data.message_id}, '${escapeHtml(data.message).replace(/\n/g, '<br>')}')">
+                                                    <i class="fas fa-edit"></i>
+                                                </span>` : ''}
+                                            <span class="text-danger ms-2 cursor-pointer delete-icon" title="Delete"
+                                                onclick="if (confirm('Are you sure you want to unsend this message?')) deleteMessage(${data.message_id})">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </span>`
+                                        : ''}`
+                                : ''}
+                                ${!data.is_deleted ? `
+                                    <span class="text-warning ms-2 cursor-pointer reaction-icon" 
+                                        title="React" onclick="showReactionPicker(event, ${data.message_id})">
+                                        <i class="fas fa-smile-beam"></i>
+                                    </span>
+                                ` : ''}
+                        </small>
+                    </div>
+                </div>`;
+
+                if (!chatMessagesDiv || !chatMessagesList) return;
+
+                // 🛑 Prevent duplicate message if already exists (e.g., after editing)
+                if (renderedMessageIds.has(data.message_id)) {
+                    console.warn("Duplicate WS message skipped:", data.message_id);
+                    return;
+                }
+                renderedMessageIds.add(data.message_id);                
+
+                chatMessagesList.appendChild(messageDiv);
+
+                const isSender = parseInt(data.sender_id) === CURRENT_USER_ID;
+                const isReceiver = !isSender;
+                const isNearBottom = chatMessagesDiv.scrollTop + chatMessagesDiv.clientHeight >= chatMessagesDiv.scrollHeight - 100;
+
+                if (isSender || isNearBottom) {
+                    requestAnimationFrame(() => {
+                        chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+                    });
+                } else if (isReceiver && !isNearBottom) {
+                    showScrollToBottomButton(otherUserId); 
+                }
+
+                document.querySelectorAll(".read-check[data-read='false']").forEach(icon => {
+                    const messageId = parseInt(icon.getAttribute("data-message-id"));
+                    if (pendingReadReceipts.has(messageId)) {
+                        icon.classList.remove("fa-check", "text-muted");
+                        icon.classList.add("fa-check-double", "text-primary");
+                        icon.setAttribute("data-read", "true");
+                        pendingReadReceipts.delete(messageId);
+                    }
+                });
+
+
+                requestAnimationFrame(() => {
+                const scrollBtn = document.getElementById(`scrollToBottomBtn-${userId}`);
+                    if (!isSender && !isNearBottom) {
+                        if (scrollBtn) scrollBtn.classList.remove("d-none");
+                    } else {
+                        if (scrollBtn) scrollBtn.classList.add("d-none");
+                    }
+                });
+                
+
+                if (parseInt(data.receiver_id) === CURRENT_USER_ID) {
+                    const isChatOpen = !!chatMessagesDiv;
+                    const isNearBottom = chatMessagesDiv.scrollTop + chatMessagesDiv.clientHeight >= chatMessagesDiv.scrollHeight - 50;
+                    
+                    if (isChatOpen && isNearBottom) {
+                        throttleReadReceipt(otherUserId);
+                    }
+                }      
+                
+                socket.onerror = function(event) {
+                    console.error("WebSocket error observed:", event);
+                };
+                
+                socket.onclose = function(event) {
+                    console.warn("WebSocket closed. Code:", event.code, "Reason:", event.reason);
+                };
+                
+        };
+
+        let reconnectAttempts = 0;
+    
+        socket.onclose = () => {
+            delete activeSockets[socketKey];
+        
+            reconnectAttempts++;
+            const delay = Math.min(30000, 2000 * reconnectAttempts); // Max 30s
+            console.log(`Attempting to reconnect in ${delay / 1000}s...`);
+        
+            setTimeout(() => connectWebSocket(userId, null, isGroup), delay);
+        };
+    
+        socket.onerror = (e) => {
+            console.error(`[WebSocket] 🚨 Error for user ${userId}:`, e);
+        };
+    }
+    // Function to send a reaction
+    function sendReaction(messageId, emoji) {
+        const activeChatId = localStorage.getItem("activeChatId");
+        const isGroup = localStorage.getItem("activeIsGroup") === 'true'; 
+        const socketKey = isGroup ? `group_${activeChatId}` : activeChatId;
+        const socket = activeSockets[socketKey];
+    
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            const existingBadge = document.querySelector(`#reaction-display-${messageId} .reaction-badge[data-user="${CURRENT_USER_ID}"]`);
+            if (existingBadge) {
+                existingBadge.remove();
+            }
+    
+            socket.send(JSON.stringify({
+                type: "add_reaction",
+                message_id: messageId,
+                emoji: emoji
+            }));
+        } else {
+            console.warn(`[Reaction] Socket not ready for ${socketKey}`);
+        }
+    }
+    // Function to delete a message
+    function deleteMessage(messageId) {
+        const activeChatId = localStorage.getItem("activeChatId");
+        const isGroup = localStorage.getItem("activeIsGroup") === 'true';
+        const socketKey = isGroup ? `group_${activeChatId}` : activeChatId;
+        const socket = activeSockets[socketKey];
+    
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+                type: "delete_message",
+                message_id: messageId
+            }));
+        } else {
+            console.warn("Cannot delete message: WebSocket not ready.");
+        }
+    }
+    // Function to edit a message
+    function editMessagePrompt(messageId, oldMessage) {
+        cancelReply();
+        const activeChatId = localStorage.getItem("activeChatId");
+        const chatInput = document.getElementById(`chatInput-${activeChatId}`);
+        
+        if (!chatInput) return;
+    
+        // Set editing state
+        editingMessageId = messageId;
+    
+        // Fill input with message content
+        chatInput.innerText = oldMessage;
+    
+        // Show editing indicator
+        const form = chatInput.closest("form");
+        let editingNotice = form.querySelector(".editing-indicator");
+    
+        if (!editingNotice) {
+            editingNotice = document.createElement("div");
+            editingNotice.className = "editing-indicator text-muted small d-flex align-items-center gap-2";
+            editingNotice.innerHTML = `
+                <span>✏️ Editing message</span>
+                <span class="text-danger cursor-pointer" onclick="cancelEdit()">Cancel</span>
+            `;
+            form.prepend(editingNotice);
+        }
+    }
+    // Function to cancel editing state
+    function cancelEdit() {
+        editingMessageId = null;
+    
+        const activeChatId = localStorage.getItem("activeChatId");
+        const chatInput = document.getElementById(`chatInput-${activeChatId}`);
+        if (chatInput) chatInput.innerText = "";
+    
+        const form = chatInput.closest("form");
+        const editingNotice = form.querySelector(".editing-indicator");
+        if (editingNotice) editingNotice.remove();
+    }
+    
+    // Function to get CSRF token
+    function getCSRFToken() {
+        return document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1] || '';
+    }
+    // Function to scroll to the latest message 
+    function scrollToLatest(userId) {
+        const isGroup = localStorage.getItem('activeIsGroup') === 'true';
+        const chatMessagesDiv = document.getElementById(isGroup ? `groupMessages-${userId}` : `chatMessages-${userId}`);
+        
+        if (chatMessagesDiv) {
+            requestAnimationFrame(() => {
+                chatMessagesDiv.scrollTo({
+                    top: chatMessagesDiv.scrollHeight,
+                    behavior: 'smooth'
+                });
+            });
+        }
+        
+        const scrollBtn = document.getElementById(`scrollToBottomBtn-${userId}`);
+        if (scrollBtn) scrollBtn.classList.add("d-none");
+    }  
+    //Scroll to bottom button
+    function showScrollToBottomButton(userId) {
+        const scrollBtn = document.getElementById(`scrollToBottomBtn-${userId}`);
+        if (scrollBtn) scrollBtn.classList.remove("d-none");
+    }
+    //Stop typing if the window is closed or refreshed
+    window.addEventListener("beforeunload", () => {
+        const activeChatId = localStorage.getItem("activeChatId");
+        const isGroup = localStorage.getItem("activeIsGroup") === 'true';
+        const socketKey = isGroup ? `group_${activeChatId}` : activeChatId;
+        const socket = activeSockets[socketKey];
+    
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: "stop_typing" }));
+        }
+    });
+    // Function to prepare a reply
+    function prepareReply(messageId, messageText, senderName) {
+        if (editingMessageId !== null) {
+            cancelEdit();  // This will clear editing state
+        }
+
+        const activeChatId = localStorage.getItem('activeChatId');
+        const chatInput = document.getElementById(`chatInput-${activeChatId}`);
+        if (!chatInput) return;
+    
+        // Optional: highlight the original message (just for visual reference)
+        const originalMessage = document.querySelector(`.chat-message-content[data-message-id="${messageId}"]`);
+        if (originalMessage) {
+            originalMessage.classList.add("border", "border-primary", "shadow-sm");
+            setTimeout(() => originalMessage.classList.remove("border", "border-primary", "shadow-sm"), 1500);
+        }
+    
+        // Add quote box above input
+        const form = chatInput.closest("form");
+        let replyBox = form.querySelector(".reply-indicator");
+        if (replyBox) replyBox.remove();
+    
+        replyBox = document.createElement("div");
+        replyBox.className = "reply-indicator text-muted small d-flex align-items-center gap-2";
+        replyBox.innerHTML = `
+            <span class="text-primary">↪️ Replying to ${senderName}:</span>
+            <em class="text-secondary text-truncate" style="max-width: 250px;">${messageText}</em>
+            <span class="text-danger cursor-pointer ms-auto" onclick="cancelReply()">×</span>
+        `;
+        form.prepend(replyBox);
+    
+        // Focus the input
+        chatInput.focus();
+    
+        // Store reply metadata (optional enhancement)
+        chatInput.dataset.replyTo = messageId;
+    }
+    // Function to cancel reply
+    function cancelReply() {
+        const activeChatId = localStorage.getItem('activeChatId');
+        const chatInput = document.getElementById(`chatInput-${activeChatId}`);
+        delete chatInput.dataset.replyTo;
+    
+        const form = chatInput.closest("form");
+        const replyBox = form.querySelector(".reply-indicator");
+        if (replyBox) replyBox.remove();
+    }    
+</script> 
+
+<script>
+    function showReactionPicker(event, messageId) {
+        event.preventDefault();
+        event.stopPropagation();
+    
+        hideAllReactionPickers(); // Remove existing pickers
+    
+        const picker = document.createElement("div");
+        picker.className = "reaction-picker shadow-sm bg-white border rounded px-2 py-1";
+        picker.style.position = "absolute";
+        picker.style.zIndex = 9999;
+    
+        const isSender = event.target.closest(".chat-message-wrapper")?.classList.contains("justify-content-end");
+    
+        const pickerWidth = 160;  // adjust based on how wide your picker is
+    
+        picker.style.top = `${event.clientY}px`;
+        picker.style.left = isSender
+            ? `${event.clientX - pickerWidth}px`  // Shift left if it's your message
+            : `${event.clientX}px`;               // Normal for others
+    
+        picker.style.display = "flex";
+        picker.style.gap = "6px";
+    
+        const emojis = ['👍', '❤️', '😂', '😮', '😢', '😡'];
+        emojis.forEach(emoji => {
+            const span = document.createElement("span");
+            span.className = "cursor-pointer";
+            span.style.fontSize = "18px";
+            span.innerText = emoji;
+            span.onclick = () => {
+                sendReaction(messageId, emoji);
+                document.body.removeChild(picker);
+            };
+            picker.appendChild(span);
+        });
+    
+        document.body.appendChild(picker);
+    }    
+    function hideAllReactionPickers() {
+        document.querySelectorAll(".reaction-picker").forEach(p => p.remove());
+    }
+</script>
+<script>
+    function createGroupChat() {
+        const groupName = document.getElementById("groupName").value.trim();
+        const selected = [...document.querySelectorAll("#groupMembersList input:checked")]
+                        .map(checkbox => parseInt(checkbox.value));
+        const photoFile = document.getElementById("groupPhoto").files[0];
+    
+        if (!groupName || selected.length === 0) {
+            alert("Please enter a group name and select at least one member.");
+            return;
+        }
+    
+        const formData = new FormData();
+        formData.append('name', groupName);
+        selected.forEach(memberId => formData.append('members', memberId));
+        if (photoFile) formData.append('photo', photoFile);
+    
+        fetch('/social/group_chat/', {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": getCSRFToken()
+            },
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) throw new Error("Failed to create group chat.");
+            return response.json();
+        })
+        .then(data => {
+            alert("Group chat created successfully!");
+            document.getElementById("createGroupForm").reset();
+            bootstrap.Modal.getInstance(document.getElementById("createGroupModal")).hide();
+            loadChatList();
+        })
+        .catch(error => {
+            console.error("Error creating group chat:", error);
+            alert("Error: Could not create group chat.");
+        });
+    }
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.body.addEventListener("click", async function (e) {
+            const button = e.target.closest(".btn-chat-info");
+            if (!button) return;
+    
+            const groupId = button.getAttribute("data-index");
+            const membersList = document.getElementById("groupChatMembersList");
+            const offcanvas = new bootstrap.Offcanvas(document.getElementById("groupChatInfoOffcanvas"));
+            offcanvas.show();
+    
+            membersList.innerHTML = "<p class='text-muted'>Loading members...</p>";
+    
+            try {
+                const res = await fetch(`/social/group_chat/${groupId}/members/`);
+                const data = await res.json();
+    
+                if (!data.length) {
+                    membersList.innerHTML = "<p class='text-muted'>No members found.</p>";
+                    return;
+                }
+    
+                // Get the current user ID via context (you can pass it in a global variable in HTML)
+                const currentUserId = parseInt(document.body.dataset.currentUserId); // make sure to set this
+    
+                const isAdmin = data.find(m => m.id === currentUserId)?.role === 'admin';
+    
+                membersList.innerHTML = data.map(member => {
+                    let actionButton = '';
+    
+                    if (member.id === currentUserId && member.role !== 'admin') {
+                        actionButton = `<button class="btn btn-sm btn-outline-danger ms-auto leave-btn" data-id="${member.id}" data-group="${groupId}">Leave</button>`;
+                    } else if (isAdmin && member.id !== currentUserId) {
+                        actionButton = `<button class="btn btn-sm btn-outline-danger ms-auto remove-btn" data-id="${member.id}" data-group="${groupId}">Remove</button>`;
+                    }
+    
+                    return `
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="${member.photo || '/static/assets/img/def_user.jpg'}" 
+                                 alt="${member.name}" class="rounded-circle me-3"
+                                 style="width: 40px; height: 40px; object-fit: cover;">
+                            <div class="flex-grow-1">
+                                <div class="fw-bold">${member.name || 'Unnamed User'}</div>
+                                <small class="text-muted">${member.role === 'admin' ? 'Admin' : 'Member'}</small>
+                            </div>
+                            ${actionButton}
+                        </div>
+                    `;
+                }).join("");
+    
+            } catch (err) {
+                membersList.innerHTML = "<p class='text-danger'>Failed to load members.</p>";
+            }
+        });
+    
+        // Handle Leave
+        document.body.addEventListener("click", async function (e) {
+            if (e.target.classList.contains("leave-btn")) {
+                const groupId = e.target.dataset.group;
+                const res = await fetch(`/social/group_chat/${groupId}/leave/`, {
+                    method: "POST",
+                    headers: { "X-CSRFToken": getCSRFToken() }
+                });
+                const data = await res.json();
+                alert(data.message || "You left the group.");
+                location.reload(); // or redirect
+            }
+        });
+    
+        // Handle Remove
+        document.body.addEventListener("click", async function (e) {
+            if (e.target.classList.contains("remove-btn")) {
+                const userId = e.target.dataset.id;
+                const groupId = e.target.dataset.group;
+                const res = await fetch(`/social/group_chat/${groupId}/remove_member/`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": getCSRFToken()
+                    },
+                    body: JSON.stringify({ user_id: userId })
+                });
+                const data = await res.json();
+                alert(data.message || "Member removed.");
+                e.target.closest(".d-flex").remove(); // remove the member card
+            }
+        });
+    
+        // Utility: Get CSRF token
+        function getCSRFToken() {
+            const cookie = document.cookie.split(';').find(c => c.trim().startsWith('csrftoken='));
+            return cookie ? cookie.split('=')[1] : '';
+        }
+    });
+</script>      
+<style>
+    
+    .pulse-effect {
+        animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(44, 123, 229, 0.5); }
+        70% { box-shadow: 0 0 0 10px rgba(44, 123, 229, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(44, 123, 229, 0); }
+    }
+
+    .status-online::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 12px;
+        height: 12px;
+        background-color: #28a745; /* green */
+        border-radius: 50%;
+        border: 2px solid white;
+    }
+
+    .status-offline::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 12px;
+        height: 12px;
+        background-color: #6c757d; /* gray */
+        border-radius: 50%;
+        border: 2px solid white;
+    }
+    .avatar {
+        position: relative;
+    }
+
+    .status-online::after {
+        animation: pulse 1.5s infinite;
+    }
+    .chat-messages {
+        scroll-behavior: smooth;
+        padding-bottom: 50px;
+    }
+
+    .unsent-message {
+        background-color: #f0f0f0;
+        font-style: italic;
+        color: #6c757d;
+        padding: 10px 14px;
+        border-radius: 12px;
+    }
+
+    .chat-message-content {
+        word-break: normal;
+        overflow-wrap: anywhere;     /* ✅ allow wrapping only if needed */
+        white-space: normal;         /* ✅ default, best for natural wrapping */
+        display: inline-block;
+        max-width: 75%;
+        min-width: 50px;             /* ✅ prevent being too narrow for short words */
+      }
+
+    .reply-indicator,
+    .file-preview-box {
+        max-width: 100%;
+        overflow-wrap: break-word;
+        white-space: normal;
+    }
+
+
+    .chat-message-text {
+        display: inline-block;
+        max-width: 100%;
+        word-break: break-word;
+    }
+
+    .chat-message-text a {
+        color: #cce3ff;
+        font-weight: bold;
+        word-break: break-all;
+    }
+
+    .chat-message-text img {
+        display: block;
+        width: 200px;            
+        max-width: 100%;          
+        height: auto;              
+        margin-top: 4px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        object-fit: cover;         
+    }
+    .chat-img {
+        max-width: 100%;
+        border-radius: 8px;
+        display: block;
+    }
+
+    .chat-bubble-preview {
+        border: 1px solid #ddd;
+        border-radius: 20px;
+        background-color: #f8f9fa;
+    }
+
+    .file-preview-inner img {
+        border-radius: 6px;
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+    }
+
+
+    .file-name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+
+    .chat-bubble-wrapper {
+        border: 1px solid #ddd;
+        border-radius: 20px;
+        background-color: #f8f9fa;
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        min-height: 38px;
+        overflow-x: hidden;
+    }
+
+    .chat-input {
+        flex-grow: 1;
+        outline: none;
+        word-break: break-word;
+        min-height: 20px;
+        max-height: 150px;
+        overflow-y: auto;
+    }
+
+    .file-preview-box {
+        background-color: #e9ecef;
+        border-radius: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 12px;
+    }
+
+    .chat-video {
+        max-width: 100%;
+        width: 200px;          
+        height: auto;
+        border-radius: 8px;
+        display: block;
+        object-fit: cover;
+    }
+
+    .editing-indicator {
+        padding-left: 8px;
+        font-style: italic;
+        margin-bottom: 4px;
+    }
+
+    .emoji-picker {
+        z-index: 9999 !important;
+    }
+
+    .custom-emoji-picker {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        min-width: 150px;
+    }
+    
+    .chat-message-wrapper {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    .chat-message-wrapper:hover {
+        background-color: inherit !important;
+        box-shadow: none !important;
+    }
+
+    .reply-button {
+        font-size: 14px;
+        opacity: 0.7;
+        transition: opacity 0.2s ease;
+    }
+
+
+    .reply-preview {
+        font-size: 12px;
+        background-color: rgba(255, 255, 255, 0.08);
+        border-left: 4px solid #2C7BE5;
+        padding-left: 10px;
+        margin-bottom: 4px;
+        color: #adb5bd;
+    }
+
+    .reply-preview:hover {
+        background-color: rgba(255, 255, 255, 0.15);
+    }
+    .reply-bubble {
+        background-color: rgba(255, 255, 255, 0.05); /* subtle background */
+        border-left: 4px solid #2C7BE5;
+        font-size: 13px;
+        max-width: 100%;
+        overflow-wrap: break-word;
+        color: #adb5bd;
+    }
+
+    .reply-bubble:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .reply-sender-name {
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 13px;
+    }
+
+    .reply-message-text {
+        font-style: italic;
+        font-size: 12px;
+        color: #ced4da;
+    }
+
+    .reply-message-text {
+        font-style: italic;
+        font-size: 12px;
+        color: #ced4da;
+        display: inline-block;
+        max-width: 240px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .reaction-display {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        font-size: 14px;
+        margin-top: 4px;
+    }
+    .reaction-picker {
+        background-color: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 6px 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .reaction-icon {
+        display: none;
+    }
+
+
+    .reaction-bubble-container {
+        position: relative;
+        display: flex;
+        gap: 4px;
+        margin-top: 4px;
+        padding-left: 12px;
+    }
+    
+    .reaction-bubble-container .reaction-badge {
+        background-color:rgb(160, 70, 107);
+        color: #000;
+        font-size: 14px;
+        padding: 2px 6px;
+        border-radius: 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        transition: transform 0.2s ease;
+    }
+    
+
+</style>
+        
+{% endblock %}

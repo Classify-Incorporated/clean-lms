@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  View {{ module.file_name }}
+{% endblock %}
+
+{% block content %}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+
+  <style>
+    @media (max-width: 768px) {
+      .content-wrapper {
+        padding: 0 10px;
+      }
+      .pdf-viewer,
+      .image-viewer,
+      .video-viewer {
+        width: 100%;
+        max-width: 100%;
+      }
+      .btn {
+        font-size: 14px;
+        padding: 6px 10px;
+      }
+    }
+    
+    /* Ensure the PDF viewer does not show a dark background */
+    #pdf-container {
+      background-color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: visible; /* Allow progress bar to show */
+      padding: 10px;
+      position: relative; /* Ensure child elements like progress bar stay positioned */
+    }
+    
+    /* Ensure the canvas background remains white */
+    #pdf-canvas {
+      width: 100%;
+      height: auto;
+      background-color: white;
+    }
+    
+    /* Keep Progress Bar Visible */
+    .progress-container {
+      width: 100%;
+      position: absolute;
+      bottom: -10px; /* Ensures it's inside pdf-container */
+      left: 0;
+      padding: 5px;
+      background: rgba(255, 255, 255, 0.9);
+      z-index: 1000;
+    }
+    
+    /* Fullscreen Mode - Keep Progress Bar */
+    .fullscreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: white;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .fullscreen .progress-container {
+      position: fixed;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+    }
+  </style>
+
+  <!-- Content Header -->
+
+  <div class="row mb-3 justify-content-between">
+    <div class="col-12 col-md-6">
+      <h3 class="m-0">View Lesson</h3>
+    </div>
+    <div class="col-12 col-md-6 text-md-right text-center mt-2 mt-md-0">
+      <a href="{% url 'subjectDetail' module.subject.id %}" class="btn btn-outline-secondary">Back to Subject</a>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+
+  <h4 class="text-center">{{ module.file_name }}</h4>
+
+  {% if module.iframe_code %}
+    <div class="embed-responsive embed-responsive-16by9">
+      {{ module.iframe_code|safe }} <!-- Allow rendering of stored iframe -->
+    </div>
+  {% endif %}
+
+  {% if is_pdf and module.file %}
+    <div id="pdf-container" class="pdf-viewer shadow-sm rounded mx-auto p-2" style="width: 100%; max-width: 800px; position: relative;">
+      <canvas id="pdf-canvas" style="width: 100%; height: auto;"></canvas>
+
+      <!-- Fullscreen Button -->
+      <button id="fullscreen-btn" class="btn btn-dark btn-sm position-absolute" style="top: 10px; right: 10px;"><i class="fas fa-expand"></i></button>
+
+      <!-- Page Navigation -->
+      <div class="d-flex justify-content-between w-100 px-3 position-absolute" style="bottom: 50px;">
+        <button id="prev-page" class="btn btn-dark btn-sm"><i class="fas fa-caret-left"></i></button>
+        <span class="text-white bg-secondary px-3 rounded">Page: <span id="page-num"></span> / <span id="page-count"></span></span>
+        <button id="next-page" class="btn btn-dark btn-sm"><i class="fas fa-caret-right"></i></button>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="progress mt-2 w-100">
+        <div id="progress-bar" class="progress-bar bg-primary" style="width: 0%;"></div>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Image Viewer -->
+  {% if is_image and module.file %}
+    <div class="image-viewer shadow-sm rounded mx-auto p-2" style="width: 100%; max-width: 800px;">
+      <img src="{{ module.file.url }}" class="img-fluid rounded" alt="Image" />
+    </div>
+  {% endif %}
+
+  <!-- Video Viewer -->
+  {% if is_video and module.file %}
+    <div class="video-viewer shadow-sm rounded mx-auto p-2" style="width: 100%; max-width: 800px;">
+      <video controls class="w-100">
+        <source src="{{ module.file.url }}" type="video/mp4" />Your browser does not support the video tag.
+      </video>
+    </div>
+  {% endif %}
+
+  <!-- External Video (YouTube, Vimeo) -->
+  {% if is_youtube or is_vimeo %}
+    <div class="embed-responsive embed-responsive-16by9 shadow-sm rounded mx-auto p-2" style="width: 100%; max-width: 800px;">
+      <iframe class="embed-responsive-item" src="{{ embed_url }}" allowfullscreen></iframe>
+    </div>
+  {% endif %}
+
+  <!-- External Link -->
+  {% if is_url %}
+    <div class="text-center mt-3">
+      <a href="{{ module.url }}" target="_blank" class="btn btn-outline-primary">Open {{ module.file_name }}</a>
+    </div>
+  {% endif %}
+
+  {% if is_unknown %}
+    <p class="text-danger">Unsupported file format. Unable to display the content.</p>
+  {% endif %}
+
+  {% if is_pdf and module.file %}
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        var url = '{{ module.file.url }}';
+        var pdfDoc = null;
+        var pageNum = {{ last_page }};
+        var canvas = document.getElementById('pdf-canvas');
+        var ctx = canvas.getContext('2d');
+        var fullscreenBtn = document.getElementById('fullscreen-btn');
+        var pdfContainer = document.getElementById('pdf-container'); // Corrected element
+        var progressBar = document.getElementById('progress-bar');
+
+        function startModule() {
+          fetch("{% url 'start_module_session' %}", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": "{{ csrf_token }}"
+            },
+          }).then(response => response.json())
+            .then(data => console.log(data.status));
+        }
+
+        function stopModule() {
+          fetch("{% url 'stop_module_session' %}", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": "{{ csrf_token }}"
+            },
+          }).then(response => response.json())
+            .then(data => console.log(data.status));
+        }
+
+        window.addEventListener('beforeunload', stopModule);
+
+        startModule();
+
+        function renderPage(num) {
+          pdfDoc.getPage(num).then(function (page) {
+            var viewport = page.getViewport({ scale: 1.5 });
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            var renderContext = {
+              canvasContext: ctx,
+              viewport: viewport
+            };
+
+            page.render(renderContext).promise.then(function () {
+              document.getElementById('page-num').textContent = num;
+              updateProgress(num, pdfDoc.numPages);
+            });
+          });
+        }
+
+        function updateProgress(currentPage, totalPages) {
+          var progress = (currentPage / totalPages) * 100;
+          progressBar.style.width = progress + '%';
+
+          fetch("{% url 'module_progress' %}", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify({
+              "module_id": "{{ module.id }}",
+              "progress": progress,
+              "last_page": currentPage
+            })
+          }).then(response => response.json())
+            .then(data => console.log("Progress updated:", data))
+            .catch(error => console.error("Error updating progress:", error));
+        }
+
+        pdfjsLib.getDocument(url).promise.then(function (pdfDoc_) {
+          pdfDoc = pdfDoc_;
+          document.getElementById('page-count').textContent = pdfDoc.numPages;
+          renderPage(pageNum);
+        });
+
+        document.getElementById('prev-page').addEventListener('click', function () {
+          if (pageNum <= 1) return;
+          pageNum--;
+          renderPage(pageNum);
+        });
+
+        document.getElementById('next-page').addEventListener('click', function () {
+          if (pageNum >= pdfDoc.numPages) return;
+          pageNum++;
+          renderPage(pageNum);
+        });
+
+        fullscreenBtn.addEventListener('click', function () {
+          if (!document.fullscreenElement) {
+            if (pdfContainer.requestFullscreen) {
+              pdfContainer.requestFullscreen();
+            } else if (pdfContainer.webkitRequestFullscreen) { // for Safari
+              pdfContainer.webkitRequestFullscreen();
+            } else if (pdfContainer.msRequestFullscreen) { // for IE/Edge
+              pdfContainer.msRequestFullscreen();
+            }
+            fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
+          } else {
+            document.exitFullscreen();
+            fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+          }
+        });
+      });
+    </script>
+  {% endif %}
+{% endblock %}

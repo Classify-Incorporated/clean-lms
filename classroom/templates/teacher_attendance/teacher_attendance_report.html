@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}
+  Teacher Attendance Report
+{% endblock %}
+
+{% block content %}
+  <div class="container mt-4">
+    <h3>Teacher Attendance Report</h3>
+
+    <!-- Date Range Filter -->
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <label for="start_date">Start Date:</label>
+        <input type="date" id="start_date" class="form-control" value="{{ start_date }}" />
+      </div>
+      <div class="col-md-4">
+        <label for="end_date">End Date:</label>
+        <input type="date" id="end_date" class="form-control" value="{{ end_date }}" />
+      </div>
+      <div class="col-md-4 d-flex align-items-end">
+        <button id="filterReport" class="btn btn-primary w-100">Filter</button>
+      </div>
+    </div>
+
+    <div class="card shadow mb-4">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Attendance Report</h5>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table mb-0 data-table fs-10 table-bordered" data-datatables="data-datatables">
+            <thead class="bg-primary text-white">
+              <tr>
+                <th>Teacher Name</th>
+                <th>Subject Name</th>
+                <th>Total Attendance Time</th>
+                <th>Scheduled Total Time</th>
+                <th>Variance</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for record in report_data %}
+                <tr>
+                  <td>
+                    <a href="{% url 'teacher_attendance_calendar_page' record.subject_id %}" class="text-decoration-none">{{ record.teacher_name }}</a>
+                  </td>
+                  <td>{{ record.subject_name }}</td>
+                  <td>{{ record.total_attendance_time }} hrs</td>
+                  <td>{{ record.total_scheduled_time }} hrs</td>
+                  <td>
+                    {% if record.variance|slice:':1' == '-' %}
+                      <span class="text-danger">{{ record.variance }} hrs</span>
+                    {% else %}
+                      <span class="text-success">{{ record.variance }} hrs</span>
+                    {% endif %}
+                  </td>
+                </tr>
+
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('filterReport').addEventListener('click', function () {
+      var startDate = document.getElementById('start_date').value
+      var endDate = document.getElementById('end_date').value
+      if (startDate && endDate) {
+        window.location.href = `?start_date=${startDate}&end_date=${endDate}`
+      }
+    })
+  </script>
+{% endblock %}

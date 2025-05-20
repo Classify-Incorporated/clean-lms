@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+
+{% block title %} Student Grade {% endblock %}
+
+{% block content %}
+  <!-- Main Content -->
+    <!-- Filter Grades Card -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white">
+            <h5 class="m-0"><i class="fas fa-filter"></i> Filter Grades</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <label for="semester" class="fw-bold">Select Semester:</label>
+                    <select id="semester" name="semester" class="form-select select2">
+                        <option value="" selected disabled>Select Semester</option>
+                        {% for semester in semesters %}
+                            <option value="{{ semester.id }}"
+                                    {% if current_semester and semester.id == current_semester.id %}selected{% endif %}>
+                                {{ semester.semester_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label for="subject" class="fw-bold">Select Subject:</label>
+                    <select id="subject" name="subject" class="form-select select2">
+                        <option value="" selected disabled>Select Subject</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <input type="hidden" id="user-role" value="{{ user_role }}">
+    <input type="hidden" id="user-id" value="{{ user_id }}">
+
+    <!-- Grades Table Card -->
+    <div class="card mt-4 shadow-sm border-0">
+        <div class="card-header bg-secondary text-white d-flex align-items-center">
+            <h5 class="m-0"><i class="fas fa-table me-2 text-light"></i> <span class="text-light">Grades</span> </h5>
+            <div class="ms-auto d-flex gap-2 ml-2">
+                <button id="download-excel" class="btn btn-success btn-sm mr-2">
+                    <i class="fas fa-file-excel"></i> Export to Excel
+                </button>
+                <button id="download-pdf" class="btn btn-danger btn-sm mr-2">
+                    <i class="fas fa-file-pdf"></i> Download PDF
+                </button>
+            </div>
+        </div>
+        <div class="card-body table-responsive p-3">
+            <table id="grades-table" class="table table-hover table-bordered text-center shadow-sm" style="display: none;">
+                <thead class="bg-success">
+
+                    <tr>
+                        <th>Student Name</th>
+              <!-- Dynamic Term Headers -->
+                        <th>Final Grade</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            let transmutationRules = [];
+            let selectedSemester = $('#semester option:selected').text();
+            let selectedSubject = '';
+    
+            // Initialize DataTable
+            let dataTable = $('#grades-table').DataTable({
+                "processing": true,
+                "paging": true,
+                "searching": true,
+                "info": true,
+                "ordering": true,
+                "columnDefs": [
+                    { "width": "30%", "targets": 0 }, // Wider column for Student Name
+                    { "width": "15%", "targets": "_all" } // Adjust other columns
+                ],
+                "autoWidth": false  // Prevent auto-sizing from overriding width settings
+            });
+    
+            // Fetch transmutation rules
+            $.ajax({
+                url: '/api/transmutation_rules/',
+                method: 'GET',
+                success: function (data) {
+                    transmutationRules = data.rules;
+                },
+                error: function () {
+                    alert('Failed to fetch transmutation rules.');
+                }
+            });
+    
+            function applyTransmutation(grade) {
+                for (let rule of transmutationRules) {
+                    if (grade >= rule.min_grade && grade <= rule.max_grade) {
+                        return rule.transmuted_value;
+                    }
+                }
+                return grade;
+            }
+    
+            function fetchGrades() {
+                let semesterId = $('#semester').val();
+                let subjectId = $('#subject').val();
+                let userRole = $('#user-role').val().toLowerCase();
+                let userId = $('#user-id').val();
+
+                console.log(subjectId)
+                console.log(semesterId)
+    
+                if (semesterId && subjectId) {
+                    selectedSemester = $('#semester option:selected').text();
+                    selectedSubject = $('#subject option:selected').text();
+    
+                    $.ajax({
+                        url: '/student_score_viewsets/',
+                        data: { semester: semesterId, subject: subjectId },
+                        success: function (data) {
+                            $('#grades-table').show();
+                            let thead = $('#grades-table thead');
+                            let tbody = $('#grades-table tbody');
+                            thead.empty();
+                            tbody.empty();
+                            dataTable.clear().draw(); // Clear previous DataTables data
+    
+                            // Define dynamic headers
+                            let termHeaders = data.terms.map(term => `<th colspan="2">${term}</th>`).join('');
+                            let subHeaders = data.terms.map(() => `<th>Grade</th><th>Transmuted</th>`).join('');
+    
+                            thead.append(`
+                                <tr class="table-success">
+                                    <th>Student Name</th>
+                                    ${termHeaders}
+                                    <th colspan="2">Final Grade</th>
+                                </tr>
+                                <tr class="bg-primary text-white">
+                                    <th></th>
+                                    ${subHeaders}
+                                    <th>Grade</th>
+                                    <th>Transmuted</th>
+                                </tr>
+                            `);
+    
+                            let filteredResults = data.results;
+                            if (userRole === "student") {
+                                filteredResults = data.results.filter(result => result.student_id == userId);
+                            }
+    
+                            // Populate table rows
+                            filteredResults.forEach(result => {
+                                let termGrades = result.terms.map(term => {
+                                    let normalScore = term.term_score || '--';
+                                    let transmutedScore = applyTransmutation(term.term_score) || '--';
+                                    return `<td>${normalScore}</td><td>${transmutedScore}</td>`;
+                                }).join('');
+    
+                                let finalNormalGrade = result.final_grade || '--';
+                                let finalTransmutedGrade = applyTransmutation(result.final_grade) || '--';
+    
+                                let rowData = `
+                                    <tr>
+                                        <td class="text-wrap">
+                                            <a href="/studentTotalScore/${result.student_id}/${subjectId}/"
+                                            class="student-name-link text-900 fw-semibold d-inline-flex align-items-center"
+                                            style="text-decoration: none; transition: color 0.3s ease, transform 0.2s ease;"
+                                            onmouseover="this.style.color='#0d6efd'; this.style.transform='translateY(-2px)';"
+                                            onmouseout="this.style.color='inherit'; this.style.transform='translateY(0)';">
+                                                ${result.student_full_name}
+                                                <i class="fas fa-arrow-right ms-2 text-primary"></i>
+                                            </a>
+                                        </td>
+                                        ${termGrades}
+                                        <td>${finalNormalGrade}</td>
+                                        <td>${finalTransmutedGrade}</td>
+                                    </tr>
+                                `;
+                                
+                                dataTable.row.add($(rowData)).draw(false);
+                            });
+                        },
+                        error: function () {
+                            alert('Failed to fetch student grades.');
+                        }
+                    });
+                }
+            }
+    
+            function fetchSubjects(semesterId) {
+                if (semesterId) {
+                    $.ajax({
+                        url: '/api/subjects/',
+                        data: { semester: semesterId },
+                        success: function (data) {
+                            $('#subject').html('<option value="">--Select Subject--</option>');
+                            if (data.subjects && data.subjects.length > 0) {
+                                data.subjects.forEach(subject => {
+                                    $('#subject').append(`<option value="${subject.id}">${subject.name}</option>`);
+                                });
+                            } else {
+                                $('#subject').append('<option value="">No subjects available</option>');
+                            }
+                        },
+                        error: function () {
+                            alert('Failed to fetch subjects.');
+                        }
+                    });
+                } else {
+                    $('#subject').html('<option value="">--Select Subject--</option>');
+                }
+            }
+    
+            $('#semester').change(function () {
+                let semesterId = $(this).val();
+                fetchSubjects(semesterId);
+            });
+    
+            let defaultSemesterId = $('#semester').val();
+            if (defaultSemesterId) {
+                fetchSubjects(defaultSemesterId);
+            }
+    
+            $('#subject').change(function () {
+                fetchGrades();
+            });
+    
+            // Export to Excel Function
+            function exportToExcel() {
+                let table = document.getElementById("grades-table");
+                if (!table || table.rows.length === 0) {
+                    alert("No data available to export.");
+                    return;
+                }
+    
+                let wb = XLSX.utils.table_to_book(table, { sheet: "Grades" });
+                XLSX.writeFile(wb, "student_grades.xlsx");
+            }
+    
+            // Export to PDF Function
+            function exportToPDF() {
+                let table = document.getElementById("grades-table");
+                if (!table || table.rows.length === 0) {
+                    alert("No data available to export.");
+                    return;
+                }
+    
+                const { jsPDF } = window.jspdf;
+                let doc = new jsPDF();
+                doc.text("Student Grades Report", 15, 10);
+                doc.autoTable({ html: '#grades-table' });
+                doc.save("student_grades.pdf");
+            }
+    
+            $("#download-excel").click(exportToExcel);
+            $("#download-pdf").click(exportToPDF);
+        });
+    </script>
+<style>
+    .student-name-link {
+        position: relative;
+        overflow: hidden;
+        display: inline-flex;
+        align-items: center;
+        text-decoration: none;
+        transition: color 0.3s ease, transform 0.2s ease;
+    }
+    
+    .student-name-link:hover {
+        color: #0d6efd !important;
+        transform: translateY(-2px);
+    }
+    
+    .student-name-link::after {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 2px;
+        bottom: 0;
+        left: 0;
+        background-color: #0d6efd;
+        transform: scaleX(0);
+        transform-origin: right;
+        transition: transform 0.3s ease;
+    }
+    
+    .student-name-link:hover::after {
+        transform: scaleX(1);
+        transform-origin: left;
+    }
+    
+</style>
+{% endblock %}

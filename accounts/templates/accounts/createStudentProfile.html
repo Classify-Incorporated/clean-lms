@@ -1,0 +1,28 @@
+{% load static %}
+{% block content %}
+  <div id="customModal" class="custom-modal">
+    <div class="custom-modal-header">
+      <button class="close-btn" id="closeModalBtn"></button>
+      <h5>Add User</h5>
+    </div>
+    <div class="custom-modal-body">
+      <!-- Your add user form goes here -->
+      <form>
+        <!-- Example form fields -->
+        <div class="form-group">
+          <label for="name">Name</label>
+          <input type="text" class="form-control" id="name" placeholder="Enter name" />
+        </div>
+        <div class="form-group">
+          <label for="position">Position</label>
+          <input type="text" class="form-control" id="position" placeholder="Enter position" />
+        </div>
+        <!-- Add more form fields as needed -->
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Custom Modal Backdrop -->
+  <div id="customModalBackdrop" class="custom-modal-backdrop"></div>
+{% endblock %}

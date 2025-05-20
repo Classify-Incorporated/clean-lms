@@ -1,0 +1,76 @@
+{% load static %}
+{% block content %}
+
+    <form method="POST" action="{% url 'updateRole' role.id %}">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="role">Role:</label>
+            {{ form.name }}
+        </div>
+
+        <div class="form-group">
+            <label for="permissions">Permissions:</label>
+            <div>
+                <input type="checkbox" id="checkAll"> Check All
+            </div>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Module</th>
+                        <th>Add</th>
+                        <th>View</th>
+                        <th>Update</th>
+                        <th>Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for module, actions in structured_permissions.items %}
+                        <tr>
+                            <td>{{ module|capfirst }}</td>
+                            <td>
+                                {% if actions.add %}
+                                    <input type="checkbox" name="permissions" class="permission-checkbox" value="{{ actions.add.id }}"
+                                           {% if actions.add in form.instance.permissions.all %}checked{% endif %}>
+                                    {{ actions.add.name }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if actions.view %}
+                                    <input type="checkbox" name="permissions" class="permission-checkbox" value="{{ actions.view.id }}"
+                                           {% if actions.view in form.instance.permissions.all %}checked{% endif %}>
+                                    {{ actions.view.name }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if actions.change %}
+                                    <input type="checkbox" name="permissions" class="permission-checkbox" value="{{ actions.change.id }}"
+                                           {% if actions.change in form.instance.permissions.all %}checked{% endif %}>
+                                    {{ actions.change.name }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if actions.delete %}
+                                    <input type="checkbox" name="permissions" class="permission-checkbox" value="{{ actions.delete.id }}"
+                                           {% if actions.delete in form.instance.permissions.all %}checked{% endif %}>
+                                    {{ actions.delete.name }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+
+
+<!-- Add this script at the bottom -->
+    <script>
+        document.getElementById('checkAll').addEventListener('change', function() {
+            let checkboxes = document.querySelectorAll('.permission-checkbox');
+            for (let checkbox of checkboxes) {
+                checkbox.checked = this.checked;
+            }
+        });
+    </script>
+{% endblock %}

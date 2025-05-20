@@ -1,0 +1,259 @@
+:root,
+[data-bs-theme=light] {
+
+  --falcon-primary: #75adee;
+  --falcon-secondary: #747476;
+  --falcon-success: #A1C099 ;
+  --falcon-info: #b899c0;
+  --falcon-warning: #fdd095;
+  --falcon-danger: #c09999;
+  --falcon-light: #f9fafd;
+  --falcon-dark: #0b1727;
+  --falcon-primary-rgb: 117, 173, 238;
+  --falcon-secondary-rgb: 116, 116, 118;
+  --falcon-success-rgb: 161, 192, 153;
+  --falcon-info-rgb: 184, 153, 192;
+  --falcon-warning-rgb: 253, 208, 149;
+  --falcon-danger-rgb: 192, 153, 153;
+  --falcon-light-rgb: 249, 250, 253;
+  --falcon-dark-rgb: 11, 23, 39;
+  --falcon-primary-text-emphasis: #215cac;
+  --falcon-secondary-text-emphasis: #5d6776;
+  --falcon-success-text-emphasis: #357623;
+  --falcon-info-text-emphasis: #197aa4;
+  --falcon-warning-text-emphasis: #ac5a2b;
+  --falcon-danger-text-emphasis: #b82c46;
+  --falcon-light-text-emphasis: #646465;
+  --falcon-dark-text-emphasis: #91979e;
+  --falcon-primary-bg-subtle: #d9e7fa;
+  --falcon-secondary-bg-subtle: #e6e8ec;
+  --falcon-success-bg-subtle: #d9f8eb;
+  --falcon-info-bg-subtle: #d8f3ff;
+  --falcon-warning-bg-subtle: #fde6d8;
+  --falcon-danger-bg-subtle: #fbdbe1;
+  --falcon-light-bg-subtle: #fdfefe;
+  --falcon-dark-bg-subtle: #08101b;
+  --falcon-primary-border-subtle: #abcaf5;
+  --falcon-secondary-border-subtle: #c7cdd4;
+  --falcon-success-border-subtle: #99edca;
+  --falcon-info-border-subtle: #a9e4fe;
+  --falcon-warning-border-subtle: #fbccb2;
+  --falcon-danger-border-subtle: #f5afbc;
+  --falcon-light-border-subtle: #edf2f9;
+  --falcon-dark-border-subtle: #9da9bb;
+  --falcon-white-rgb: 255, 255, 255;
+  --falcon-black-rgb: 0, 0, 0;
+  --falcon-font-sans-serif: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --falcon-font-monospace: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --falcon-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0));
+  --falcon-body-font-family: "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --falcon-body-font-size: 1rem;
+  --falcon-body-font-weight: 400;
+  --falcon-body-line-height: 1.5;
+  --falcon-body-color: #5e6e82;
+  --falcon-body-color-rgb: 94, 110, 130;
+  --falcon-body-bg: #edf2f9;
+  --falcon-body-bg-rgb: 237, 242, 249;
+  --falcon-emphasis-color: #000;
+  --falcon-emphasis-color-rgb: 0, 0, 0;
+  --falcon-secondary-color: #344050;
+  --falcon-secondary-color-rgb: 52, 64, 80;
+  --falcon-secondary-bg: #d8e2ef;
+  --falcon-secondary-bg-rgb: 216, 226, 239;
+  --falcon-tertiary-color: #748194;
+  --falcon-tertiary-color-rgb: 116, 129, 148;
+  --falcon-tertiary-bg: #f9fafd;
+  --falcon-tertiary-bg-rgb: 249, 250, 253;
+  --falcon-heading-color: var(--falcon-secondary-color);
+  --falcon-link-color: #2c7be5;
+  --falcon-link-color-rgb: 44, 123, 229;
+  --falcon-link-decoration: none;
+  --falcon-link-hover-color: #2362b7;
+  --falcon-link-hover-color-rgb: 35, 98, 183;
+  --falcon-link-hover-decoration: underline;
+  --falcon-code-color: #ff679b;
+  --falcon-highlight-color: #5e6e82;
+  --falcon-highlight-bg: #fde6d8;
+  --falcon-border-width: 1px;
+  --falcon-border-style: solid;
+  --falcon-border-color: #d8e2ef;
+  --falcon-border-color-translucent: rgba(0, 0, 0, 0.175);
+  --falcon-border-radius: 0.25rem;
+  --falcon-border-radius-sm: 0.25rem;
+  --falcon-border-radius-lg: 0.375rem;
+  --falcon-border-radius-xl: 1rem;
+  --falcon-border-radius-xxl: 2rem;
+  --falcon-border-radius-2xl: var(--falcon-border-radius-xxl);
+  --falcon-border-radius-pill: 50rem;
+  --falcon-box-shadow: 0 7px 14px 0 rgba(65, 69, 88, 0.1), 0 3px 6px 0 rgba(0, 0, 0, 0.07);
+  --falcon-box-shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  --falcon-box-shadow-lg: 0 1rem 4rem rgba(0, 0, 0, 0.175);
+  --falcon-box-shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.075);
+  --falcon-focus-ring-width: 0.25rem;
+  --falcon-focus-ring-opacity: 0.25;
+  --falcon-focus-ring-color: rgba(44, 123, 229, 0.25);
+  --falcon-form-valid-color: #00d27a;
+  --falcon-form-valid-border-color: #00d27a;
+  --falcon-form-invalid-color: #e63757;
+  --falcon-form-invalid-border-color: #e63757;
+}
+
+[data-bs-theme=dark] {
+  color-scheme: dark;
+  --falcon-body-color: #9da9bb;
+  --falcon-body-color-rgb: 157, 169, 187;
+  --falcon-body-bg: #0b1727;
+  --falcon-body-bg-rgb: 11, 23, 39;
+  --falcon-emphasis-color: #fff;
+  --falcon-emphasis-color-rgb: 255, 255, 255;
+  --falcon-secondary-color: #d8e2ef;
+  --falcon-secondary-color-rgb: 216, 226, 239;
+  --falcon-secondary-bg: #344050;
+  --falcon-secondary-bg-rgb: 52, 64, 80;
+  --falcon-tertiary-color: #748194;
+  --falcon-tertiary-color-rgb: 116, 129, 148;
+  --falcon-tertiary-bg: #162231;
+  --falcon-tertiary-bg-rgb: 22, 34, 49;
+  --falcon-primary-text-emphasis: #abcaf5;
+  --falcon-secondary-text-emphasis: #c7cdd4;
+  --falcon-success-text-emphasis: #73e6b6;
+  --falcon-info-text-emphasis: #93defe;
+  --falcon-warning-text-emphasis: #fbc6a8;
+  --falcon-danger-text-emphasis: #f4a5b3;
+  --falcon-light-text-emphasis: #646465;
+  --falcon-dark-text-emphasis: #91979e;
+  --falcon-primary-bg-subtle: #0f2b50;
+  --falcon-secondary-bg-subtle: #292d34;
+  --falcon-success-bg-subtle: #003f25;
+  --falcon-info-bg-subtle: #0c384c;
+  --falcon-warning-bg-subtle: #562d16;
+  --falcon-danger-bg-subtle: #5c1623;
+  --falcon-light-bg-subtle: #fdfefe;
+  --falcon-dark-bg-subtle: #08101b;
+  --falcon-primary-border-subtle: #163e73;
+  --falcon-secondary-border-subtle: #3a414a;
+  --falcon-success-border-subtle: #00693d;
+  --falcon-info-border-subtle: #145e7f;
+  --falcon-warning-border-subtle: #7b401f;
+  --falcon-danger-border-subtle: #731c2c;
+  --falcon-light-border-subtle: #5e6e82;
+  --falcon-dark-border-subtle: #4d5969;
+  --falcon-heading-color: var(--falcon-secondary-color);
+  --falcon-link-color: #2c7be5;
+  --falcon-link-hover-color: #2362b7;
+  --falcon-link-color-rgb: 44, 123, 229;
+  --falcon-link-hover-color-rgb: 35, 98, 183;
+  --falcon-code-color: #ff679b;
+  --falcon-highlight-color: #9da9bb;
+  --falcon-highlight-bg: #623319;
+  --falcon-border-color: rgba(255, 255, 255, 0.05);
+  --falcon-border-color-translucent: rgba(0, 0, 0, 0.175);
+  --falcon-form-valid-color: #66e4af;
+  --falcon-form-valid-border-color: #00d27a;
+  --falcon-form-invalid-color: #f0879a;
+  --falcon-form-invalid-border-color: #e63757;
+}
+
+
+.btn-primary, .tox .tox-menu__footer .tox-button:last-child,
+.tox .tox-dialog__footer .tox-button:last-child {
+  --falcon-btn-color: #fff;
+  --falcon-btn-bg: #75adee;
+  --falcon-btn-border-color: #75adee !important;
+  --falcon-btn-hover-color: #fff;
+  --falcon-btn-hover-bg: #2569c3;
+  --falcon-btn-hover-border-color: #2362b7;
+  --falcon-btn-focus-shadow-rgb: 76, 143, 233;
+  --falcon-btn-active-color: #fff;
+  --falcon-btn-active-bg: #2362b7;
+  --falcon-btn-active-border-color: #215cac;
+  --falcon-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+  --falcon-btn-disabled-color: #fff;
+  --falcon-btn-disabled-bg: #2c7be5;
+  --falcon-btn-disabled-border-color: #2c7be5;
+}
+
+.btn-secondary {
+  --falcon-btn-color: #fff;
+  --falcon-btn-bg: #748194;
+  --falcon-btn-border-color: #748194 !;
+  --falcon-btn-hover-color: #fff;
+  --falcon-btn-hover-bg: #636e7e;
+  --falcon-btn-hover-border-color: #5d6776;
+  --falcon-btn-focus-shadow-rgb: 137, 148, 164;
+  --falcon-btn-active-color: #fff;
+  --falcon-btn-active-bg: #5d6776;
+  --falcon-btn-active-border-color: #57616f;
+  --falcon-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+  --falcon-btn-disabled-color: #fff;
+  --falcon-btn-disabled-bg: #748194;
+  --falcon-btn-disabled-border-color: #748194;
+}
+
+.btn-success {
+  --falcon-btn-color: #fff;
+  --falcon-btn-bg: #a1c099;
+  --falcon-btn-border-color: #a1c099 !important;
+  --falcon-btn-hover-color: #fff;
+  --falcon-btn-hover-bg: #00b368;
+  --falcon-btn-hover-border-color: #00a862;
+  --falcon-btn-focus-shadow-rgb: 38, 217, 142;
+  --falcon-btn-active-color: #fff;
+  --falcon-btn-active-bg: #00a862;
+  --falcon-btn-active-border-color: #009e5c;
+  --falcon-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+  --falcon-btn-disabled-color: #fff;
+  --falcon-btn-disabled-bg: #00d27a;
+  --falcon-btn-disabled-border-color: #00d27a;
+}
+
+.btn-info {
+  --falcon-btn-color: #fff;
+  --falcon-btn-bg: #b899c0;
+  --falcon-btn-border-color: #b899c0 !important;
+  --falcon-btn-hover-color: #fff;
+  --falcon-btn-hover-bg: #21a0d7;
+  --falcon-btn-hover-border-color: #1f96ca;
+  --falcon-btn-focus-shadow-rgb: 71, 198, 253;
+  --falcon-btn-active-color: #fff;
+  --falcon-btn-active-bg: #1f96ca;
+  --falcon-btn-active-border-color: #1d8dbe;
+  --falcon-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+  --falcon-btn-disabled-color: #fff;
+  --falcon-btn-disabled-bg: #27bcfd;
+  --falcon-btn-disabled-border-color: #27bcfd;
+}
+
+.btn-warning {
+  --falcon-btn-color: #fff;
+  --falcon-btn-bg: #fdd095;
+  --falcon-btn-border-color: #fdd095 !important;
+  --falcon-btn-hover-color: #fff;
+  --falcon-btn-hover-bg: #d06d35;
+  --falcon-btn-hover-border-color: #c46632;
+  --falcon-btn-focus-shadow-rgb: 247, 147, 91;
+  --falcon-btn-active-color: #fff;
+  --falcon-btn-active-bg: #c46632;
+  --falcon-btn-active-border-color: #b8602f;
+  --falcon-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+  --falcon-btn-disabled-color: #fff;
+  --falcon-btn-disabled-bg: #f5803e;
+  --falcon-btn-disabled-border-color: #f5803e;
+}
+
+.btn-danger {
+  --falcon-btn-color: #fff;
+  --falcon-btn-bg: #c09999;
+  --falcon-btn-border-color: #c09999 !important;
+  --falcon-btn-hover-color: #fff;
+  --falcon-btn-hover-bg: #c42f4a;
+  --falcon-btn-hover-border-color: #b82c46;
+  --falcon-btn-focus-shadow-rgb: 234, 85, 112;
+  --falcon-btn-active-color: #fff;
+  --falcon-btn-active-bg: #b82c46;
+  --falcon-btn-active-border-color: #ad2941;
+  --falcon-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+  --falcon-btn-disabled-color: #fff;
+  --falcon-btn-disabled-bg: #e63757;
+  --falcon-btn-disabled-border-color: #e63757;
+}

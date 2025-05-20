@@ -1,0 +1,665 @@
+{% extends 'base.html' %}
+{% block title %}
+  Add Activity
+{% endblock %}
+{% block content %}
+
+  <!-- Content Header with breadcrumbs and title -->
+  <div class="row mb-2 align-items-center">
+    <div class="col-sm-6">
+      <h1 class="display-5 mb-">Add Quiz Type</h1>
+    </div>
+  </div>
+
+        <!-- Activity Heading with Icon and Description -->
+  <div class="activity-heading mb-2">
+    <h5>Activity Name: {{ activity.activity_name }}</h5>
+    <p class="text-muted">To Manage and configure questions for this activity click the the add button below.</p>
+  </div>
+  <div class="dropdown">
+    <button class="btn btn-primary dropdown-toggle mb-3" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+      Add
+    </button>
+    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+      {% for quiz_type in quiz_types %}
+        {% if is_participation %}
+          {% if quiz_type.name == 'Participation' %}
+            <a class="dropdown-item" href="#"
+               data-bs-toggle="modal"
+               data-bs-target="#quizTypeModal"
+               data-id="{{ quiz_type.id }}"
+               data-name="{{ quiz_type.name }}"
+               data-url="{% url 'add_question' activity.id quiz_type.id %}">
+              {{ quiz_type.name }}
+            </a>
+          {% endif %}
+        {% else %}
+          {% if quiz_type.name != 'Participation' %}
+            <a class="dropdown-item" href="#"
+               data-bs-toggle="modal"
+               data-bs-target="#quizTypeModal"
+               data-id="{{ quiz_type.id }}"
+               data-name="{{ quiz_type.name }}"
+               data-url="{% url 'add_question' activity.id quiz_type.id %}">
+              {{ quiz_type.name }}
+            </a>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <input type="hidden" id="activity_id_hidden" value="{{ activity.id|default:'' }}">
+
+        <!-- Modal for Adding Questions -->
+  <div class="modal fade" data-backdrop="static" data-keyboard="false" id="quizTypeModal" tabindex="-1" role="dialog" aria-labelledby="quizTypeModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="quizTypeModalLabel">Add</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="quizTypeForm" method="post" action="" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div id="quiz-type-fields"></div>
+
+                  <!-- CSV file input, visible only for Multiple Choice -->
+            <div class="form-group" id="csv-file-upload" style="display: none;">
+              <label for="csv_file">Import Questions from CSV:</label>
+              <input type="file" id="csv_file" name="csv_file" accept=".csv" class="form-control" />
+              <div class="mt-2">
+                <a href="{{ MEDIA_URL }}template/Multiple Choice Template.csv" class="btn btn-sm btn-secondary" download>
+                  Download Template here.
+                </a>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-2">Add</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-success text-light d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">
+        {% if questions.0.quiz_type == 'Participation' %}
+          Participation Scores
+        {% else %}
+          Type of Questions ( <span class="badge bg-light text-success">{{ questions|length }} Total Questions</span> )
+        {% endif %}
+      </h5>
+    </div>
+
+      {% if questions.0.quiz_type == 'Participation' %}
+        <div class="d-flex justify-content-end mt-2 px-3">
+          <a href="{% url 'edit_participation' activity.id %}" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Edit Participation Scores
+          </a>
+        </div>
+      {% endif %}
+
+    <div class="card-body">
+      {% if questions.0.quiz_type == 'Participation' %}
+              <!-- Display Participation Scores -->
+        <table class="table table-hover table-bordered">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Student Name</th>
+              <th>Points Given</th>
+            </tr>
+          </thead>
+          <tbody class="text-center">
+            {% for participation in questions.0.participation_data %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ participation.student_name|default:"Name not found" }}</td>
+                <td>{{ participation.score }}</td>  <!-- Display student score -->
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+              <!-- Display Normal Question List -->
+        <table class="table table-hover table-bordered">
+          <thead >
+            <tr>
+              <th>#</th>
+              <th>Question</th>
+              <th>Quiz Type</th>
+              <th>Points</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody class="text-center">
+            {% for question in questions %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>
+                  {% if question.quiz_type == 'Calculated Numeric' %}
+                    $ {{ question.question_text|safe }} $
+                  {% else %}
+                    {{ question.question_text }}
+                  {% endif %}
+                </td>
+                <td>{{ question.quiz_type }}</td>
+                <td>{{ question.score }}</td>
+                <td>
+                  <a href="{% url 'edit_question' activity.id forloop.counter0 %}" class="btn btn-sm btn-warning me-2"><i class="fas fa-edit"></i></a>
+                  <form action="{% url 'delete_temp_question' activity.id forloop.counter0 %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <a href="javascript:void(0);" onclick="confirmDeleteQuestion('{{ activity.id }}', '{{ forloop.counter0 }}');" class="btn btn-sm btn-danger ms-2"><i class="fas fa-trash"></i></a>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+            <tr>
+              <td colspan="3" class="text-end"><strong>Total Points:</strong></td>
+              <td><strong>{{ total_points }}</strong></td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      {% endif %}
+    </div>
+  </div>
+
+
+        <!-- Save All Questions Form -->
+  <div class="d-flex justify-content-end mt-4">
+    <form id="saveAllQuestionsForm" method="post" action="{% url 'save_all_questions' activity.id %}" novalidate>
+      {% csrf_token %}
+      <button type="submit" class="btn btn-success me-2" id="saveAllQuestionsBtn">
+        <span id="saveText">Save All Questions</span>
+        <span id="loadingSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+      </button>
+    </form>
+  </div>
+
+
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <!-- Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var activityId = document.getElementById("activity_id_hidden").value;
+      
+      $('#quizTypeModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var quizTypeId = button.data('id');
+        var quizTypeName = button.data('name');
+        var formUrl = button.data('url');  // ✅ Get pre-generated Django URL
+
+        var modal = $(this);
+        var form = modal.find('#quizTypeForm');
+
+        if (!formUrl || formUrl === 'undefined') {
+          console.error("🚨 ERROR: Form URL is not defined!");
+          return;
+        }
+
+        form.attr('action', formUrl);
+
+        // Set modal title
+        modal.find('.modal-title').text('Add Question for ' + quizTypeName);
+        
+        // Clear previous quiz type fields
+        var quizTypeFields = modal.find('#quiz-type-fields');
+        quizTypeFields.empty();
+
+        // Add common fields for most question types
+        if (quizTypeName !== 'Participation') {
+          quizTypeFields.append(`
+            <div class="form-group">
+              <label for="question_text">Question:</label>
+              <textarea id="question_text" name="question_text" class="form-control" required></textarea>
+              <div class="mt-3" id="question-mathjax-preview" style="display: none;">
+              <label> Preview (Question):</label>
+              <p id="mathjax-preview-question"></p>
+            </div>
+            </div>
+            <div class="form-group">
+              <label for="score">Equivalent Points:</label>
+              <input type="number" id="score" name="score" class="form-control" min="1" required>
+            </div>
+          `);
+        }
+
+        // Handle Multiple Choice question type
+        if (quizTypeName === 'Multiple Choice') {
+          quizTypeFields.append(`
+            <div id="choices">
+              <div class="form-group">
+                <label>Choices:</label>
+              </div>
+            </div>
+            <button type="button" class="btn btn-secondary mb-2" onclick="addChoice()">Add Choice</button>
+          `);
+
+          // Add two choices by default
+          addChoice();
+          addChoice();
+
+          document.getElementById('csv-file-upload').style.display = 'block';
+        } else {
+          document.getElementById('csv-file-upload').style.display = 'none';
+        }
+
+        // Other quiz type-specific fields
+        if (quizTypeName === 'True/False') {
+          quizTypeFields.append(`
+            <div class="form-group">
+              <label for="correct_answer">Correct Answer:</label>
+              <select id="correct_answer" name="correct_answer" class="form-control" required>
+                <option value="True">True</option>
+                <option value="False">False</option>
+              </select>
+            </div>
+          `);
+        }
+
+        if (quizTypeName === 'Matching Type') {
+          quizTypeFields.append(`
+            <div id="matching_pairs">
+              <div class="form-group">
+                <label for="matching_pair">Matching Pairs:</label>
+                <div class="input-group mb-3">
+                  <input type="text" name="matching_left" class="form-control" placeholder="Left side" required>
+                  <input type="text" name="matching_right" class="form-control" placeholder="Right side" required>
+                </div>
+              </div>
+            </div>
+
+            <div id="additional_right_options">
+            <div class="form-group">
+                <label for="additional_right">Additional Right Side Options (Distractors):</label>
+                <div class="input-group mb-3">
+                    <input type="text" name="extra_right" class="form-control" placeholder="Right side (distractor)">
+                </div>
+              </div>
+            </div>
+            <button type="button" class="btn btn-secondary mb-2" onclick="addRightOption()">Add Another Right Side Option</button>
+          `);
+        }
+
+        if (quizTypeName === 'Fill in the Blank') {
+          quizTypeFields.append(`
+            <div class="form-group">
+              <label for="correct_answer">Correct Answer:</label>
+              <input type="text" id="correct_answer" name="correct_answer" class="form-control" required>
+            </div>
+          `);
+        }
+
+        if (quizTypeName === 'Calculated Numeric') {
+
+          document.getElementById('question-mathjax-preview').style.display = 'block';
+
+          quizTypeFields.append(`
+            <div class="form-group">
+              <label for="correct_answer">Correct Answer:</label>
+              <input type="text" id="correct_answer" name="correct_answer" class="form-control" required>
+            </div>
+            <div class="mt-3">
+               <label> Preview (Answer):</label>
+              <p id="mathjax-preview-answer"></p>
+            </div>
+
+            <!-- Documentation List with Tooltips -->
+              <ul>
+                  <li>
+                      Superscript (power): 
+                      <span data-bs-toggle="tooltip" data-bs-placement="right" title="Use the caret symbol ^ for exponents. Example: 2^3 renders \(2^3\).">
+                          <i class="fas fa-info-circle text-muted"></i>
+                      </span> 
+                      Example: <code>2^3</code> renders \(2^3\).
+                  </li>
+                  <li>
+                      Subscript:
+                      <span data-bs-toggle="tooltip" data-bs-placement="right" title="Use the underscore symbol _ for subscripts. Example: x_2 renders \(x_2\).">
+                          <i class="fas fa-info-circle text-muted"></i>
+                      </span> 
+                      Example: <code>x_2</code> renders \(x_2\).
+                  </li>
+                  <li>
+                      Fractions:
+                      <span data-bs-toggle="tooltip" data-bs-placement="right" title="Use \frac{numerator}{denominator}. Example: \frac{1}{2} renders \(\frac{1}{2}\).">
+                          <i class="fas fa-info-circle text-muted"></i>
+                      </span> 
+                      Example: <code>\frac{1}{2}</code> renders \(\frac{1}{2}\).
+                  </li>
+                  <li>
+                      Square root:
+                      <span data-bs-toggle="tooltip" data-bs-placement="right" title="Use \sqrt{expression}. Example: \sqrt{x} renders \(\sqrt{x}\).">
+                          <i class="fas fa-info-circle text-muted"></i>
+                      </span> 
+                      Example: <code>\sqrt{x}</code> renders \(\sqrt{x}\).
+                  </li>
+                  <li>
+                      Powers inside powers:
+                      <span data-bs-toggle="tooltip" data-bs-placement="right" title="Wrap the exponent in curly braces. Example: 2^{3^x} renders \(2^{3^x}\).">
+                          <i class="fas fa-info-circle text-muted"></i>
+                      </span> 
+                      Example: <code>2^{3^x}</code> renders \(2^{3^x}\).
+                  </li>
+                  <li>
+                      Greek letters:
+                      <span data-bs-toggle="tooltip" data-bs-placement="right" title="Use backslash followed by the letter name. Example: \alpha renders \(\alpha\).">
+                          <i class="fas fa-info-circle text-muted"></i>
+                      </span> 
+                      Example: <code>\alpha</code> renders \(\alpha\).
+                  </li>
+                  <li>
+                      Integral:
+                      <span data-bs-toggle="tooltip" data-bs-placement="right" title="Use \int. Example: \int_0^1 x^2 dx renders \(\int_0^1 x^2 dx\).">
+                          <i class="fas fa-info-circle text-muted"></i>
+                      </span> 
+                      Example: <code>\int_0^1 x^2 dx</code> renders \(\int_0^1 x^2 dx\).
+                  </li>
+              </ul>
+          `);
+          var questionInput = document.getElementById('question_text');
+          if (questionInput) {
+            questionInput.addEventListener('input', function () {
+              var input = this.value;
+              var questionPreview = document.getElementById('mathjax-preview-question');
+
+              if (questionPreview) {
+                questionPreview.textContent = `\\(${input}\\)`;
+                MathJax.typesetPromise([questionPreview]).catch(function (err) {
+                  console.error('MathJax typeset error:', err.message);
+                });
+              }
+            });
+          }
+
+        // MathJax dynamic rendering for the Correct Answer
+          var correctAnswerInput = document.getElementById('correct_answer');
+          if (correctAnswerInput) {
+            correctAnswerInput.addEventListener('input', function () {
+              var input = this.value;
+              var answerPreview = document.getElementById('mathjax-preview-answer');
+
+              if (answerPreview) {
+                answerPreview.textContent = `\\(${input}\\)`;
+                MathJax.typesetPromise([answerPreview]).catch(function (err) {
+                  console.error('MathJax typeset error:', err.message);
+                });
+              }
+            });
+          }
+        }
+
+        if (quizTypeName === 'Participation') {
+          quizTypeFields.append(`
+            <div class="form-group">
+              <label for="max_score">Maximum Score:</label>
+              <input type="number" id="max_score" name="max_score" class="form-control" min="0" required>
+            </div>
+            <h4>Participation Scores</h4>
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Points</th>
+                </tr>
+              </thead>
+              <tbody id="participation-students"></tbody>
+            </table>
+          `);
+          fetch(`/participation_scores/{{ activity.id }}`)
+            .then(response => response.json())
+            .then(data => {
+              const studentsTable = document.getElementById('participation-students');
+              data.students.forEach(student => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${student.name}</td><td><input type="number" name="score_${student.id}" class="form-control" required></td>`;
+                studentsTable.appendChild(row);
+              });
+            });
+        }
+      });
+
+
+      // Add choice for Multiple Choice questions
+      window.addChoice = function() {
+        const choiceIndex = document.querySelectorAll('input[name="choices"]').length;
+        const choiceContainer = document.createElement('div');
+        choiceContainer.classList.add('input-group', 'mb-3');
+
+        const radioInput = document.createElement('input');
+        radioInput.type = 'radio';
+        radioInput.name = 'correct_answer';
+        radioInput.value = choiceIndex;
+        radioInput.classList.add('me-2');
+        radioInput.required = true;
+
+        const textInput = document.createElement('input');
+        textInput.type = 'text';
+        textInput.name = 'choices';
+        textInput.classList.add('form-control', 'ml-2');
+        textInput.placeholder = `Choice ${choiceIndex + 1}`;
+        textInput.required = true;
+
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.classList.add('btn', 'btn-danger', 'btn-sm', 'ml-2');
+        deleteButton.textContent = 'Delete';
+        deleteButton.onclick = function () {
+          choiceContainer.remove();
+        };
+
+        choiceContainer.appendChild(radioInput);
+        choiceContainer.appendChild(textInput);
+        choiceContainer.appendChild(deleteButton);
+
+        document.getElementById('choices').appendChild(choiceContainer);
+      };
+
+      // Add matching pair for Matching questions
+      window.addMatchingPair = function() {
+        const pairContainer = document.createElement('div');
+        pairContainer.classList.add('input-group', 'mb-3');
+
+        const leftInput = document.createElement('input');
+        leftInput.type = 'text';
+        leftInput.name = 'matching_left';
+        leftInput.classList.add('form-control');
+        leftInput.placeholder = 'Left side';
+        leftInput.required = true;
+
+        const rightInput = document.createElement('input');
+        rightInput.type = 'text';
+        rightInput.name = 'matching_right';
+        rightInput.classList.add('form-control');
+        rightInput.placeholder = 'Right side';
+        rightInput.required = true;
+
+        pairContainer.appendChild(leftInput);
+        pairContainer.appendChild(rightInput);
+
+        document.getElementById('matching_pairs').appendChild(pairContainer);
+      };
+
+      // Add additional right-side option for Matching Type questions (distractors)
+      window.addRightOption = function() {
+        const optionContainer = document.createElement('div');
+        optionContainer.classList.add('input-group', 'mb-3');
+
+        const rightInput = document.createElement('input');
+        rightInput.type = 'text';
+        rightInput.name = 'extra_right';
+        rightInput.classList.add('form-control');
+        rightInput.placeholder = 'Right side (distractor)';
+
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.classList.add('btn', 'btn-danger', 'btn-sm', 'ml-2');
+        deleteButton.textContent = 'Delete';
+        deleteButton.onclick = function () {
+          optionContainer.remove();
+        };
+
+        optionContainer.appendChild(rightInput);
+        optionContainer.appendChild(deleteButton);
+
+        document.getElementById('additional_right_options').appendChild(optionContainer);
+      };
+
+    });
+  </script>
+
+  <script>
+    function confirmDeleteQuestion(activityId, questionIndex) {
+      Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Submit the form to delete the question
+          fetch(`{% url 'delete_temp_question' 0 0 %}`.replace('0', activityId).replace('0', questionIndex), {
+            method: 'POST',
+            headers: {
+              'X-CSRFToken': '{{ csrf_token }}'
+            }
+          }).then((response) => {
+            if (response.ok) {
+              Swal.fire({
+                title: 'Deleted!',
+                text: 'Your question has been deleted.',
+                icon: 'success'
+              }).then(() => {
+                // Optionally reload the page or remove the deleted row
+                window.location.reload() // You can also remove the deleted question row dynamically instead of reloading
+              })
+            } else {
+              Swal.fire({
+                title: 'Error',
+                text: 'There was a problem deleting the question.',
+                icon: 'error'
+              })
+            }
+          })
+        }
+      })
+    }
+  </script>
+  <script>
+    document.getElementById('saveAllQuestionsForm').addEventListener('submit', function (event) {
+      event.preventDefault(); // Prevent immediate form submission
+
+      let questionRows = document.querySelectorAll("tbody tr").length; // Count the number of question rows
+      let participationText = document.querySelector(".card-header h5").textContent.trim(); // Check header text
+      let isParticipation = participationText.includes("Participation Scores");
+
+      if (!isParticipation && questionRows < 2) { // The table has a total row, so check for at least one real question
+        Swal.fire({
+          title: "Error",
+          text: "You must add at least one question before saving.",
+          icon: "error"
+        });
+        return; // Stop form submission
+      }
+
+  
+      Swal.fire({
+        title: 'Are you sure?',
+        text: 'Do you want to save all the questions?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          let saveButton = document.getElementById('saveAllQuestionsBtn');
+          let saveText = document.getElementById('saveText');
+          let spinner = document.getElementById('loadingSpinner');
+  
+          // Disable the button to prevent multiple clicks
+          saveButton.disabled = true;
+          saveText.textContent = "Processing...";
+          spinner.classList.remove("d-none"); // Show the spinner
+  
+          // Show loading message
+          Swal.fire({
+            title: 'Saving...',
+            text: 'Please wait while we save your questions and send emails.',
+            icon: 'info',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            timerProgressBar: true
+          });
+  
+          // Simulate processing delay before form submission
+          setTimeout(() => {
+            document.getElementById('saveAllQuestionsForm').submit();
+          }, 1000);
+
+        }
+      });
+    });
+  </script>
+  <script type="text/javascript">
+    window.MathJax = {
+      tex: {
+        inlineMath: [['\\(', '\\)'], ['$', '$']],
+        displayMath: [['\\[', '\\]'], ['$$', '$$']]
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      MathJax.typesetPromise(); // Rerender the MathJax when the content is fully loaded
+    });
+  </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      document.getElementById('quizTypeModal').addEventListener('input', function (event) {
+        // Ensure this runs only if Participation is selected
+        if (document.getElementById('max_score')) {
+          let maxScore = parseFloat(document.getElementById('max_score').value) || 0;
+    
+          if (event.target.name.startsWith('score_')) { 
+            let studentScore = parseFloat(event.target.value) || 0;
+            
+            if (studentScore > maxScore) {
+              event.target.value = maxScore; // Limit score to max score
+              Swal.fire({
+                icon: 'warning',
+                title: 'Invalid Score',
+                text: 'Student score cannot exceed the maximum score.',
+                timer: 2000,
+                showConfirmButton: false
+              });
+            } else if (studentScore < 0) {
+              event.target.value = 0; // Prevent negative scores
+            }
+          }
+        }
+      });
+    });
+    
+   </script>    
+   <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (sessionStorage.getItem('questionsSaved') === 'true') {
+        sessionStorage.removeItem('questionsSaved');
+        history.replaceState(null, null, location.href); // Prevent form resubmission on reload
+      }
+    });
+  </script>  
+{% endblock %}

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {% load static %}
+    <title>Classroom Mode - {{ subject.subject_name }}</title>
+    <link rel="icon" type="image/png" href="{% static 'favicon.ico' %}" />
+    <link rel="stylesheet" href="{% static 'css/all.min.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/adminlte.min.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/settings.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/css/custom_modal.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/subject_details.css' %}" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    {% comment %} <link rel="shortcut icon" href="{% static 'assets/dist/images/gsu_logo.png' %}" /> {% endcomment %}
+  </head>
+  <body class="bg-light">
+    <!-- Classroom Header -->
+    <div class="classroom-header fade-in mb-1">
+      <div class="header-content">
+        <h1>Classroom Mode: {{ subject.subject_name }}</h1>
+        <a href="{% url 'subjectDetail' subject.id %}" class="btn btn-light">Exit Classroom Mode</a>
+      </div>
+    </div>
+    <!-- Main Content -->
+    <div class="classroom-container fade-in col-sm-6">
+      <div class="text-left mb-2">
+        <a href="{% url 'classroom_mode' module.subject.id %}" class="btn btn-secondary">Back to Subject</a>
+      </div>
+      <h2>{{ module.file_name }}</h2>
+
+      {% if module.iframe_code %}
+        <div class="embed-responsive embed-responsive-16by9">
+          {{ module.iframe_code|safe }} <!-- Allow rendering of stored iframe -->
+        </div>
+      {% endif %}
+
+      {% if is_pdf and module.file %}
+        <div id="pdf-container" class="pdf-viewer shadow-sm rounded" style="margin: 0 auto; position: relative;">
+          <canvas id="pdf-canvas" class="w-100"></canvas>
+          <!-- Fullscreen Button -->
+          <button id="fullscreen-btn" class="btn btn-dark btn-sm" style="position: absolute; top: 10px; right: 10px;"><i class="fas fa-expand"></i></button>
+
+          <!-- Page Navigation -->
+          <button id="prev-page" class="btn btn-dark btn-sm" style="position: absolute; bottom: 50px; left: 20px;"><i class="fas fa-caret-left"></i></button>
+          <button id="next-page" class="btn btn-dark btn-sm" style="position: absolute; bottom: 50px; right: 20px;"><i class="fas fa-caret-right"></i></button>
+
+          <!-- Page Info -->
+          <div class="page-info text-white bg-secondary rounded" style="position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);">
+            Page: <span id="page-num"></span> / <span id="page-count"></span>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="progress mt-2" style="height: 10px;">
+            <div id="progress-bar" class="progress-bar bg-primary" style="width: 0%;"></div>
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Image Viewer -->
+      {% if is_image and module.file %}
+        <div class="image-viewer shadow-sm rounded" style="margin: 0 auto;">
+          <img src="{{ module.file.url }}" class="img-fluid rounded" alt="Image" />
+        </div>
+      {% endif %}
+
+      <!-- Video Viewer -->
+      {% if is_video and module.file %}
+        <div class="video-viewer shadow-sm rounded" style="margin: 0 auto;">
+          <video controls class="w-100">
+            <source src="{{ module.file.url }}" type="video/mp4" />Your browser does not support the video tag.
+          </video>
+        </div>
+      {% endif %}
+
+      <!-- External Video (YouTube, Vimeo) -->
+      {% if is_youtube or is_vimeo %}
+        <div class="embed-responsive embed-responsive-16by9 shadow-sm rounded" style="margin: 0 auto;">
+          <iframe class="embed-responsive-item" src="{{ embed_url }}" allowfullscreen></iframe>
+        </div>
+      {% endif %}
+
+      <!-- Link to external resource -->
+      {% if is_url %}
+        <div class="text-center mt-3">
+          <a href="{{ module.url }}" target="_blank" class="btn btn-outline-primary">Open {{ module.file_name }}</a>
+        </div>
+      {% endif %}
+
+      {% if is_unknown %}
+        <p class="text-danger">Unsupported file format. Unable to display the content.</p>
+      {% endif %}
+    </div>
+
+    <script src="{% static 'assets/plugins/jquery/jquery.min.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+    {% if is_pdf and module.file %}
+      <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          var url = '{{ module.file.url }}';
+          var pdfDoc = null;
+          var pageNum = {{ last_page }};
+          var canvas = document.getElementById('pdf-canvas');
+          var ctx = canvas.getContext('2d');
+          var fullscreenBtn = document.getElementById('fullscreen-btn');
+          var pdfContainer = document.getElementById('pdf-container'); // Corrected element
+          var progressBar = document.getElementById('progress-bar');
+
+          function startModule() {
+            fetch("{% url 'start_module_session' %}", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+              },
+            }).then(response => response.json())
+              .then(data => console.log(data.status));
+          }
+
+          function stopModule() {
+            fetch("{% url 'stop_module_session' %}", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+              },
+            }).then(response => response.json())
+              .then(data => console.log(data.status));
+          }
+
+          window.addEventListener('beforeunload', stopModule);
+
+          startModule();
+
+          function renderPage(num) {
+            pdfDoc.getPage(num).then(function (page) {
+              var viewport = page.getViewport({ scale: 1.5 });
+              canvas.height = viewport.height;
+              canvas.width = viewport.width;
+
+              var renderContext = {
+                canvasContext: ctx,
+                viewport: viewport
+              };
+
+              page.render(renderContext).promise.then(function () {
+                document.getElementById('page-num').textContent = num;
+                updateProgress(num, pdfDoc.numPages);
+              });
+            });
+          }
+
+          function updateProgress(currentPage, totalPages) {
+            var progress = (currentPage / totalPages) * 100;
+            progressBar.style.width = progress + '%';
+
+            fetch("{% url 'module_progress' %}", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+              },
+              body: JSON.stringify({
+                "module_id": "{{ module.id }}",
+                "progress": progress,
+                "last_page": currentPage
+              })
+            }).then(response => response.json())
+              .then(data => console.log("Progress updated:", data))
+              .catch(error => console.error("Error updating progress:", error));
+          }
+
+          pdfjsLib.getDocument(url).promise.then(function (pdfDoc_) {
+            pdfDoc = pdfDoc_;
+            document.getElementById('page-count').textContent = pdfDoc.numPages;
+            renderPage(pageNum);
+          });
+
+          document.getElementById('prev-page').addEventListener('click', function () {
+            if (pageNum <= 1) return;
+            pageNum--;
+            renderPage(pageNum);
+          });
+
+          document.getElementById('next-page').addEventListener('click', function () {
+            if (pageNum >= pdfDoc.numPages) return;
+            pageNum++;
+            renderPage(pageNum);
+          });
+
+          fullscreenBtn.addEventListener('click', function () {
+            if (!document.fullscreenElement) {
+              if (pdfContainer.requestFullscreen) {
+                pdfContainer.requestFullscreen();
+              } else if (pdfContainer.webkitRequestFullscreen) { // for Safari
+                pdfContainer.webkitRequestFullscreen();
+              } else if (pdfContainer.msRequestFullscreen) { // for IE/Edge
+                pdfContainer.msRequestFullscreen();
+              }
+              fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
+            } else {
+              document.exitFullscreen();
+              fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+            }
+          });
+        });
+      </script>
+    {% endif %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="{% static 'js/classroom-mode.js' %}"></script>  <!-- Global screenshot script -->
+  </body>
+</html>

@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Teacher Progress Report
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+
+    <div class="row mb-3">
+        <div class="col-12">
+            <h3 class="m-0">Teacher Progress Report</h3>
+        </div>
+    </div>
+
+
+<!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-md-6 ">
+            <label for="teacherFilter" class="form-label">Filter by Teacher</label>
+            <select id="teacherFilter" class="form-control w-auto d-inline-block">
+                <option value="">All Teachers</option>
+            </select>
+        </div>
+    </div>
+
+<!-- Main Content -->
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">Teacher Progress Report</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped" id="dataTable" width="100%" cellspacing="0">
+                    <thead class="bg-primary">
+                        <tr>
+                            <th>#</th>
+                            <th>Subject</th>
+                            <th>Teacher</th>
+                            <th>Total Progress</th>
+                        </tr>
+                    </thead>
+                    <tbody id="progressTableBody" class="text-center">
+                    <!-- Data will be inserted dynamically -->
+                    </tbody>
+                </table>                
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            console.log("Document is ready, fetching data...");
+        
+            $.getJSON("/semester_date_range/", function (data) {
+                let subjects = data.progress_by_subject;
+                let teachers = new Set();
+        
+                function updateTable(filteredSubjects) {
+                    let progressTableBody = $("#progressTableBody");
+                    progressTableBody.empty(); // ✅ Clear existing data before inserting new
+        
+                    let rowIndex = 1;
+                    $.each(filteredSubjects, function (subject, details) {
+                        let subjectName = subject.split(" (ID:")[0];
+                        let progressPercentage = parseFloat(details.total_progress);
+        
+                        let progressBar = `
+                        <div class="progress rounded-pill" style="height: 25px; background-color: #e9ecef;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: ${progressPercentage}%;" 
+                                aria-valuenow="${progressPercentage}" aria-valuemin="0" aria-valuemax="100">
+                                <span class="fw-bold">${progressPercentage.toFixed(2)}%</span>
+                            </div>
+                        </div>`;
+        
+                        let row = `<tr>
+                            <td>${rowIndex}</td>
+                            <td>${subjectName}</td>
+                            <td>${details.teacher_name}</td>
+                            <td>${progressBar}</td>
+                        </tr>`;
+                        progressTableBody.append(row);
+                        rowIndex++;
+                    });
+
+                    // Destroy and re-initialize DataTable (for filtering)
+                    if ($.fn.DataTable.isDataTable('#dataTable')) {
+                        $('#dataTable').DataTable().clear().destroy();
+                    }
+
+                    $('#dataTable').DataTable({
+                        responsive: true,
+                        ordering: true,
+                        paging: true,
+                        searching: true,
+                        lengthChange: true
+                    });
+                }
+
+                
+        
+                $.each(subjects, function (subject, details) {
+                    teachers.add(details.teacher_name);
+                });
+        
+                teachers.forEach(teacher => {
+                    $("#teacherFilter").append(`<option value="${teacher}">${teacher}</option>`);
+                });
+        
+                $("#teacherFilter").change(function () {
+                    let selectedTeacher = $("#teacherFilter").val();
+                    let filteredSubjects = {};
+        
+                    $.each(subjects, function (subject, details) {
+                        if (selectedTeacher === "" || details.teacher_name === selectedTeacher) {
+                            filteredSubjects[subject] = details;
+                        }
+                    });
+        
+                    updateTable(filteredSubjects);
+                });
+        
+                updateTable(subjects);
+            });
+        });
+        
+    </script>
+
+{% endblock %}

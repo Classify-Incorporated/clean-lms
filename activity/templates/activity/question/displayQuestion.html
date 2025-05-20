@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  {{ activity.activity_name }} - Questions
+{% endblock %}
+
+{% block content %}
+    <!-- Content Header -->
+<h3 class="mb-4">{{ activity.activity_name }}</h3>
+
+<!-- Main Content -->
+  {% if is_teacher or is_time_keeper %}
+    <div class="card shadow-sm p-3 mb-4">
+      <h5 class="text-secondary">Teacher View - Question and Answer Key</h5>
+      {% for question in questions %}
+        <div class="border rounded p-3 mb-3">
+          <label class="fw-bold">{{ forloop.counter }}. {{ question.question_text|safe }}
+            <span class="text-muted">(Max Score: {{ question.score }})</span>
+          </label>
+          <div class="mt-2">
+            {% if question.quiz_type.name == 'Multiple Choice' or question.quiz_type.name == 'True/False' %}
+              <p class="text-success">Correct Answer: {{ question.correct_answer }}</p>
+            {% elif question.quiz_type.name == 'Essay' %}
+              <p class="text-muted">Essay Question (No specific answer)</p>
+            {% elif question.quiz_type.name == 'Matching Type' %}
+              <ul class="list-group">
+                {% for pair in question.pairs %}
+                  <li class="list-group-item">{{ pair.left }} → {{ pair.right }}</li>
+                {% endfor %}
+              </ul>
+            {% elif question.quiz_type.name == 'Calculated Numeric' %}
+              <p class="text-success">Correct Answer: \( {{ question.correct_answer|safe }} \)</p>
+            {% elif question.quiz_type.name == 'Document' %}
+              <p>Uploaded Document: <a href="{{ question.correct_answer.url }}" target="_blank">View Document</a></p>
+            {% else %}
+              <p class="text-success">Correct Answer: {{ question.correct_answer }}</p>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    <a href="javascript:history.back()" class="btn btn-secondary">Back</a>
+  {% elif is_student %}
+    {% if not can_retake %}
+      <div class="alert alert-danger">You have reached the maximum number of retakes for this activity.</div>
+      <a href="{% url 'studentActivityView' activity.id %}" class="btn btn-info">View Activity Summary</a>
+    {% else %}
+      {% if not has_answered %}
+        <div class="alert alert-warning">
+          <h4>Time Remaining: <span id="timer"></span></h4>
+        </div>
+        
+        <!-- Student Answer Form -->
+        <form method="post" action="{% url 'submit_answers' activity.id %}" enctype="multipart/form-data" id="activity-form">
+          {% csrf_token %}
+          {% for question in questions %}
+            <div class="border rounded p-3 mb-3">
+              <label class="fw-bold">{{ forloop.counter }}. {{ question.question_text|safe }}
+                <span class="text-muted">(Max Score: {{ question.score }})</span>
+              </label>
+              
+              {% if question.quiz_type.name == 'Multiple Choice' %}
+                {% for choice in question.choices.all %}
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="choice_{{ choice.id }}" value="{{ choice.choice_text }}" {% if not can_retake %}disabled{% endif %} />
+                    <label class="form-check-label" for="choice_{{ choice.id }}">{{ choice.choice_text }}</label>
+                  </div>
+                {% endfor %}
+              {% elif question.quiz_type.name == 'True/False' %}
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="true_{{ question.id }}" value="True" {% if not can_retake %}disabled{% endif %} />
+                  <label class="form-check-label" for="true_{{ question.id }}">True</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="false_{{ question.id }}" value="False" {% if not can_retake %}disabled{% endif %} />
+                  <label class="form-check-label" for="false_{{ question.id }}">False</label>
+                </div>
+              {% elif question.quiz_type.name == 'Essay' %}
+                <textarea name="question_{{ question.id }}" class="form-control" rows="4" placeholder="Write your answer here..."></textarea>
+              {% elif question.quiz_type.name == 'Matching Type' %}
+                {% for pair in question.pairs %}
+                  <div class="input-group mb-2">
+                    <input type="text" class="form-control" value="{{ pair.left }}" readonly />
+                    <select name="matching_right_{{ question.id }}_{{ forloop.counter0 }}" class="form-select" required>
+                      <option value="" disabled selected>Select a match</option>
+                      {% for right_term in question.shuffled_right_terms %}
+                        <option value="{{ right_term }}">{{ right_term }}</option>
+                      {% endfor %}
+                    </select>
+                    <input type="hidden" name="matching_left_{{ question.id }}_{{ forloop.counter0 }}" value="{{ pair.left }}" />
+                  </div>
+                {% endfor %}
+              {% elif question.quiz_type.name == 'Calculated Numeric' %}
+                <input type="text" name="question_{{ question.id }}" class="form-control" placeholder="Enter your answer" {% if not can_retake %}disabled{% endif %} />
+              {% elif question.quiz_type.name == 'Document' %}
+                <input type="file" name="question_{{ question.id }}" class="form-control" {% if not can_retake %}disabled{% endif %} />
+              {% else %}
+                <input type="text" name="question_{{ question.id }}" class="form-control" placeholder="Enter your answer" {% if not can_retake %}disabled{% endif %} />
+              {% endif %}
+            </div>
+          {% endfor %}
+          
+          {% if can_retake %}
+            <button type="submit" class="btn btn-primary">Submit</button>
+          {% endif %}
+        </form>
+      {% else %}
+        <p class="text-success">You have already answered this activity.</p>
+        {% if is_student and can_retake and has_answered %}
+          <form method="post" action="{% url 'retake_activity' activity.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-warning">Retake Activity</button>
+          </form>
+        {% endif %}
+      {% endif %}
+    {% endif %}
+
+    <script type="text/javascript">
+      window.MathJax = {
+        tex: {
+          inlineMath: [['\\(', '\\)'], ['$', '$']],
+          displayMath: [['\\[', '\\]'], ['$$', '$$']]
+        },
+        options: {
+          skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+        }
+      };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript">
+      window.MathJax = {
+        tex: {
+          inlineMath: [['\\(', '\\)'], ['$', '$']],
+          displayMath: [['\\[', '\\]'], ['$$', '$$']]
+        },
+        options: {
+          skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+        }
+      };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        if (typeof MathJax !== 'undefined') {
+          MathJax.typeset();
+        } else {
+          console.error('MathJax is not defined');
+        }
+      });
+
+    </script>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        let isSubmitting = false;
+        let isUploadingFile = false;
+        const form = document.getElementById('activity-form');
+
+        document.querySelectorAll('input[type="file"]').forEach(input => {
+          input.addEventListener('click', () => isUploadingFile = true);
+          input.addEventListener('change', () => isUploadingFile = false);
+        });
+
+        form.addEventListener('submit', () => isSubmitting = true);
+
+        function autoSubmitForm() {
+          if (!isSubmitting) {
+            isSubmitting = true;
+
+            const formData = new FormData(form);
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+
+            fetch("{% url 'auto_submit_answers' activity.id %}", {
+              method: "POST",
+              body: formData,
+              headers: {
+                "X-Requested-With": "XMLHttpRequest",
+                "X-CSRFToken": csrfToken
+              }
+            })
+              .then(response => response.json())
+              .then(data => {
+                alert(data.message);
+                window.location.href = "/subjectDetail/{{ activity.subject.id }}/";
+              })
+              .catch(error => console.error("Error:", error));
+          }
+        }
+
+
+        let timeRemaining = Math.floor({{ time_remaining|default:0 }});
+        const timerElement = document.getElementById('timer');
+
+        function updateTimer() {
+          if (timeRemaining <= 0) {
+            timerElement.textContent = "00:00";
+            autoSubmitForm();
+            return;
+          }
+
+          let minutes = Math.floor(timeRemaining / 60);
+          let seconds = timeRemaining % 60;
+          let formattedSeconds = seconds < 10 ? '0' + seconds : seconds;
+
+          timerElement.textContent = `${minutes}:${formattedSeconds}`;
+          timeRemaining--;
+        }
+
+        if (timeRemaining > 0) {
+          updateTimer();
+          setInterval(updateTimer, 1000);
+        }
+
+      });
+    </script>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Update Badge{% endblock %}
+
+{% block content %}
+<div class="card shadow">
+  <div class="card-header bg-secondary text-white">
+    <h5 class="mb-0">Update</h5>
+  </div>
+  <div class="card-body">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <div class="d-flex justify-content-between">
+          <a href="{% url 'badge_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back
+          </a>
+          <button type="submit" class="btn btn-primary ms-2">Save</button>
+        </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

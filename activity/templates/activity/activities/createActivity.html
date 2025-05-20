@@ -1,0 +1,311 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Add Activity
+{% endblock %}
+
+{% block content %}
+
+  <!-- Content Header with centered title and modern typography -->
+
+  <h1 class="display-5 text-center">Add Activity to {{ subject.subject_name }}</h1>
+  <p class="text-center text-muted">Please fill out the form to add a new activity for this subject.</p>
+
+  <!-- Main content with centered form card -->
+  <div class="col-md-12">
+    <div class="card shadow-lg border-0 mb-4">
+            <!-- Card header with a primary gradient and white text for a polished look -->
+      <div class="card-header bg-success text-white py-3">
+        <h6 class="m-0 font-weight-bold text-uppercase">Activity Details</h6>
+      </div>
+
+            <!-- Card body with enhanced spacing and form controls -->
+      <div class="card-body px-5 py-4">
+        <form method="post" class="needs-validation" novalidate>
+          {% csrf_token %}
+
+          <input type="hidden" name="activity_type_id" value="{{ request.GET.activity_type_id }}" />
+
+                <!-- Row with 3 fields: Activity Name, Activity Type, and Term -->
+          <div class="row mb-4">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="activity_name">
+                  Activity Name
+                  <span data-bs-toggle="tooltip" data-bs-placement="right" title="This is the name of the activity you are creating."><i class="fas fa-info-circle text-muted"></i></span>
+                </label>
+                <input type="text" id="activity_name" name="activity_name" class="form-control shadow-sm" placeholder="Enter activity name" required />
+                <div class="invalid-feedback">Please provide an activity name.</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="term">
+                  Term
+                  <span data-bs-toggle="tooltip" data-bs-placement="right" title="Select the term in which the activity will take place."><i class="fas fa-info-circle text-muted"></i></span>
+                </label>
+                <select id="term" name="term" class="form-control shadow-sm" required>
+                  {% for term in terms %}
+                    <option value="{{ term.id }}" {% if term.id == current_term.id %}selected{% endif %}>{{ term.term_name }}</option>
+                  {% endfor %}
+                </select>
+                <div class="invalid-feedback">Please select a term.</div>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="module">
+                  Select Lesson
+                  <span data-bs-toggle="tooltip" data-bs-placement="right" title="Select the module related to this activity."><i class="fas fa-info-circle text-muted"></i></span>
+                </label>
+                <select id="module" name="module" class="form-control shadow-sm" required>
+                  {% for module in modules %}
+                    <option value="{{ module.id }}">{{ module.file_name }}</option>
+                  {% endfor %}
+                </select>
+                <div class="invalid-feedback">Please select a module.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="activity_instruction">
+              Activity Instruction
+              <span data-bs-toggle="tooltip" data-bs-placement="right" title="Provide instructions for students completing this activity.">
+                <i class="fas fa-info-circle text-muted"></i>
+              </span>
+            </label>
+            <textarea id="activity_instruction" name="activity_instruction" class="form-control shadow-sm" rows="4" placeholder="Enter activity instructions here...">{{ activity.activity_instruction }}</textarea>
+          </div>
+
+          <div class="row mb-4">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="max_retake">
+                  Maximum Reattempt
+                  <span data-bs-toggle="tooltip" data-bs-placement="right" title="Set the maximum number of attempts allowed for this activity."><i class="fas fa-info-circle text-muted"></i></span>
+                </label>
+                <input type="number" id="max_retake" name="max_retake" class="form-control shadow-sm" value="2" min="1" required oninput="validateNumberInput(this)" />
+                <div class="invalid-feedback">Please provide a valid number of attempts.</div>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="retake_method">
+                  Retake Method
+                  <span data-bs-toggle="tooltip" data-bs-placement="right" title="Choose how the retake score will be calculated (highest or latest)."><i class="fas fa-info-circle text-muted"></i></span>
+                </label>
+                <select id="retake_method" name="retake_method" class="form-control shadow-sm" required>
+                  <option value="highest">Highest Score</option>
+                  <option value="latest">Latest Take</option>
+                  <option value="average">Average</option>
+                  <option value="first">First Take</option>
+                </select>
+                <div class="invalid-feedback">Please select a retake method.</div>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="time_duration">
+                  Time Duration
+                  <span data-bs-toggle="tooltip" data-bs-placement="right" title="Set the time duration for this activity."><i class="fas fa-info-circle text-muted"></i></span>
+                </label>
+                <input type="number" id="time_duration" name="time_duration" class="form-control shadow-sm" value="60" min="1" required oninput="validateNumberInput(this)" />
+              </div>
+            </div>
+          </div>
+
+                <!-- Row with 2 fields: Start Time and End Time -->
+          <div class="row mb-3">
+            <div class="col-md-2">
+              <div class="form-group">
+                <label for="passing_score">
+                  Passing Score
+                  <span data-bs-toggle="tooltip" data-bs-placement="right" title="Set the passing score for this activity."><i class="fas fa-info-circle text-muted"></i></span>
+                </label>
+                <input type="number" id="passing_score" name="passing_score" class="form-control shadow-sm" value="0" min="1" required oninput="validateNumberInput(this)" />
+                <div class="invalid-feedback">Please provide a valid number.</div>
+              </div>
+            </div>
+
+            <div class="col-md-2">
+              <div class="form-group">
+                <label for="passing_score_type">
+                  Type
+                  <span data-bs-toggle="tooltip" data-bs-placement="right" title="Select whether the passing score is a number or a percentage."><i class="fas fa-info-circle text-muted"></i></span>
+                </label>
+                <select id="passing_score_type" name="passing_score_type" class="form-control shadow-sm" required>
+                  <option value="percentage">Percentage</option>
+                  <option value="number">Number</option>
+                </select>
+                <div class="invalid-feedback">Please select the score type.</div>
+              </div>
+            </div>
+
+                  <!-- Start Time and End Time Fields -->
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="start_time">
+                  Start Time
+                  <span data-bs-toggle="tooltip" data-bs-placement="right" title="Set the starting time of the activity."><i class="fas fa-info-circle text-muted"></i></span>
+                </label>
+                <input type="datetime-local" id="start_time" name="start_time" class="form-control shadow-sm" required />
+                <div class="invalid-feedback">Please select a start time.</div>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="end_time">
+                  End Time
+                  <span data-bs-toggle="tooltip" data-bs-placement="right" title="Set the deadline for completing the activity."><i class="fas fa-info-circle text-muted"></i></span>
+                </label>
+                <input type="datetime-local" id="end_time" name="end_time" class="form-control shadow-sm" required />
+                <div class="invalid-feedback">Please select an end time.</div>
+              </div>
+            </div>
+          </div>
+
+                <!-- Remedial Activity checkbox -->
+          <div class="form-check mb-4">
+            <input type="checkbox" id="remedial" name="remedial" class="form-check-input" />
+            <label for="remedial" class="form-check-label">
+              Remedial Activity
+              <span data-bs-toggle="tooltip" data-bs-placement="right" title="Check this box if this is a remedial activity for selected students."><i class="fas fa-info-circle text-muted"></i></span>
+            </label>
+          </div>
+
+                <!-- Remedial Students selection (only visible if checkbox is checked) -->
+          <div class="form-group" id="remedial_students_field" style="display: none;">
+            <label for="remedial_students">
+              Select Students
+              <span data-bs-toggle="tooltip" data-bs-placement="right" title="Select the students who will participate in this remedial activity."><i class="fas fa-info-circle text-muted"></i></span>
+            </label>
+            <select id="remedial_students" name="remedial_students" class="form-select select2 shadow-sm" multiple>
+              {% for student in students %}
+                <option value="{{ student.id }}">{{ student.get_full_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+                <!-- Form submission buttons with sleek design -->
+          <div class="text-right mt-4">
+            <button type="submit" class="btn btn-primary btn-lg rounded-pill shadow-lg px-5">Next</button>
+            <a href="{% url 'subjectDetail' subject.id %}" class="btn btn-secondary btn-lg rounded-pill shadow-lg px-5">Back</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Include Bootstrap Tooltip JS and Font Awesome for icons -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- JavaScript section for dynamic behavior -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var activityTypeId = document.getElementById('activityTypeHiddenInput').value;
+      var extraFields = document.getElementById('extraFields');
+      var extraFieldsRemedial = document.getElementById('extraFieldsRemedial');
+
+      // Check if the activity type is "Participation" and hide extra fields
+      if (activityTypeId && activityTypeId == '{{ participation_activity_type_id }}') {
+        extraFields.style.display = 'none';
+        extraFieldsRemedial.style.display = 'none';
+      }
+
+      document.getElementById('remedial').addEventListener('change', function () {
+        var remedialStudentField = document.getElementById('remedial_students_field');
+        if (this.checked) {
+          remedialStudentField.style.display = 'block';
+          $('.selectpicker').selectpicker('refresh');
+        } else {
+          remedialStudentField.style.display = 'none';
+          $('.selectpicker').selectpicker('destroy');
+        }
+      });
+    });
+
+    // Initialize Bootstrap tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+
+    function selectActivityType(activityTypeName) {
+      var activityTypeField = document.getElementById('activity_type')
+      var selectedActivityTypeDisplay = document.getElementById('selectedActivityType')
+
+      // Get all the activity types from the dropdown
+      var activityTypeOptions = document.getElementById('activity_type').options
+
+      // Loop through options and find the one that matches the name
+      for (var i = 0; i < activityTypeOptions.length; i++) {
+        if (activityTypeOptions[i].text === activityTypeName) {
+          // Set the value of the hidden activity_type field to the matching option's value (ID)
+          activityTypeField.value = activityTypeOptions[i].value
+          selectedActivityTypeDisplay.textContent = 'Selected Activity Type: ' + activityTypeName
+          break
+        }
+      }
+
+    }
+
+    // Show/hide remedial students field based on checkbox toggle
+    document.getElementById('remedial').addEventListener('change', function () {
+      var remedialStudentField = document.getElementById('remedial_students_field')
+      if (this.checked) {
+        remedialStudentField.style.display = 'block'
+        // Initialize selectpicker once remedial checkbox is checked
+        $('.selectpicker').selectpicker('refresh')
+      } else {
+        remedialStudentField.style.display = 'none'
+        // Destroy selectpicker if remedial is unchecked
+        $('.selectpicker').selectpicker('destroy')
+      }
+    })
+  </script>
+ 
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var maxRetakeInput = document.getElementById('max_retake');
+      var retakeMethodSelect = document.getElementById('retake_method');
+
+      function toggleRetakeMethod() {
+        if (parseInt(maxRetakeInput.value, 10) === 1) {
+          retakeMethodSelect.disabled = true; // Disable dropdown
+          retakeMethodSelect.value = "first"; // Set default value to "First Take"
+        } else {
+          retakeMethodSelect.disabled = false; // Enable dropdown
+        }
+      }
+
+      maxRetakeInput.addEventListener('input', toggleRetakeMethod);
+      toggleRetakeMethod(); // Run on page load
+    });
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      function validateNumberInput(input) {
+        let value = input.value;
+    
+        // Remove non-numeric characters (except for decimal points)
+        if (!/^\d*$/.test(value)) {
+          input.value = value.replace(/[^0-9]/g, ''); // Remove non-numeric characters
+        }
+      }
+    
+      // Apply validation to all number fields
+      document.querySelectorAll('input[type="number"]').forEach(function (input) {
+        input.addEventListener('input', function () {
+          validateNumberInput(this);
+        });
+      });
+    });
+  </script>    
+{% endblock %}

@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% block title %}
+  {{ activity.activity_name }}
+{% endblock %}
+{% block content %}
+  <div class="row mb-2">
+    <div class="col-sm-6">
+      <h3 class="m-0">Student Activity</h3>
+    </div>
+  </div>
+
+  <h3 class="text-center">{{ activity.activity_name }}</h3>
+  <p class="text-center">Passing Score: {{ detailed_scores.0.passing_score_value|floatformat:"0" }}</p>
+
+  {% for entry in detailed_scores %}
+    <div class="student-score-card mb-4">
+      <div class="student-info">
+        <h4>{{ entry.student.first_name }} {{ entry.student.last_name }}</h4>
+        <p><strong>Submission Date:</strong> {{ entry.submission_time }}</p>
+        {% for question in entry.questions %}
+          <p><strong>Question {{ question.number }}:</strong> {{ question.question_text|safe }} </span> - (score: {{ question.score }})</p>
+          <p><strong>Correct Answer:</strong>
+            {% if question.correct_answer == 'Answer hidden' %}
+              Answer hidden by teacher
+            {% else %}
+              <span class="mathjax-render">\( {{ question.correct_answer|safe }} \)
+            {% endif %}
+          </p>
+          <p><strong>Student Answer:</strong>  {{ question.student_answer|safe }} </p>
+        {% endfor %}
+      </div>
+
+              <!-- Progress Circle -->
+      {% if question.correct_answer != 'Answer hidden' %}
+        <div class="progress-circle"
+             data-score="{{ entry.total_score }}"
+             data-max="{{ entry.max_score }}"
+             data-passing="{{ entry.passing_score_value }}"> <!-- Use passing_score_value -->
+          <span class="progress-text">{{ entry.total_score|floatformat:'0' }} / {{ entry.max_score|floatformat:'0' }}</span>
+          <div class="progress-inner-circle"></div>
+        </div>
+      {% else %}
+        <div class="progress-circle" data-score="0" data-max="100" data-passing="{{ entry.passing_score_value }}">
+          <span class="progress-text">Score Hidden</span>
+          <div class="progress-inner-circle"></div>
+        </div>
+      {% endif %}
+    </div>
+  {% endfor %}
+  <div class="text-right mt-3">
+    <a href="{% url 'subjectDetail' activity.subject.id %}" class="btn btn-secondary">Back</a>
+  </div>
+
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['\\(', '\\)'], ['$', '$']],
+        displayMath: [['\\[', '\\]'], ['$$', '$$']]
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      if (typeof MathJax !== "undefined") {
+        setTimeout(() => {
+          MathJax.typesetPromise().then(() => {
+            console.log("MathJax rendering completed.");
+          }).catch((err) => {
+            console.error("MathJax rendering failed:", err.message);
+          });
+        }, 500);
+      } else {
+        console.error("MathJax is not loaded.");
+      }
+    });
+  </script>
+
+
+  <style>
+    .student-score-card {
+      display: flex;
+      align-items: center;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+    }
+    .student-score-card + .student-score-card {
+      margin-top: 16px;
+    }
+    .progress-circle {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: conic-gradient(#4caf50 0% 0%, transparent 0% 100%); /* Default green color */
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: bold;
+      color: #000;
+      transition: transform 0.3s ease;
+      margin-right: 16px;
+    }
+    .progress-circle.warning {
+      background: conic-gradient(#ff9800 0% 0%, transparent 0% 100%); /* Warning yellow color */
+    }
+    .progress-circle:hover {
+      transform: scale(1.1);
+    }
+    .progress-inner-circle {
+      width: 145px;
+      height: 145px;
+      border-radius: 50%;
+      background-color: #f3f3f3;
+      position: absolute;
+      top: 7px;
+      left: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .progress-text {
+      position: absolute;
+      z-index: 1;
+    }
+    .student-info {
+      flex: 1;
+    }
+    .student-info h4 {
+      margin-bottom: 8px;
+    }
+  </style>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('.progress-circle').forEach(function (circle) {
+        const score = parseFloat(circle.getAttribute('data-score'));
+        const max = parseFloat(circle.getAttribute('data-max'));
+        const passing = parseFloat(circle.getAttribute('data-passing'));  // Use the calculated passing score
+
+        if (!isNaN(score) && !isNaN(max) && max > 0) {
+          const percentage = (score / max) * 100;
+
+          if (score < passing) {
+            circle.classList.add('warning');
+          }
+
+          circle.style.background = `conic-gradient(${score >= passing ? '#4caf50' : '#ff9800'} 0% ${percentage}%, transparent ${percentage}% 100%)`;
+        }
+      });
+    });
+  </script>
+{% endblock %}

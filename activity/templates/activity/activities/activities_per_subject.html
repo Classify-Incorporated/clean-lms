@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Subject Activity Reports
+{% endblock %}
+
+{% block content %}
+  <!-- Main content -->
+  <!-- Content Header -->
+  <div class="row mb-2">
+    <div class="col-sm-6">
+      <h3 class="m-0">Activities Per Subject Reports</h3>
+    </div>
+  </div>
+  <!-- Activities Table -->
+  <div class="card shadow mb-4">
+    <div class="card-header bg-success text-white">
+      <h5 class="mb-0">Activities Per Subject</h5>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table mb-0 data-table fs-10 table-bordered" data-datatables="data-datatables">
+          <thead class="bg-primary">
+            <tr>
+              <th>#</th>
+              <th>Subject Name</th>
+              <th>Activity Count</th>
+            </tr>
+          </thead>
+          <tbody class="text-center">
+            {% for subject in subjects %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ subject.subject_name }}</td>
+                <td>{{ subject.activity_count }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <a href="{% url 'dashboard' %}" class="btn btn-secondary mb-2">Back</a>
+{% endblock %}

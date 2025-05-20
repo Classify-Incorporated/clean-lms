@@ -1,0 +1,666 @@
+{% load static %}
+{% load permissions %}
+<style>
+  .navbar-vertical-collapsed .logo-img {
+    display: none !important;
+  }
+  
+  .navbar-vertical-collapsed .navbar-vertical-label-wrapper {
+    display: none !important;
+  }
+  .navbar-brand {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    text-align: center;
+  }
+  .navbar-brand div {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+    display: flex;
+  }
+</style>
+<nav class="navbar navbar-light navbar-vertical navbar-expand-xl navbar-inverted">
+  <script>
+    var navbarStyle = localStorage.getItem('navbarStyle')
+    if (navbarStyle && navbarStyle !== 'transparent') {
+      document.querySelector('.navbar-vertical').classList.add(`navbar-${navbarStyle}`)
+    }
+  </script>
+  <div class="d-flex align-items-center">
+    <div class="toggle-icon-wrapper">
+      <button class="btn navbar-toggler-humburger-icon navbar-vertical-toggle mb-3 mt-2" data-bs-toggle="tooltip" data-bs-placement="left" title="Toggle Navigation"><span class="navbar-toggle-icon"><span class="toggle-line"></span></span></button>
+    </div>
+  </div>
+
+  <div class="collapse navbar-collapse" id="navbarVerticalCollapse">
+    <div class="navbar-vertical-content">
+      <div class="form-inline mt-2 mb-3" style="display: flex; flex-direction: column; align-items: center;">
+        <div class="input-group" data-widget="sidebar-search" style="display: flex; justify-content: center;">
+          <img src="{% static 'assets/img/ched.png' %}" alt="{{ SCHOOL_NAME }}" class="logo-img" style="width: 140px;" height="140px" />
+        </div>
+      </div>
+
+      <a class="navbar-brand" href="{% url 'dashboard' %}">
+        <div class="d-flex align-items-center py-1">
+          <span class="font-sans-serif text-500">{{ SCHOOL_SHORT_NAME }}</span>
+        </div>
+      </a>
+
+      <hr class="mb-3 navbar-vertical-divider" />
+
+      <ul class="navbar-nav flex-column mb-3" id="navbarVerticalNav">
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'dashboard' %}" role="button">
+            <div class="d-flex align-items-center">
+              <span class="nav-link-icon"><span class="fas fa-chart-pie"></span></span><span class="nav-link-text ps-1">Dashboard</span>
+            </div>
+          </a>
+        </li>
+        <li class="nav-item">
+          {% if not user.is_superuser and not user.is_staff %}
+            {% if not user.profile.role.name|lower == 'registrar' %}
+              <!-- label -->
+              <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
+                <div class="col-auto navbar-vertical-label">App</div>
+                <div class="col ps-0">
+                  <hr class="mb-0 navbar-vertical-divider" />
+                </div>
+              </div>
+              <!-- parent pages -->
+
+              <a class="nav-link" href="{% url 'calendars' %}" role="button">
+                <div class="d-flex align-items-center">
+                  <span class="nav-link-icon"><span class="fas fa-calendar-alt"></span></span><span class="nav-link-text ps-1">Calendar</span>
+                </div>
+              </a>
+            {% endif %}
+          {% endif %}
+
+          <!-- parent pages -->
+          {% if not user.is_superuser and not user.is_staff %}
+            <!-- Messages (Permission check) -->
+            {% if user|has_perm:'message.view_message' %}
+              <a class="nav-link" href="{% url 'social_media_inbox' %}" role="button">
+                <div class="d-flex align-items-center">
+                  <span class="nav-link-icon"><span class="fas fa-comments"></span></span>
+                  <span class="nav-link-text ps-1">Messages</span>
+
+                  {% if unread_messages_count > 0 %}
+                    <span class="badge rounded-pill badge-subtle-primary ms-2">{{ unread_messages_count }}</span>
+                  {% endif %}
+
+                  {% if pending_friend_requests_count > 0 %}
+                    <span class="badge rounded-pill badge-subtle-warning ms-2" id="pendingFriendRequestsBadge">{{ pending_friend_requests_count }}</span>
+                  {% endif %}
+                </div>
+              </a>
+            {% endif %}
+          {% endif %}
+
+          {% if not user.profile.is_coil_user %}
+            {% if not user.is_superuser and not user.is_staff %}
+              {% if user|has_perm:'subject.view_subject' %}
+                <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
+                  <div class="col-auto navbar-vertical-label">Teaching</div>
+                  <div class="col ps-0">
+                    <hr class="mb-0 navbar-vertical-divider" />
+                  </div>
+                </div>
+
+                <!-- parent pages -->
+                {% if user.profile.role.name|lower != 'student' %}
+                  <!-- Teaching Menu for Non-Students -->
+                  <a class="nav-link dropdown-indicator" href="#email" role="button" data-bs-toggle="collapse" aria-expanded="false" aria-controls="email">
+                    <div class="d-flex align-items-center">
+                      <span class="nav-link-icon"><span class="fas fa-book-open"></span></span>
+                      <span class="nav-link-text ps-1">Teaching</span>
+                    </div>
+                  </a>
+                {% else %}
+                  <!-- Learning Menu for Students -->
+                  <a class="nav-link dropdown-indicator" href="#email" role="button" data-bs-toggle="collapse" aria-expanded="false" aria-controls="email">
+                    <div class="d-flex align-items-center">
+                      <span class="nav-link-icon"><span class="fas fa-book-reader"></span></span>
+                      <span class="nav-link-text ps-1">Learning</span>
+                    </div>
+                  </a>
+                {% endif %}
+
+                <ul class="nav collapse" id="email">
+                  {% if user|has_perm:'subject.view_subject' %}
+                    {% if not user.profile.role.name|lower == 'registrar' %}
+                      <li class="nav-item">
+                        <a class="nav-link" href="{% url 'SubjectList' %}">
+                          <div class="d-flex align-items-center">
+                            <span class="nav-link-text ps-1">Subjects</span>
+                          </div>
+                        </a>
+                        <!-- more inner pages -->
+                      </li>
+                    {% endif %}
+                  {% endif %}
+
+                  {% if user|has_perm:'gradebookcomponent.view_gradebookcomponents' %}
+                    <li class="nav-item">
+                      <a class="nav-link" href="{% url 'student_grades' %}">
+                        <div class="d-flex align-items-center">
+                          <span class="nav-link-text ps-1">Grades</span>
+                        </div>
+                      </a>
+                      <!-- more inner pages -->
+                    </li>
+                  {% endif %}
+
+                  {% if user|has_perm:'subject.view_subject' %}
+                    {% if not user.profile.role.name|lower == 'student' %}
+                      <li class="nav-item">
+                        <a class="nav-link" href="{% url 'subject' %}">
+                          <div class="d-flex align-items-center">
+                            <span class="nav-link-text ps-1">
+                              {% if is_registrar %}
+                                Subject Management
+                              {% elif is_student %}
+                                Subject List
+                              {% else %}
+                                Subject List
+                              {% endif %}
+                            </span>
+                          </div>
+                        </a>
+                      </li>
+                    {% endif %}
+                  {% endif %}
+
+                  {% if user|has_perm:'subject.view_schedule' %}
+                    <li class="nav-item">
+                      <a class="nav-link" href="{% url 'schedule' %}">
+                        <div class="d-flex align-items-center">
+                          <span class="nav-link-text ps-1">Schedule Management</span>
+                        </div>
+                      </a>
+                      <!-- more inner pages -->
+                    </li>
+                  {% endif %}
+
+                  {% if not is_student %}
+                    {% if user|has_perm:'classroom.view_teacher_attendance' %}
+                      <li class="nav-item">
+                        <a class="nav-link" href="{% url 'teacher_attendance_report' %}">
+                          <div class="d-flex align-items-center">
+                            <span class="nav-link-text ps-1">Teacher Attendance</span>
+                          </div>
+                        </a>
+                        <!-- more inner pages -->
+                      </li>
+                    {% endif %}
+
+                    {% if user|has_perm:'studentprogress.view_studentprogress' %}
+                      {% if not user.profile.role.name|lower == 'registrar' %}
+                        {% if not user.profile.role.name|lower == 'student' %}
+                          <li class="nav-item">
+                            <a class="nav-link" href="{% url 'progressList' %}">
+                              <div class="d-flex align-items-center">
+                                <span class="nav-link-text ps-1">Activity Progress</span>
+                              </div>
+                            </a>
+                            <!-- more inner pages -->
+                          </li>
+                        {% endif %}
+                      {% endif %}
+                    {% endif %}
+
+                    {% if user|has_perm:'course.view_subjectenrollment' %}
+                      {% if not user.is_superuser and not user.is_staff %}
+                        <li class="nav-item">
+                          <a class="nav-link" href="{% url 'subjectEnrollmentList' %}">
+                            <div class="d-flex align-items-center">
+                              <span class="nav-link-text ps-1">Student Management</span>
+                            </div>
+                          </a>
+                          <!-- more inner pages -->
+                        </li>
+                      {% endif %}
+                    {% endif %}
+                  {% endif %}
+                </ul>
+              {% endif %}
+            {% endif %}
+          {% endif %}
+
+          {% if not user.profile.is_coil_user %}
+            {% if user.profile.role.name|lower == 'admin' or user.profile.role.name|lower == 'registrar' or user.is_superuser or user.is_staff %}
+              <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
+                <div class="col-auto navbar-vertical-label">User Management</div>
+                <div class="col ps-0">
+                  <hr class="mb-0 navbar-vertical-divider" />
+                </div>
+              </div>
+              <!-- parent pages -->
+              <a class="nav-link dropdown-indicator" href="#events" role="button" data-bs-toggle="collapse" aria-expanded="false" aria-controls="events">
+                <div class="d-flex align-items-center">
+                  <span class="nav-link-icon"><span class="fas fa-users"></span></span><span class="nav-link-text ps-1">User List</span>
+                </div>
+              </a>
+            {% endif %}
+
+            <ul class="nav collapse" id="events">
+              {% if user|has_perm:'accounts.view_profile' %}
+                {% if user.profile.role.name|lower == 'admin' or user.profile.role.name|lower == 'registrar' or user.is_superuser or user.is_staff %}
+                  <li class="nav-item">
+                    <a class="nav-link" href="{% url 'teacher_list' %}">
+                      <div class="d-flex align-items-center">
+                        <span class="nav-link-text ps-1">Teachers Master Data</span>
+                      </div>
+                    </a>
+                  </li>
+                {% endif %}
+
+                {% if user.profile.role.name|lower == 'admin' or user.profile.role.name|lower == 'registrar' or user.is_superuser or user.is_staff %}
+                  <li class="nav-item">
+                    <a class="nav-link" href="{% url 'student_list' %}">
+                      <div class="d-flex align-items-center">
+                        <span class="nav-link-text ps-1">Students Master Data</span>
+                      </div>
+                    </a>
+                  </li>
+                {% endif %}
+
+                {% if user.profile.role.name|lower == 'admin' or user.profile.role.name|lower == 'registrar' or user.is_superuser or user.is_staff %}
+                  <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin_and_staff_list' %}">
+                      <div class="d-flex align-items-center">
+                        <span class="nav-link-text ps-1">Admin and Staff Master Data</span>
+                      </div>
+                    </a>
+                  </li>
+                {% endif %}
+
+                {% if user.profile.role.name|lower == 'admin' or user.profile.role.name|lower == 'registrar' or user.is_superuser or user.is_staff %}
+                  <li class="nav-item">
+                    <a class="nav-link" href="{% url 'program_head_list' %}">
+                      <div class="d-flex align-items-center">
+                        <span class="nav-link-text ps-1">Program Heads Master Data</span>
+                      </div>
+                    </a>
+                  </li>
+                {% endif %}
+              {% endif %}
+            </ul>
+
+            <!-- parent pages -->
+            {% if user|has_perm:'roles.view_role' and user|has_perm:'roles.change_role' %}
+              <a class="nav-link dropdown-indicator" href="#e-commerce" role="button" data-bs-toggle="collapse" aria-expanded="false" aria-controls="e-commerce">
+                <div class="d-flex align-items-center">
+                  <span class="nav-link-icon"><span class="fas fa-key"></span></span><span class="nav-link-text ps-1">Roles and Permission</span>
+                </div>
+              </a>
+              <ul class="nav collapse" id="e-commerce">
+                {% if user|has_perm:'roles.view_role' and user|has_perm:'roles.change_role' %}
+                  <li class="nav-item">
+                    <a class="nav-link" href="{% url 'roleList' %}">
+                      <div class="d-flex align-items-center">
+                        <span class="nav-link-text ps-1">User Roles and Permissions</span>
+                      </div>
+                    </a>
+                    <!-- more inner pages -->
+                  </li>
+                {% endif %}
+              </ul>
+            {% endif %}
+          {% endif %}
+
+          {% if not user.is_superuser and not user.is_staff %}
+            <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
+              <div class="col-auto navbar-vertical-label">Orbit Program</div>
+              <div class="col ps-0">
+                <hr class="mb-0 navbar-vertical-divider" />
+              </div>
+            </div>
+
+            <!-- COIL Program Dropdown -->
+            <a class="nav-link dropdown-indicator" href="#coilProgram" role="button" data-bs-toggle="collapse" aria-expanded="false" aria-controls="coilProgram">
+              <div class="d-flex align-items-center">
+                <span class="nav-link-icon"><span class="fas fa-globe"></span></span>
+                <span class="nav-link-text ps-1">COIL Program</span>
+              </div>
+            </a>
+            <ul class="nav collapse" id="coilProgram">
+              {% if user|has_perm:'subject.view_subject' and user.profile.role.name|lower != 'registrar' %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'coil_subjectList' %}">
+                    <div class="d-flex align-items-center">
+                      <span class="nav-link-text ps-1">Coil Subjects</span>
+                    </div>
+                  </a>
+                </li>
+              {% endif %}
+
+              {% if user.profile.role.name|lower in 'admin registrar' or user.is_superuser or user.is_staff %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'coil_school_list' %}">
+                    <div class="d-flex align-items-center">
+                      <span class="nav-link-text ps-1">Participating Schools</span>
+                    </div>
+                  </a>
+                </li>
+              {% endif %}
+
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'coil_subect_update' %}">
+                  <div class="d-flex align-items-center">
+                    <span class="nav-link-text ps-1">Latest Updates</span>
+                  </div>
+                </a>
+              </li>
+            </ul>
+
+            <!-- HALI Program Dropdown -->
+            <a class="nav-link dropdown-indicator" href="#haliProgram" role="button" data-bs-toggle="collapse" aria-expanded="false" aria-controls="haliProgram">
+              <div class="d-flex align-items-center">
+                <span class="nav-link-icon"><span class="fas fa-satellite"></span></span>
+                <span class="nav-link-text ps-1">HALI Program</span>
+              </div>
+            </a>
+            <ul class="nav collapse" id="haliProgram">
+              {% if user|has_perm:'subject.view_subject' and user.profile.role.name|lower != 'registrar' %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'hali_subjectList' %}">
+                    <div class="d-flex align-items-center">
+                      <span class="nav-link-text ps-1">Hali Subjects</span>
+                    </div>
+                  </a>
+                </li>
+              {% endif %}
+
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'hali_subect_update' %}">
+                  <div class="d-flex align-items-center">
+                    <span class="nav-link-text ps-1">Latest Updates</span>
+                  </div>
+                </a>
+              </li>
+            </ul>
+ 
+
+          {% if user|has_perm:'roles.view_role' %}
+            <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
+              <div class="col-auto navbar-vertical-label">Reports</div>
+              <div class="col ps-0">
+                <hr class="mb-0 navbar-vertical-divider" />
+              </div>
+            </div>
+            <!-- parent pages -->
+            <a class="nav-link dropdown-indicator" href="#e-learning" role="button" data-bs-toggle="collapse" aria-expanded="false" aria-controls="e-learning">
+              <div class="d-flex align-items-center">
+                <span class="nav-link-icon"><span class="fas fa-graduation-cap"></span></span><span class="nav-link-text ps-1">Reports</span>
+              </div>
+            </a>
+            <ul class="nav collapse" id="e-learning">
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'active_and_inactive' %}">
+                  <div class="d-flex align-items-center">
+                    <span class="nav-link-text ps-1">User Last Login Report</span>
+                  </div>
+                </a>
+                <!-- more inner pages -->
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'teachers_last_login' %}">
+                  <div class="d-flex align-items-center">
+                    <span class="nav-link-text ps-1">Teacher Last Login Report</span>
+                  </div>
+                </a>
+                <!-- more inner pages -->
+              </li>
+
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'daily_login_report' %}">
+                  <div class="d-flex align-items-center">
+                    <span class="nav-link-text ps-1">Student Daily Login Report</span>
+                  </div>
+                </a>
+                <!-- more inner pages -->
+              </li>
+
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'teacher_progress_report' %}">
+                  <div class="d-flex align-items-center">
+                    <span class="nav-link-text ps-1">Teacher Progress Report</span>
+                  </div>
+                </a>
+                <!-- more inner pages -->
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'display_student_per_course' %}">
+                  <div class="d-flex align-items-center">
+                    <span class="nav-link-text ps-1">Student Per Course Report</span>
+                  </div>
+                </a>
+                <!-- more inner pages -->
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'display_student_per_subject' %}">
+                  <div class="d-flex align-items-center">
+                    <span class="nav-link-text ps-1">Student Per Subject Report</span>
+                  </div>
+                </a>
+                <!-- more inner pages -->
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'activities_per_subject' %}">
+                  <div class="d-flex align-items-center">
+                    <span class="nav-link-text ps-1">Activities Per Subject Report</span>
+                  </div>
+                </a>
+                <!-- more inner pages -->
+              </li>
+            </ul>
+          {% endif %}
+          {% if not user.profile.is_coil_user %}
+            {% if not user.is_superuser and not user.is_staff %}
+              {% if not user.profile.role.name|lower == 'registrar' %}
+                {% if user|has_perm:'logs.view_subjectlog' %}
+                  <a class="nav-link" href="{% url 'subjectLogDetails' %}" role="button">
+                    <div class="d-flex align-items-center">
+                      <span class="nav-link-icon"><span class="fas fa-list"></span></span><span class="nav-link-text ps-1">Activity Logs</span>
+                    </div>
+                  </a>
+                {% endif %}
+              {% endif %}
+            {% endif %}
+          {% endif %}
+
+          <!-- parent pages -->
+          {% if user|has_perm:'roles.view_role' %}
+            <a class="nav-link dropdown-indicator" href="#social" role="button" data-bs-toggle="collapse" aria-expanded="false" aria-controls="social">
+              <div class="d-flex align-items-center">
+                <span class="nav-link-icon"><span class="fas fa-school"></span></span><span class="nav-link-text ps-1">School Profile</span>
+              </div>
+            </a>
+            <ul class="nav collapse" id="social">
+              {% if user|has_perm:'roles.view_role' %}
+                <li class="nav-item">
+                  <a class="nav-link" href="#">
+                    <div class="d-flex align-items-center">
+                      <span class="nav-link-text ps-1">Update School Information</span>
+                    </div>
+                  </a>
+                  <!-- more inner pages -->
+                </li>
+              {% endif %}
+            </ul>
+          {% endif %}
+
+          <!-- Settings Section -->
+          {% if not user.is_superuser and not user.is_staff %}
+            {% if not user.profile.role.name|lower == 'student' %}
+              <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
+                <div class="col-auto navbar-vertical-label">System Settings</div>
+                <div class="col ps-0">
+                  <hr class="mb-0 navbar-vertical-divider" />
+                </div>
+              </div>
+              <!-- parent pages -->
+              <a class="nav-link dropdown-indicator" href="#support-desk" role="button" data-bs-toggle="collapse" aria-expanded="false" aria-controls="support-desk">
+                <div class="d-flex align-items-center">
+                  <span class="nav-link-icon"><span class="fas fa-cog"></span></span><span class="nav-link-text ps-1">Settings</span>
+                </div>
+              </a>
+
+              <ul class="nav collapse" id="support-desk">
+                {% if user|has_perm:'subject.view_evaluationassignment' %}
+                  {% if not user.is_superuser and not user.is_staff %}
+                    <li class="nav-item">
+                      <a class="nav-link" href="{% url 'list_evaluation_assignments' %}">
+                        <div class="d-flex align-items-center">
+                          <span class="nav-link-text ps-1">Teacher Evaluation</span>
+                        </div>
+                      </a>
+                      <!-- more inner pages -->
+                    </li>
+                  {% endif %}
+                {% endif %}
+
+                {% if user|has_perm:'subject.view_teacherevaluationresponse' %}
+                  {% if not user.is_superuser and not user.is_staff %}
+                    <li class="nav-item">
+                      <a class="nav-link" href="{% url 'list_evaluation_results' %}">
+                        <div class="d-flex align-items-center">
+                          <span class="nav-link-text ps-1">Evaluation Result</span>
+                        </div>
+                      </a>
+                      <!-- more inner pages -->
+                    </li>
+                  {% endif %}
+                {% endif %}
+
+                {% if user|has_perm:'course.view_course' %}
+                  <li class="nav-item">
+                    <a class="nav-link" href="{% url 'course_list' %}">
+                      <div class="d-flex align-items-center">
+                        <span class="nav-link-text ps-1">Course Settings</span>
+                      </div>
+                    </a>
+                    <!-- more inner pages -->
+                  </li>
+                {% endif %}
+
+                {% if user|has_perm:'course.view_course' %}
+                  <li class="nav-item">
+                    <a class="nav-link" href="{% url 'transmutation_list' %}">
+                      <div class="d-flex align-items-center">
+                        <span class="nav-link-text ps-1">Transmutation Settings</span>
+                      </div>
+                    </a>
+                    <!-- more inner pages -->
+                  </li>
+                {% endif %}
+
+                {% if user|has_perm:'activity.view_activitytype' %}
+                  {% if not user.is_superuser and not user.is_staff %}
+                    <li class="nav-item">
+                      <a class="nav-link" href="{% url 'activityTypeList' %}">
+                        <div class="d-flex align-items-center">
+                          <span class="nav-link-text ps-1">Activity Type Settings</span>
+                        </div>
+                      </a>
+                      <!-- more inner pages -->
+                    </li>
+                  {% endif %}
+                {% endif %}
+
+                {% if user|has_perm:'course.view_semester' %}
+                  {% if not user.is_superuser and not user.is_staff %}
+                    <li class="nav-item">
+                      <a class="nav-link" href="{% url 'semesterList' %}">
+                        <div class="d-flex align-items-center">
+                          <span class="nav-link-text ps-1">
+                            {% if is_registrar %}
+                              School Year Management
+                            {% elif is_student %}
+                              Semester Settings
+                            {% else %}
+                              Semester Settings
+                            {% endif %}
+                          </span>
+                        </div>
+                      </a>
+                    </li>
+                  {% endif %}
+                {% endif %}
+
+                {% if user|has_perm:'course.view_term' and not user.is_superuser %}
+                  <li class="nav-item">
+                    <a class="nav-link" href="{% url 'termList' %}">
+                      <div class="d-flex align-items-center">
+                        <span class="nav-link-text ps-1">Term Settings</span>
+                      </div>
+                    </a>
+                    <!-- more inner pages -->
+                  </li>
+                {% endif %}
+
+                {% if user|has_perm:'course.view_semester' %}
+                  {% if not user.is_superuser and not user.is_staff %}
+                    <li class="nav-item">
+                      <a class="nav-link" href="{% url 'event_list' %}">
+                        <div class="d-flex align-items-center">
+                          <span class="nav-link-text ps-1">Event Settings</span>
+                        </div>
+                      </a>
+                      <!-- more inner pages -->
+                    </li>
+                  {% endif %}
+                {% endif %}
+
+                {% if user|has_perm:'course.view_semester' %}
+                  {% if not user.is_superuser and not user.is_staff %}
+                    <li class="nav-item">
+                      <a class="nav-link" href="{% url 'announcement_list' %}">
+                        <div class="d-flex align-items-center">
+                          <span class="nav-link-text ps-1">Announcement Settings</span>
+                        </div>
+                      </a>
+                      <!-- more inner pages -->
+                    </li>
+                  {% endif %}
+                {% endif %}
+
+                {% if user|has_perm:'gradebookcomponent.view_gradebookcomponents' %}
+                  {% if not user.is_superuser and not user.is_staff %}
+                    {% if user|has_perm:'gradebookcomponent.view_gradebookcomponents' %}
+                      <li class="nav-item">
+                        <a class="nav-link" href="{% url 'viewGradeBookComponents' %}">
+                          <div class="d-flex align-items-center">
+                            <span class="nav-link-text ps-1">Gradebook</span>
+                          </div>
+                        </a>
+                        <!-- more inner pages -->
+                      </li>
+                    {% endif %}
+                  {% endif %}
+                {% endif %}
+
+                {% endif %}
+
+                {% if not user.profile.is_coil_user %}
+                  <li class="nav-item">
+                    <a class="nav-link" href="{% url 'gale_library' %}">
+                      <div class="d-flex align-items-center">
+                        <span class="nav-link-icon"><span class="fas fa-book"></span></span>
+                        <span class="nav-link-text ps-1">Gale Library</span>
+                      </div>
+                    </a>
+                  </li>
+                {% endif %}
+
+              </ul>
+            {% endif %}
+          {% endif %}
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>

@@ -1,0 +1,695 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+  Sent
+{% endblock %}
+{% block content %}
+
+    <!-- Content Header (Page header) -->
+
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h3 class="m-0">Sent</h3>
+          </div>
+        </div>
+
+    <!-- Main Content -->
+
+        <div class="row">
+          <div class="col-md-2">
+            <button class="btn btn-success mb-3 w-100" id="openSendMessageModalBtn"><i class="fas fa-pencil-alt"></i> Compose</button>
+            <!-- Add Friend Button -->
+            <button class="btn btn-primary mb-3 w-100" id="openAddFriendModalBtn"><i class="fas fa-user-plus"></i> Add Friend</button>
+            <!-- Friends List Button -->
+            <button class="btn btn-info mb-3 w-100 position-relative" id="openFriendsListModalBtn">
+              <i class="fas fa-users"></i> Friends List
+              {% if pending_friend_requests_count > 0 %}
+                  <span class="badge rounded-pill bg-warning ms-2" id="pendingFriendRequestsBadge">
+                      {{ pending_friend_requests_count }}
+                  </span>
+              {% endif %}
+            </button>
+            <div class="list-group">
+              <a href="{% url 'inbox' %}" class="list-group-item list-group-item-action d-flex align-items-center">
+                <i class="fas fa-inbox me-2"></i>
+                <span>Inbox</span>
+                <span class="badge rounded-pill bg-primary ml-auto ms-2" id="unreadCountBadge">{{ unread_messages_count }}</span>
+              </a>
+              <a href="{% url 'sent' %}" class="list-group-item list-group-item-action d-flex align-items-center">
+                <i class="fas fa-envelope me-2"></i>
+                <span>Sent</span>
+              </a>
+              <a href="{% url 'trash' %}" class="list-group-item list-group-item-action d-flex align-items-center">
+                <i class="fas fa-trash me-2"></i>
+                <span>Trash</span>
+              </a>
+            </div>
+          </div>
+          <div class="col-md-10">
+            <div class="card">
+              <div class="bg-holder d-none d-lg-block bg-card" 
+              style="background-image: url('{% static 'assets/img/icons/spot-illustrations/corner-3.png' %}');
+                      opacity: 0.7;
+                      pointer-events: none;">
+              </div>
+              <div class="card-header d-flex justify-content-between align-items-center bg-primary rounded-top-1">
+                <h5 class="mb-0">Sent</h5>
+                <input type="text" id="searchMail" class="form-control w-25 ml-auto" placeholder="Search Mail" />
+              </div>
+              <div class="card-body p-0">
+                <table class="table table-hover">
+                  <thead class="text-center">
+                    <tr>
+                      <div class="d-flex align-items-center">
+                        <input type="checkbox" id="selectAll" class="ms-3 mb-3 mt-3" />
+                        <div class="toolbar" id="toolbar" style="display: none;">
+                          <button class="btn btn-sm btn-trash ms-1" data-toggle="tooltip" title="Trash" onclick="confirmTrashMessages()"><i class="fas fa-trash"></i></button>
+                          <button class="btn btn-sm btn-untrash ms-1" data-toggle="tooltip" title="Move to Inbox"><i class="fas fa-inbox"></i></button>
+                        </div>
+                      </div>
+                    </tr>
+                  </thead>
+                  <tbody id="messageTable" class="text-center">
+                    {% if message_status_list %}
+                      {% for item in message_status_list %}
+                        <tr class="message-row" data-id="{{ item.message.id }}">
+                          <td>
+                            <input type="checkbox" class="selectItem" />
+                          </td>
+                          <td class="text-left">{{ item.message.sender }}</td>
+                          <td class="text-left">
+                            <a href="#" class="text-decoration-none text-900 viewMessageLink" data-id="{{ item.message.id }}" data-body="{{ item.message.body|striptags }}">{{ item.message.subject }} - <span class="message-body"></span></a>
+                          </td>
+                          <td>
+                            <span class="badge rounded-pill badge-subtle-info">{{ item.status }}</span>
+                          </td>
+                        </tr>
+                      {% endfor %}
+                    {% else %}
+                      <tr>
+                        <td colspan="5">No matching records found</td>
+                      </tr>
+                    {% endif %}
+                  </tbody>
+                </table>
+              </div>
+              <!-- Card Footer -->
+              <div class="card-footer d-flex justify-content-between align-items-center">
+                <div>
+                  <button class="btn btn-secondary"><i class="fas fa-arrow-left"></i></button>
+                  <button class="btn btn-secondary"><i class="fas fa-arrow-right"></i></button>
+                </div>
+                <div>
+                  <span>Showing {{ message_status_list|length }} messages</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+  <!-- Include the modals -->
+  {% include 'message/message.html' %}
+
+  <!-- Include the Modal -->
+  {% include 'message/add_friend_modal.html' %}
+
+  <!-- Include the Friends List Modal -->
+  {% include 'message/friends_list_modal.html' %}
+
+  <!-- View Message Modal -->
+  <div id="viewMessageModal" class="custom-modal">
+    <div class="custom-modal-header">
+      <button class="close-btn" id="closeViewMessageModalBtn"></button>
+      <h5>View Sent Message</h5>
+    </div>
+    <div class="custom-modal-body">
+      <div id="viewMessageContent">
+        <!-- Message content will be loaded here dynamically -->
+      </div>
+    </div>
+  </div>
+  <div id="viewMessageModalBackdrop" class="custom-modal-backdrop"></div>
+
+  <!-- Send Message Modal -->
+  <div id="sendMessageModal" class="custom-modal">
+    <div class="custom-modal-header">
+      <button class="close-btn" id="closeSendMessageModalBtn"></button>
+      <h5>Send Message</h5>
+    </div>
+    <div class="custom-modal-body">
+      <!-- Send message form content -->
+      <form id="sendMessageForm" method="post" action="{% url 'send_message' %}">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="recipient_type">To:</label>
+          <select id="recipient_type" name="recipient_type" class="form-control" required>
+            <option value="">Select Recipient</option>
+            <optgroup label="Subjects">
+              {% for subject in subjects %}
+                <option value="subject_{{ subject.id }}">{{ subject.subject_name }}</option>
+              {% endfor %}
+            </optgroup>
+            <optgroup label="Instructors">
+              {% for instructor in instructors %}
+                <option value="teacher_{{ instructor.id }}">{{ instructor.first_name }} {{ instructor.last_name }}</option>
+              {% endfor %}
+            </optgroup>
+            <optgroup label="Students">
+              {% for student in students %}
+                <option value="student_{{ student.id }}">{{ student.first_name }} {{ student.last_name }}</option>
+              {% endfor %}
+            </optgroup>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="subject">Subject:</label>
+          <input type="text" class="form-control" id="subject" name="subject" required />
+        </div>
+        <div class="form-group">
+          <label for="body">Message:</label>
+          <textarea class="form-control" id="body" name="body" rows="5" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Send</button>
+      </form>
+    </div>
+  </div>
+  <div id="sendMessageModalBackdrop" class="custom-modal-backdrop"></div>
+
+  <!-- Custom Modal Script and SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    // Function to trigger SweetAlert2 for trashing messages
+    function confirmTrashMessages() {
+      const selectedMessages = document.querySelectorAll('.selectItem:checked')
+      const messageIds = Array.from(selectedMessages).map((item) => item.closest('tr').dataset.id)
+    
+      if (messageIds.length > 0) {
+        Swal.fire({
+          title: 'Are you sure?',
+          text: "You won't be able to revert this!",
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            const formData = new FormData()
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}')
+            messageIds.forEach((id) => formData.append('message_ids[]', id))
+    
+            fetch("{% url 'trash_messages' %}", {
+              method: 'POST',
+              body: formData
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                if (data.status === 'success') {
+                  messageIds.forEach((id) => {
+                    document.querySelector(`tr[data-id="${id}"]`).remove()
+                  })
+                  toggleToolbar() // Hide toolbar if no items are selected
+                  Swal.fire('Deleted!', 'Your messages have been deleted.', 'success')
+                } else {
+                  Swal.fire('Error!', 'An error occurred while trying to trash messages.', 'error')
+                }
+              })
+              .catch((error) => {
+                Swal.fire('Error!', 'An error occurred while trying to trash messages.', 'error')
+              })
+          }
+        })
+      } else {
+        Swal.fire('No Messages Selected', 'Please select at least one message to delete.', 'info')
+      }
+    }
+    
+    document.getElementById('openSendMessageModalBtn').addEventListener('click', function () {
+      document.getElementById('sendMessageModal').classList.add('show')
+      document.getElementById('sendMessageModalBackdrop').classList.add('show')
+    })
+    
+    document.getElementById('closeSendMessageModalBtn').addEventListener('click', function () {
+      document.getElementById('sendMessageModal').classList.remove('show')
+      document.getElementById('sendMessageModalBackdrop').classList.remove('show')
+    })
+    
+    // Open View Message Modal
+    document.querySelectorAll('.viewMessageLink').forEach(function (element) {
+      element.addEventListener('click', function (event) {
+        event.preventDefault()
+        const messageId = this.getAttribute('data-id')
+        fetchMessageContent(messageId)
+      })
+    })
+    
+    document.getElementById('closeViewMessageModalBtn').addEventListener('click', function () {
+      document.getElementById('viewMessageModal').classList.remove('show')
+      document.getElementById('viewMessageModalBackdrop').classList.remove('show')
+    })
+    
+    function fetchMessageContent(messageId) {
+      fetch(`/message/sent/${messageId}/`)
+        .then((response) => response.text())
+        .then((data) => {
+          document.getElementById('viewMessageContent').innerHTML = data
+          document.getElementById('viewMessageModal').classList.add('show')
+          document.getElementById('viewMessageModalBackdrop').classList.add('show')
+        })
+    }
+    
+    // Click row to view message
+    document.querySelectorAll('.message-row').forEach(function (row) {
+      row.addEventListener('click', function (event) {
+        if (event.target.tagName !== 'INPUT' && event.target.tagName !== 'A') {
+          const messageId = this.getAttribute('data-id')
+          fetchMessageContent(messageId)
+        }
+      })
+    })
+    
+    // Select all checkboxes
+    document.getElementById('selectAll').addEventListener('change', function () {
+      const checkboxes = document.querySelectorAll('.selectItem')
+      checkboxes.forEach(function (checkbox) {
+        checkbox.checked = document.getElementById('selectAll').checked
+        toggleHighlightRow(checkbox)
+      })
+      toggleToolbar()
+    })
+    
+    // Individual checkbox click
+    document.querySelectorAll('.selectItem').forEach(function (checkbox) {
+      checkbox.addEventListener('change', function () {
+        toggleHighlightRow(checkbox)
+        toggleToolbar()
+      })
+    })
+    
+    // Toggle toolbar visibility
+    function toggleToolbar() {
+      const toolbar = document.getElementById('toolbar')
+      const checkboxes = document.querySelectorAll('.selectItem')
+      const anyChecked = Array.from(checkboxes).some((checkbox) => checkbox.checked)
+      toolbar.style.display = anyChecked ? 'flex' : 'none'
+    }
+    
+    // Toggle row highlight
+    function toggleHighlightRow(checkbox) {
+      const row = checkbox.closest('tr')
+      if (checkbox.checked) {
+        row.classList.add('highlight')
+      } else {
+        row.classList.remove('highlight')
+      }
+    }
+    
+    function filterMessages() {
+      const searchValue = document.getElementById('searchMail').value.toLowerCase()
+      const rows = document.querySelectorAll('#messageTable .message-row')
+      let hasVisibleRow = false
+    
+      // Remove the 'No matching records' row if it already exists
+      const existingNoRecordsRow = document.querySelector('#messageTable .no-records')
+      if (existingNoRecordsRow) {
+        existingNoRecordsRow.remove()
+      }
+    
+      rows.forEach((row) => {
+        const subject = row.querySelector('td:nth-child(3)').textContent.toLowerCase().trim()
+        const sender = row.querySelector('td:nth-child(2)').textContent.toLowerCase().trim()
+    
+        if (subject.includes(searchValue) || sender.includes(searchValue)) {
+          row.style.display = '' // Show the row if there's a match
+          hasVisibleRow = true
+        } else {
+          row.style.display = 'none' // Hide the row if no match
+        }
+      })
+    
+      // If no visible rows, add 'No matching records' message
+      if (!hasVisibleRow && rows.length > 0) {
+        const noRecordsRow = document.createElement('tr')
+        noRecordsRow.className = 'no-records'
+        noRecordsRow.innerHTML = '<td colspan="5">No matching records found</td>'
+        document.querySelector('#messageTable').appendChild(noRecordsRow)
+      }
+    }
+    
+    // Event listener for search input
+    document.getElementById('searchMail').addEventListener('input', filterMessages)
+  </script>
+  <script>
+    document.getElementById("searchEmail").addEventListener("input", function () {
+      const email = this.value.trim();
+  
+      if (email.length === 0) {
+          document.getElementById("userList").innerHTML = ""; // Clear results when empty
+          return;
+      }
+  
+      fetch(`/get-users-with-status/?email=${encodeURIComponent(email)}`, {
+          method: "GET",
+          headers: {
+              "Content-Type": "application/json",
+          },
+      })
+      .then((response) => response.json())
+      .then((data) => {
+          const userList = document.getElementById("userList");
+          userList.innerHTML = ""; // Clear previous results
+  
+          if (data.users.length === 0) {
+              userList.innerHTML = `<div class="text-center text-muted">No user found.</div>`;
+              return;
+          }
+  
+          data.users.forEach((user) => {
+              const userRow = document.createElement("div");
+              userRow.classList.add("d-flex", "justify-content-between", "align-items-center", "mb-3", "p-3", "border", "rounded", "shadow-sm", "bg-light");
+              userRow.id = `userRow${user.id}`;
+  
+              // User info with profile picture
+              const userInfo = document.createElement("div");
+              userInfo.classList.add("d-flex", "align-items-center");
+              userInfo.innerHTML = `
+                  <div style="width: 50px; height: 50px; overflow: hidden; border-radius: 50%; margin-right: 15px; border: 2px solid #ddd;">
+                      <img src="${user.student_photo || 'https://via.placeholder.com/50'}" alt="${user.name}" class="img-fluid" style="width: 100%; height: 100%; object-fit: cover;">
+                  </div>
+                  <div>
+                      <strong style="font-size: 1.1rem;">${user.name}</strong><br>
+                      <small style="color: #666;">${user.email}</small><br>
+                      <small style="color: #666;">${user.role}</small>
+                  </div>
+              `;
+              userRow.appendChild(userInfo);
+  
+              // Status icons
+              const actionDiv = document.createElement("div");
+              actionDiv.classList.add("text-right", "d-flex", "align-items-center", "justify-content-center");
+  
+              if (user.status === "pending") {
+                  actionDiv.innerHTML = `<i class="fas fa-hourglass-half text-secondary" title="Friend Request Sent"></i>`;
+              } else if (user.status === "friends") {
+                  actionDiv.innerHTML = `<i class="fas fa-user-check text-primary" title="Friends"></i>`;
+              } else {
+                  actionDiv.innerHTML = `<i class="fas fa-user-plus text-success" title="Add Friend" style="cursor: pointer;" onclick="addFriend(${user.id})" id="addFriendIcon${user.id}"></i>`;
+              }
+  
+              userRow.appendChild(actionDiv);
+              userList.appendChild(userRow);
+          });
+      })
+      .catch((error) => {
+          console.error("Error fetching user:", error);
+          alert("Failed to load users.");
+      });
+  });
+    
+  // Function to close modal
+  function closeAddFriendModal() {
+      document.getElementById("addFriendModal").classList.remove("show");
+      document.getElementById("addFriendModalBackdrop").classList.remove("show");
+  }
+  
+  // Function to handle Add Friend request
+  function addFriend(userId) {
+      fetch(`/add-friend/${userId}/`, {
+          method: "POST",
+          headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": "{{ csrf_token }}",
+          },
+      })
+      .then((response) => response.json())
+      .then((data) => {
+          if (data.status === "success") {
+              const icon = document.getElementById(`addFriendIcon${userId}`);
+              icon.classList.remove("fa-user-plus", "text-success");
+              icon.classList.add("fa-hourglass-half", "text-secondary");
+              icon.title = "Friend Request Sent";
+              icon.onclick = null;
+  
+              Swal.fire({
+                  title: "Success!",
+                  text: data.message,
+                  icon: "success",
+                  confirmButtonText: "OK",
+              });
+          } else {
+              Swal.fire({
+                  title: "Error",
+                  text: data.message,
+                  icon: "error",
+                  confirmButtonText: "OK",
+              });
+          }
+      })
+      .catch((error) => {
+          console.error("Error:", error);
+          Swal.fire({
+              title: "Error",
+              text: "An unexpected error occurred. Please try again later.",
+              icon: "error",
+              confirmButtonText: "OK",
+          });
+      });
+  }
+  
+   // Ensure the modal opens when clicking the "Add Friend" button
+document.getElementById('openAddFriendModalBtn').addEventListener('click', function () {
+  document.getElementById('addFriendModal').classList.add('show');
+  document.getElementById('addFriendModalBackdrop').classList.add('show');
+});
+
+// Ensure the modal closes properly when clicking the close button
+document.getElementById('closeAddFriendModalBtn').addEventListener('click', function () {
+  document.getElementById('addFriendModal').classList.remove('show');
+  document.getElementById('addFriendModalBackdrop').classList.remove('show');
+});
+
+  </script>
+
+  <script>
+    // Function to open the Friends List Modal
+    function openFriendsListModal() {
+      fetch('/get-friends-and-requests/', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          const friendRequestsList = document.getElementById('friendRequestsList');
+          const friendsList = document.getElementById('friendsList');
+    
+          // Clear existing content
+          friendRequestsList.innerHTML = '';
+          friendsList.innerHTML = '';
+    
+          // Populate friend requests
+          if (data.requests.length > 0) {
+            data.requests.forEach((request) => {
+              const requestRow = document.createElement('div');
+              requestRow.classList.add(
+                'd-flex',
+                'justify-content-between',
+                'align-items-center',
+                'mb-3',
+                'p-3',
+                'border',
+                'rounded',
+                'shadow-sm',
+                'bg-light'
+              );
+    
+              // Requester info with profile picture
+              requestRow.innerHTML = `
+                <div class="d-flex align-items-center">
+                  <div style="width: 50px; height: 50px; overflow: hidden; border-radius: 50%; margin-right: 15px; border: 2px solid #ddd;">
+                    <img src="${request.student_photo || 'https://via.placeholder.com/50'}" alt="${request.name}" class="img-fluid img-circle" style="width: 100%; height: 100%; object-fit: cover;">
+                  </div>
+                  <div>
+                    <strong style="font-size: 1.1rem;">${request.name}</strong><br>
+                    <small style="color: #666;">${request.role}</small>
+                  </div>
+                </div>
+                <div class="d-flex">
+                  <i class="fas fa-check-circle text-success mx-2" title="Accept Request" style="cursor: pointer;" onclick="acceptFriendRequest(${request.id})"></i>
+                  <i class="fas fa-times-circle text-danger mx-2" title="Reject Request" style="cursor: pointer;" onclick="rejectFriendRequest(${request.id})"></i>
+                </div>
+              `;
+    
+              friendRequestsList.appendChild(requestRow);
+            });
+          } else {
+            friendRequestsList.innerHTML = '<p class="text-muted">No friend requests found.</p>';
+          }
+    
+          // Populate friends list
+          if (data.friends.length > 0) {
+            data.friends.forEach((friend) => {
+              const friendRow = document.createElement('div');
+              friendRow.classList.add(
+                'd-flex',
+                'justify-content-between',
+                'align-items-center',
+                'mb-3',
+                'p-3',
+                'border',
+                'rounded',
+                'shadow-sm',
+                'bg-light'
+              );
+    
+              // Friend info with profile picture
+              friendRow.innerHTML = `
+                <div class="d-flex align-items-center">
+                  <div style="width: 50px; height: 50px; overflow: hidden; border-radius: 50%; margin-right: 15px; border: 2px solid #ddd;">
+                    <img src="${friend.student_photo || 'https://via.placeholder.com/50'}" alt="${friend.name}" class="img-fluid img-circle" style="width: 100%; height: 100%; object-fit: cover;">
+                  </div>
+                  <div>
+                    <strong style="font-size: 1.1rem;">${friend.name}</strong><br>
+                    <small style="color: #666;">${friend.role}</small>
+                  </div>
+                </div>
+              `;
+    
+              friendsList.appendChild(friendRow);
+            });
+          } else {
+            friendsList.innerHTML = '<p class="text-muted">No friends found.</p>';
+          }
+    
+          // Show the modal
+          document.getElementById('friendsListModal').classList.add('show');
+          document.getElementById('friendsListModalBackdrop').classList.add('show');
+        })
+        .catch((error) => {
+          console.error('Error fetching friends and requests:', error);
+          alert('Failed to load friends and requests.');
+        });
+    }
+  
+    // Function to close the Friends List Modal
+    function closeFriendsListModal() {
+      document.getElementById('friendsListModal').classList.remove('show');
+      document.getElementById('friendsListModalBackdrop').classList.remove('show');
+    }
+  
+    // Function to accept a friend request
+    function acceptFriendRequest(requestId) {
+      fetch(`/accept-friend-request/${requestId}/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}',
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.status === 'success') {
+            Swal.fire({
+              title: 'Friend Request Accepted!',
+              text: `${data.message}`,
+              icon: 'success',
+              confirmButtonText: 'OK',
+            });
+  
+            // Reload the modal content
+            openFriendsListModal();
+          } else {
+            Swal.fire({
+              title: 'Error',
+              text: data.message,
+              icon: 'error',
+              confirmButtonText: 'OK',
+            });
+          }
+        })
+        .catch((error) => {
+          console.error('Error accepting friend request:', error);
+          alert('Failed to accept the friend request.');
+        });
+    }
+  
+    // Function to reject a friend request
+    function rejectFriendRequest(requestId) {
+      fetch(`/reject-friend-request/${requestId}/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}',
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.status === 'success') {
+            Swal.fire({
+              title: 'Friend Request Rejected',
+              text: `${data.message}`,
+              icon: 'info',
+              confirmButtonText: 'OK',
+            });
+  
+            // Reload the modal content
+            openFriendsListModal();
+          } else {
+            Swal.fire({
+              title: 'Error',
+              text: data.message,
+              icon: 'error',
+              confirmButtonText: 'OK',
+            });
+          }
+        })
+        .catch((error) => {
+          console.error('Error rejecting friend request:', error);
+          alert('Failed to reject the friend request.');
+        });
+    }
+  
+    // Event listeners for modal open and close
+    document.getElementById('openFriendsListModalBtn').addEventListener('click', openFriendsListModal);
+    document.getElementById('closeFriendsListModalBtn').addEventListener('click', closeFriendsListModal);
+  </script>
+  <script>
+    function truncateText(text, wordCount) {
+      let words = text.split(' ')
+      if (words.length > wordCount) {
+        return words.slice(0, wordCount).join(' ') + '...'
+      }
+      return text
+    }
+    
+    function applyResponsiveTruncate() {
+      const isMobile = window.innerWidth <= 768 // Adjust screen width for mobile breakpoint
+      const messageElements = document.querySelectorAll('.message-body')
+    
+      messageElements.forEach(function (element) {
+        const fullMessage = element.closest('a').getAttribute('data-body')
+        if (isMobile) {
+          element.textContent = truncateText(fullMessage, 0) // No truncation on mobile
+        } else {
+          element.textContent = truncateText(fullMessage, 5) // Truncate to 5 words on desktop
+        }
+      })
+    }
+    
+    // Apply truncation on page load
+    document.addEventListener('DOMContentLoaded', applyResponsiveTruncate)
+    
+    // Reapply truncation on window resize
+    window.addEventListener('resize', applyResponsiveTruncate)
+  </script>
+
+  <style>
+    .highlight {
+      background-color: #f0f8ff !important;
+    }
+    .dark-mode .highlight {
+      background-color: #676869 !important;
+    }
+  </style>
+{% endblock %}

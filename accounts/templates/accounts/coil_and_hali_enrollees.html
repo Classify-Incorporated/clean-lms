@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Download Enrollees as Excel</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light py-5">
+
+    <div class="container text-center">
+        <h2 class="mb-4">🎓 Export Enrollee Data to Excel</h2>
+        <button id="downloadExcelBtn" class="btn btn-success btn-lg">
+            <i class="fas fa-file-excel"></i> Download Excel
+        </button>
+
+        <p class="mt-4 text-muted">Data is pulled from: <code>/fetch_enrollees_data/</code></p>
+    </div>
+
+    <script>
+        document.getElementById('downloadExcelBtn').addEventListener('click', function () {
+            fetch('/fetch_enrollees_data/')
+                .then(res => {
+                    if (!res.ok) throw new Error("Network response was not OK");
+                    return res.json();
+                })
+                .then(data => {
+                    if (!Array.isArray(data)) {
+                        alert("Unexpected data format received.");
+                        console.error("Data:", data);
+                        return;
+                    }
+
+                    // Convert to worksheet and workbook
+                    const worksheet = XLSX.utils.json_to_sheet(data);
+                    const workbook = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(workbook, worksheet, "Enrollees");
+
+                    // Trigger download
+                    XLSX.writeFile(workbook, "enrollees.xlsx");
+                })
+                .catch(error => {
+                    alert("❌ Failed to fetch enrollee data.");
+                    console.error("Error fetching enrollee data:", error);
+                });
+        });
+    </script>
+</body>
+</html>

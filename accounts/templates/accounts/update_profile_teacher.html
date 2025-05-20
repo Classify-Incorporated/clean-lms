@@ -1,0 +1,6 @@
+<!-- update teacher profile -->
+<form method="post" action="{% url 'admin_update_teacher_profile' profile.id %}" enctype="multipart/form-data">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit" class="btn btn-primary mt-2">Submit</button>
+</form>

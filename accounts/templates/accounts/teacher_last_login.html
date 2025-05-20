@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+  Teacher Last Login List
+{% endblock %}
+{% block content %}
+  <!-- Active teacher Count Display -->
+  <div class="row">
+    <div class="col-lg-12">
+      <div class="alert alert-info text-center">
+        <p><strong>Active Now:</strong> {{ active_now_count }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="row">
+    <div class="col-lg-12">
+      <div class="card shadow-sm">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0">Teacher Last Login Record</h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table mb-0 data-table fs-10 table-bordered" data-datatables="data-datatables">
+              <thead class="bg-primary">
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Last Login</th>
+                    <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for teacher in teachers %}
+                <tr>
+                    <td>{{ teacher.id }}</td>
+                    <td>{{ teacher.name }}</td>
+                    <td>{{ teacher.last_login }}</td>
+                    <td>
+                      {% if teacher.status == "Active Now" %}
+                        <span class="badge rounded-pill bg-success">{{ teacher.status }}</span>
+                      {% elif teacher.status == "Recently Logged Out (<5 min)" %}
+                        <span class="badge rounded-pill bg-warning text-dark">{{ teacher.status }}</span>
+                      {% elif teacher.status == "Away" %}
+                        <span class="badge rounded-pill bg-orange text-white">{{ teacher.status }}</span>
+                      {% elif teacher.status == "Recently Logged Out" %}
+                        <span class="badge rounded-pill bg-secondary">{{ teacher.status }}</span>
+                      {% elif teacher.status == "Logged Out More Than a Day Ago" %}
+                        <span class="badge rounded-pill bg-info text-dark">{{ teacher.status }}</span>
+                      {% elif teacher.status == "Inactive (Few Days)" %}
+                        <span class="badge rounded-pill bg-primary">{{ teacher.status }}</span>
+                      {% elif teacher.status == "Inactive (1+ Month)" %}
+                        <span class="badge rounded-pill bg-danger">{{ teacher.status }}</span>
+                      {% else %}
+                        <span class="badge rounded-pill bg-secondary">{{ teacher.status }}</span>
+                      {% endif %}
+                    </td>           
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+  Student Profile
+{% endblock %}
+<style>
+  .certificate-card:hover {
+    transform: translateY(-2px);
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  }
+  .card-body ul li {
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+  .badge {
+    font-size: 0.75rem;
+    padding: 0.4em 0.6em;
+    margin: 0.1rem;
+    border-radius: 0.5rem;
+  }
+  .card-header .badge {
+    white-space: nowrap;
+    font-size: 0.75rem;
+  }
+</style>
+{% block content %}
+  <!-- Profile Card -->
+  <div class="card mb-3">
+    <div class="card-header position-relative min-vh-25 mb-7">
+      <!-- Background Image -->
+      <div class="bg-holder rounded-3 rounded-bottom-0" style="background-image:url({% static 'assets/img/generic/4.jpg' %}); background-size: cover; background-position: center;"></div>
+
+      <!-- Profile Image -->
+      <div class="avatar avatar-5xl avatar-profile">
+        <img class="rounded-circle img-thumbnail shadow-sm"
+          src="{% if profile.student_photo %}
+            {{ profile.student_photo.url }}
+          {% else %}
+              https://via.placeholder.com/200
+          {% endif %}"
+          width="200"
+          alt="Profile Picture" />
+      </div>
+    </div>
+
+    <div class="card-body">
+      <div class="row">
+        <div class="col-lg-8">
+          <h4 class="mb-1">
+            {{ profile.first_name }} {{ profile.last_name }}
+            <span data-bs-toggle="tooltip" data-bs-placement="right" title="Verified"><small class="fa fa-check-circle text-primary" data-fa-transform="shrink-4 down-2"></small></span>
+          </h4>
+          <h5 class="fs-9 fw-normal">{{ profile.role.name|title }}</h5>
+          <p class="text-500">{{ profile.address }}</p>
+          <div class="ml-auto">
+            <button class="btn btn-secondary" id="editBtn"><i class="fas fa-edit"></i> Edit</button>
+          </div>
+          <div class="border-bottom border-dashed my-4 d-lg-none"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Basic Information -->
+    <div class="col-md-6">
+      <div class="card mb-4 shadow-sm border-0">
+        <div class="card-header bg-success text-white rounded-top">
+          <h5 class="mb-0"><i class="fas fa-id-card me-2"></i>Basic Information</h5>
+        </div>
+        <div class="card-body bg-light">
+          <ul class="list-unstyled mb-0">
+            <li class="mb-3">
+              <strong class="text-secondary">ID:</strong>
+              <span class="ms-2 text-dark">{{ profile.identification }}</span>
+            </li>
+            <li class="mb-3">
+              <strong class="text-secondary">Full Name:</strong>
+              <span class="ms-2 text-dark">{{ profile.first_name }} {{ profile.last_name }}</span>
+            </li>
+            <li class="mb-3">
+              <strong class="text-secondary">Email Address:</strong>
+              <span class="ms-2 text-dark">{{ profile.user.email }}</span>
+            </li>
+            <li class="mb-3">
+              <strong class="text-secondary">Gender:</strong>
+              <span class="ms-2 text-dark">{{ profile.gender }}</span>
+            </li>
+            <li class="mb-3">
+              <strong class="text-secondary">Birthday:</strong>
+              <span class="ms-2 text-dark">{{ profile.date_of_birth }}</span>
+            </li>
+            <li class="mb-3">
+              <strong class="text-secondary">Contact Number:</strong>
+              <span class="ms-2 text-dark">{{ profile.phone_number }}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Accolades & Certificates -->
+    <div class="col-md-6">
+      <div class="card shadow-sm mb-4 border-0">
+        <div class="card-header bg-success text-white d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center">
+          <h5 class="mb-2 mb-lg-0"><i class="fas fa-award me-2"></i>Accolades & Certificates</h5>
+          <!-- Badges in Header -->
+          <div class="d-flex flex-wrap gap-1">
+            <span class="badge bg-primary-subtle text-primary border">Verified</span>
+            <span class="badge bg-warning text-dark">Top Performer</span>
+            <span class="badge bg-info text-dark">COIL Program</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row g-4">
+            {% for cert in certificates %}
+              <div class="col-md-4 col-sm-6">
+                <div class="certificate-card border rounded shadow-sm h-100">
+                  <img src="{{ cert.file.url }}" alt="{{ cert.title }}"
+                      class="img-fluid w-100 rounded-top"
+                      style="height: 180px; object-fit: cover;"
+                      onclick="previewCertificate('{{ cert.file.url }}', '{{ cert.title }}')" />
+                  <div class="p-2 text-center bg-light">
+                    <small class="fw-semibold text-dark">{{ cert.title }}</small>
+                  </div>
+                </div>
+              </div>
+            {% empty %}
+              <div class="col-12">
+                <p class="text-muted">No certificates awarded yet.</p>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preview Modal -->
+  <div class="modal fade" id="certificatePreviewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+      <div class="modal-content bg-transparent border-0">
+        <div class="modal-body text-center position-relative">
+          <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+          <h5 class="text-white mb-3" id="previewModalTitle"></h5>
+          <img src="" id="previewModalImage" class="img-fluid rounded shadow-lg" style="max-height: 80vh;" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Modal -->
+  <div class="custom-modal" id="customModal">
+    <div class="custom-modal-header">
+      <span class="close-btn" id="closeBtn"></span>
+      <h3>Edit Profile</h3>
+    </div>
+    <div class="custom-modal-body" id="editProfileForm">
+      <!-- The form will be loaded dynamically here -->
+    </div>
+  </div>
+
+  <!-- Custom Backdrop -->
+  <div class="custom-modal-backdrop" id="customModalBackdrop"></div>
+
+  <script>
+    function previewCertificate(src, title) {
+      const previewImage = document.getElementById('previewModalImage')
+      const previewTitle = document.getElementById('previewModalTitle')
+      previewImage.src = src
+      previewTitle.textContent = title
+      new bootstrap.Modal(document.getElementById('certificatePreviewModal')).show()
+    }
+  </script>
+
+  <script>
+    document.getElementById('editBtn').addEventListener('click', function () {
+      openEditModal({{ profile.user.id }});
+    });
+
+    function openEditModal(profileId) {
+      fetch(`/update_header_profile/${profileId}/`)  // Fetch the update form
+        .then(response => response.text())
+        .then(html => {
+          document.getElementById('editProfileForm').innerHTML = html; // Load the form into the modal
+          document.getElementById('customModal').classList.add('show'); // Show the custom modal
+          document.getElementById('customModalBackdrop').classList.add('show'); // Show the backdrop
+        });
+    }
+
+    document.getElementById('closeBtn').addEventListener('click', function () {
+      closeModal();
+    });
+
+    function closeModal() {
+      document.getElementById('customModal').classList.remove('show');
+      document.getElementById('customModalBackdrop').classList.remove('show');
+    }
+
+      // Close modal when clicking on the backdrop
+    document.getElementById('customModalBackdrop').addEventListener('click', function () {
+      closeModal();
+    });
+
+      // Optional: Close the modal when clicking outside the modal content
+    window.addEventListener('click', function (event) {
+      const modal = document.getElementById('customModal');
+      const backdrop = document.getElementById('customModalBackdrop');
+      if (modal.classList.contains('show') && !modal.contains(event.target) && !event.target.matches('#editBtn')) {
+        closeModal();
+      }
+    });
+  </script>
+{% endblock %}

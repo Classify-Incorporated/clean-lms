@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Screenshots for {{ attendance.subject.subject_name }}
+{% endblock %}
+
+{% block content %}
+    <div class="container mt-4">
+        <a href="{% url 'teacher_attendance_details' subject_id %}" class="btn btn-secondary">
+            Back
+        </a>        
+
+        <h3> Screenshots for {{ attendance.teacher.get_full_name }} - {{ attendance.subject.subject_name }}</h3>
+        <p>Date: {{ attendance.time_started|date:"F j, Y" }}</p>
+
+        {% if screenshots %}
+            <div class="row">
+                {% for screenshot in screenshots %}
+                    <div class="col-md-3">
+                        <a href="{{ screenshot.image.url }}" target="_blank" class="text-decoration-none">
+                            <div class="card mb-3 shadow-sm">
+                                <img src="{{ screenshot.image.url }}" class="card-img-top" alt="Screenshot">
+                                <div class="card-body">
+                                    <p class="card-text">Taken on: {{ screenshot.timestamp }}</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>    
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted">No screenshots available for this attendance record.</p>
+        {% endif %}
+    </div>
+{% endblock %}

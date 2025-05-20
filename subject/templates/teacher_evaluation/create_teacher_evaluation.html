@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item">
+            <a href="#">Home</a>
+          </li>
+          <li class="breadcrumb-item active">Create Evaluation Sheet</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="card col-md-12">
+      <div class="card-header bg-success">
+        <h3 class="card-title">Assign Evaluation</h3>
+      </div>
+      <form method="post">
+        {% csrf_token %}
+        <div class="card-body">
+          <div class="form-group">
+            <label for="id_subject">{{ form.subject.label }}</label>
+            <select name="subject" class="form-control" id="id_subject">
+              {% for subject in form.fields.subject.queryset %}
+                <option value="{{ subject.id }}" {% if subject == form.instance.subject %}selected{% endif %}>
+                  {{ subject.subject_name }} - {{ subject.assign_teacher.get_full_name }} - {{ subject.room_number }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">{{ form.questions.label_tag }}
+            {{ form.questions }}
+          </div>
+
+          <div class="form-group form-check mt-2">{{ form.is_visible }}
+            {{ form.is_visible.label_tag }}
+          </div>
+        </div>
+        <div class="card-footer">
+          <button type="submit" class="btn btn-primary">Save</button>
+          <a href="javascript:history.back()" class="btn btn-secondary">Back</a>
+        </div>
+      </form>
+    </div>
+
+
+{% endblock %}

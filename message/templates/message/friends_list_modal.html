@@ -1,0 +1,46 @@
+<!-- Friends List Modal -->
+<div id="friendsListModal" class="custom-modal">
+  <div class="custom-modal-header">
+    <button class="close-btn" id="closeFriendsListModalBtn"></button>
+    <h5>Friends List</h5>
+  </div>
+  <div class="custom-modal-body">
+    <div class="card">
+      <div class="card-header bg-body-tertiary">
+        <div class="row align-items-center">
+          <div class="col">
+            <h5 class="mb-0" id="followers">Friends <span class="d-none d-sm-inline-block">(0)</span></h5>
+          </div>
+          <div class="col">
+            <form>
+              <div class="row g-2">
+                <div class="col">
+                  <input class="form-control form-control-sm" type="text" placeholder="Search..." id="friendSearch" />
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-body bg-body-tertiary px-3 py-2">
+        <!-- Friend Requests -->
+        <div id="friendRequestsSection" class="mb-3">
+          <h6>Friend Requests</h6>
+          <div id="friendRequestsList" class="p-2 row g-2 text-center fs-10">
+            <p class="text-muted">No friend requests found.</p>
+          </div>
+        </div>
+
+        <!-- Friends List -->
+        <div id="friendsListSection">
+          <h6>Friends</h6>
+          <div id="friendsList" class="p-2 row g-2 text-center fs-10">
+            <p class="text-muted">No friends found.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="friendsListModalBackdrop" class="custom-modal-backdrop"></div>

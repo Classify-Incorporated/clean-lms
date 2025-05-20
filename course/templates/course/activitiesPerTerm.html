@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+  <!-- Page Heading with LMS Icon -->
+  <div class="content-wrapper">
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="d-flex align-items-center mb-2">
+          <h2 class="text-left mb-0 display-10">{{ subject.subject_name }} - {{ term.term_name }} Activities</h2>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <h2>{{ activity_type|capfirst }} Activities</h2>
+
+          <ul>
+            {% for activity in activities %}
+              <li>
+                {% if request.user.profile.role.name|lower == 'teacher' %}
+                  <!-- Link for teacher -->
+                  <a href="{% url 'teacherActivityView' activity.id %}" class="text-dark btn btn-success mb-2">{{ activity.activity_name }} ({{ activity.start_time }} - {{ activity.end_time }})</a>
+                {% elif request.user.profile.role.name|lower == 'student' %}
+                  <!-- Link for student -->
+                  <a href="{% url 'studentActivityView' activity.id %}" class="text-dark btn btn-success mb-2">{{ activity.activity_name }} ({{ activity.start_time }} - {{ activity.end_time }})</a>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+
+        <a href="{% url 'subjectDetail' subject.id %}" class="btn btn-primary">Back</a>
+      </div>
+    </section>
+  </div>
+{% endblock %}

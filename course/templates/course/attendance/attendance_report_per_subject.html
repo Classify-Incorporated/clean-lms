@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+  Attendance Report Per Subject
+{% endblock %}
+{% block content %}
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0">Attendance Report Per Subject</h1>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <section class="content">
+      <div class="container-fluid">
+        <!-- Filter Form -->
+        <form method="GET" id="filterForm">
+          <div class="row">
+            <div class="col-md-4">
+              <label for="course">Filter by Course:</label>
+              <select name="course_id" id="course" class="form-control">
+                <option value="">All Courses</option>
+                {% for course in courses %}
+                  <option value="{{ course.id }}" {% if request.GET.course_id == course.id|stringformat:"s" %}selected{% endif %}>
+                    {{ course.name }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="subject">Filter by Subject:</label>
+              <select name="subject_id" id="subject" class="form-control">
+                <option value="">All Subjects</option>
+                {% for subject in subjects %}
+                  <option value="{{ subject.id }}" {% if request.GET.subject_id == subject.id|stringformat:"s" %}selected{% endif %}>
+                    {{ subject.subject_name }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+              <button type="submit" class="btn btn-primary">Apply Filters</button>
+              <a href="{% url 'attendance_report' %}" class="btn btn-secondary ml-2">Reset</a>
+            </div>
+          </div>
+        </form>
+
+        <br>
+
+        <!-- Data Table -->
+        <div class="card shadow mb-4">
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Student Name</th>
+                    <th>Course</th>
+                    <th>Subject</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for record in attendance_records %}
+                    <tr>
+                      <td>{{ record.student.get_full_name }}</td>
+                      <td>{{ record.student.profile.course.name }}</td>
+                      <td>{{ record.subject.subject_name }}</td>
+                      <td>{{ record.date }}</td>
+                      <td>{{ record.status.status_name }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-right">
+          <a href="javascript:history.back()" class="btn btn-secondary">Back</a>
+        </div>
+      </div>
+    </section>
+  </div>
+{% endblock %}

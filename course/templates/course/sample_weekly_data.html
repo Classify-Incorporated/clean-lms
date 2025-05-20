@@ -1,0 +1,271 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+    {{ subject.subject_name }}
+{% endblock %}
+{% block content %}
+
+    <div class="content-wrapper">
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">{{ subject.subject_name }}</h1>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <section class="content">
+            <div class="container-fluid">
+                <div class="row mb-4">
+                    <div class="col-md-12 mx-auto">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-success d-flex justify-content-between align-items-center position-relative">
+                                <div>
+                                    <span>Lessons &nbsp; <sup>(Organized by Week)</sup></span>
+                                </div>
+                <!-- Month Selector Dropdown (Moved to the Far Right) -->
+                                <div class="ml-auto">
+                                    <div class="dropdown">
+                                        <button class="btn btn-light dropdown-toggle" type="button" id="monthSelector" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Select Month</button>
+                                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="monthSelector" id="monthDropdown">
+                        <!-- Dynamic month options will be inserted here -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+              <!-- Week Sections -->
+                            <ul class="list-group list-group-flush" id="lesson-list">
+                <!-- Dynamic content will be loaded here -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+      // Access the semester_months passed from the view directly
+            const semesterMonths = {{ semester_months|safe }};
+
+            const monthDropdown = document.getElementById("monthDropdown");
+            const monthSelectorButton = document.getElementById("monthSelector");
+
+            if (monthDropdown) {
+          // Create a dropdown option for each month in the semester
+                semesterMonths.forEach(month => {
+                    const monthOption = document.createElement("a");
+                    monthOption.classList.add("dropdown-item", "month-option");
+                    monthOption.setAttribute("data-month", month);
+                    monthOption.textContent = month;
+                    monthDropdown.appendChild(monthOption);
+                });
+
+          // Set the current month as the default option
+                const currentMonth = new Date().toLocaleString('default', { month: 'long' });
+                const currentMonthOption = document.querySelector(`.month-option[data-month="${currentMonth}"]`);
+
+                if (currentMonthOption) {
+                    currentMonthOption.classList.add('active');
+                    monthSelectorButton.textContent = `Select Month: ${currentMonth}`;
+                    fetchScheduleData(currentMonth);  // Fetch data for the current month
+                }
+
+          // Event listener for month selection
+                document.querySelectorAll('.month-option').forEach(option => {
+                    option.addEventListener('click', function () {
+                        const selectedMonth = this.getAttribute('data-month');
+                  // Fetch data based on the selected month
+                        monthSelectorButton.textContent = `Month: ${selectedMonth}`;
+                        fetchScheduleData(selectedMonth);
+                    });
+                });
+            }
+
+      // Function to fetch schedule data based on selected month
+            function fetchScheduleData(selectedMonth) {
+                const subjectId = {{ subject.id }};
+                const apiUrl = `/api/schedules/${subjectId}/?month=${selectedMonth}`;  // Add selected month as query param
+                const lessonList = document.getElementById("lesson-list");
+
+                fetch(apiUrl)
+                    .then(response => response.json())
+                    .then(scheduleData => {
+                        lessonList.innerHTML = '';  // Clear current lessons
+                        if (scheduleData.schedule_data.length === 0) {
+                            lessonList.innerHTML = '<p class="text-center mt-3">No schedule available for this subject in the selected month.</p>';
+                            return;
+                        }
+
+                // Render lessons organized by weeks
+                        scheduleData.schedule_data.forEach((week, index) => {
+                            if (week.dates.length === 0) return;
+                            const weekId = `week${index + 1}Lessons`;
+                            const weekStart = week.dates[0].date;
+                            const weekEnd = week.dates[week.dates.length - 1].date;
+
+                            const weekItem = document.createElement("li");
+                            weekItem.classList.add("list-group-item", "week-header");
+
+                            const weekHeader = document.createElement("a");
+                            weekHeader.classList.add("lesson-toggle", "d-flex", "justify-content-between", "align-items-center", "text-dark");
+                            weekHeader.setAttribute("data-toggle", "collapse");
+                            weekHeader.setAttribute("href", `#${weekId}`);
+                            weekHeader.setAttribute("role", "button");
+                            weekHeader.setAttribute("aria-expanded", "false");
+                            weekHeader.setAttribute("aria-controls", weekId);
+                            weekHeader.innerHTML = `
+                        <span>
+                            <i class="fas fa-calendar-week text-primary mr-2"></i>
+                            ${week.week} : ${weekStart} - ${weekEnd}
+                            <small class="ml-2 text-muted">(Click to expand days)</small>
+                        </span>
+                        <i class="fas fa-chevron-down"></i>
+                    `;
+
+                            const weekContent = document.createElement("div");
+                            weekContent.classList.add("collapse");
+                            weekContent.id = weekId;
+
+                            const weekList = document.createElement("ul");
+                            weekList.classList.add("list-group", "mt-3");
+
+                            week.dates.forEach((dateInfo, dayIndex) => {
+                                const dayId = `day${index + 1}_${dayIndex + 1}Lessons`;
+
+                                const dayItem = document.createElement("li");
+                                dayItem.classList.add("list-group-item", "day-header");
+
+                                const dayHeader = document.createElement("a");
+                                dayHeader.classList.add("lesson-toggle", "d-flex", "justify-content-between", "align-items-center", "text-dark");
+                                dayHeader.setAttribute("data-toggle", "collapse");
+                                dayHeader.setAttribute("href", `#${dayId}`);
+                                dayHeader.setAttribute("role", "button");
+                                dayHeader.setAttribute("aria-expanded", "false");
+                                dayHeader.setAttribute("aria-controls", dayId);
+                                dayHeader.innerHTML = `
+                            <span>
+                                <i class="fas fa-calendar-day text-white mr-2"></i> 
+                                ${dateInfo.date} - ${formatTime(dateInfo.time)}
+                            </span>
+                            <i class="fas fa-chevron-down"></i>
+                        `;
+
+                                const dayContent = document.createElement("div");
+                                dayContent.classList.add("collapse");
+                                dayContent.id = dayId;
+
+                                const lessonList = document.createElement("ul");
+                                lessonList.classList.add("list-group", "mt-2");
+
+                                dateInfo.lessons.forEach((lesson, lessonIndex) => {
+                                    const lessonId = `lesson${index + 1}_${dayIndex + 1}_${lessonIndex + 1}`;
+
+                                    let iconClass = "far fa-file-alt text-secondary";  // Default icon
+                                    if (lesson.file_extension) {
+                                        const ext = lesson.file_extension.toLowerCase();
+                                        if (ext === ".pdf") iconClass = "far fa-file-pdf text-danger"; // PDF Icon
+                                        else if (ext === ".mp4") iconClass = "far fa-file-video text-primary"; // Video Icon
+                                        else if (ext === ".jpg" || ext === ".png") iconClass = "far fa-file-image text-success"; // Image Icon
+                                    }
+
+                                    const lessonItem = document.createElement("li");
+                                    lessonItem.classList.add("list-group-item", "lesson-content");
+
+                                    const lessonHeader = document.createElement("a");
+                                    lessonHeader.classList.add("lesson-toggle", "d-flex", "justify-content-between", "align-items-center", "text-dark");
+                                    lessonHeader.setAttribute("data-toggle", "collapse");
+                                    lessonHeader.setAttribute("href", `#${lessonId}`);
+                                    lessonHeader.setAttribute("role", "button");
+                                    lessonHeader.setAttribute("aria-expanded", "false");
+                                    lessonHeader.setAttribute("aria-controls", lessonId);
+                                    lessonHeader.innerHTML = `
+                                <span>
+                                    <i class="${iconClass} mr-2"></i> 
+                                    ${lesson.lesson}
+                                </span>
+                                <i class="fas fa-chevron-down"></i>
+                            `;
+
+                                    const lessonContent = document.createElement("div");
+                                    lessonContent.classList.add("collapse");
+                                    lessonContent.id = lessonId;
+
+                                    const lessonDetails = document.createElement("div");
+                                    lessonDetails.classList.add("p-3", "bg-light");
+                                    lessonDetails.innerHTML = `
+                                <p class="mb-1"><strong>Description:</strong> ${lesson.description || "No description available"}</p>
+                            `;
+
+                                    const viewLessonButton = document.createElement("a");
+                                    viewLessonButton.classList.add("btn", "btn-primary", "mt-2");
+                                    viewLessonButton.href = `/viewModule/${lesson.module_id}/`;  // Link to the lesson view page
+                                    viewLessonButton.textContent = "View Lesson";
+
+                            // Append the button to the lesson details
+                                    lessonDetails.appendChild(viewLessonButton);
+
+                                    if (lesson.activities.length > 0) {
+                                        let activityListHTML = `<ul class="list-group mt-2">`;
+                                        lesson.activities.forEach(activity => {
+                                            activityListHTML += `
+                                        <li class="list-group-item">
+                                            <a href="/activity_detail/${activity.activity_id}/" class="text-dark">
+                                              <strong>${activity.activity_name}</strong> (${activity.activity_type})
+                                              Time: ${activity.start_time || "TBD"} - ${activity.end_time || "TBD"} <br>
+                                            </a>
+                                        </li>
+                                    `;
+                                        });
+                                        activityListHTML += `</ul>`;
+                                        lessonDetails.innerHTML += `<p class="mb-1"><strong>Activities:</strong></p>` + activityListHTML;
+                                    }
+                                    lessonContent.appendChild(lessonDetails);
+                                    lessonItem.appendChild(lessonHeader);
+                                    lessonItem.appendChild(lessonContent);
+                                    lessonList.appendChild(lessonItem);
+                                });
+
+                                dayContent.appendChild(lessonList);
+                                dayItem.appendChild(dayHeader);
+                                dayItem.appendChild(dayContent);
+                                weekList.appendChild(dayItem);
+                            });
+
+                            weekContent.appendChild(weekList);
+                            weekItem.appendChild(weekHeader);
+                            weekItem.appendChild(weekContent);
+                            lessonList.appendChild(weekItem);
+                        });
+                    })
+                    .catch(error => {
+                        console.error("Error fetching schedule data:", error);
+                        lessonList.innerHTML = '<p class="text-center mt-3 text-danger">Error loading schedule data. Please try again later.</p>';
+                    });
+            }
+
+            function formatTime(timeRange) {
+                if (!timeRange) return "N/A";  // Handle missing time cases
+                const timeParts = timeRange.split(" to ");
+                return `${convertTo12Hour(timeParts[0])} to ${convertTo12Hour(timeParts[1])}`;
+            }
+
+            function convertTo12Hour(timeString) {
+                const [hours, minutes] = timeString.split(":");
+                let period = "AM";
+                let hour = parseInt(hours, 10);
+
+                if (hour >= 12) {
+                    period = "PM";
+                    if (hour > 12) hour -= 12;
+                }
+                return `${hour}:${minutes} ${period}`;
+            }
+        });
+    </script>
+
+{% endblock %}

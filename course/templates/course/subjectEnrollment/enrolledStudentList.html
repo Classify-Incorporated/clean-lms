@@ -1,0 +1,294 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Enrolled Students by Subject
+{% endblock %}
+
+{% block content %}
+  <style>
+  /* Improve Accordion Appearance */
+    .accordion-button {
+      font-weight: bold;
+      transition: background-color 0.3s ease-in-out;
+    }
+
+    .accordion-button:hover {
+      background-color:rgb(180, 180, 180);
+    }
+
+    .accordion-item {
+      border: none;
+      margin-bottom: 8px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+/* Accordion Icon Animation */
+    .accordion-button .fas {
+      transition: transform 0.3s ease-in-out;
+    }
+
+    .accordion-button:not(.collapsed) .fas {
+      transform: rotate(180deg);
+    }
+
+/* Table Styling */
+    .table-hover tbody tr:hover {
+      background-color: rgba(0, 123, 255, 0.1);
+    }
+
+    .badge {
+      font-size: 14px;
+      padding: 5px 10px;
+    }
+
+  </style>
+<!-- Content Header -->
+  <div class="row mb-3">
+    <div class="col-sm-6">
+      <h3>Enrolled Students by Subject</h3>
+    </div>
+  </div>
+
+<!-- Main content -->
+<!-- Semester and Subject Filters -->
+  <div class="card shadow-sm mb-3">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">Filter Enrolled Students</h5>
+    </div>
+    <div class="card-body">
+      <form method="get" class="row g-3">
+      <!-- Semester Filter -->
+        <div class="col-md-6">
+          <label for="semester" class="form-label fw-bold">Semester:</label>
+          <select id="semester" name="semester" class="form-select select2" onchange="this.form.submit()">
+            <option value="">All Semesters</option>
+            {% for semester in semesters %}
+              <option value="{{ semester.id }}" {% if selected_semester and selected_semester.id == semester.id %}selected{% endif %}>
+                {{ semester.semester_name }} - {% if current_semester.start_date.year == current_semester.end_date.year %}
+                {{ current_semester.start_date|date:"Y" }}
+              {% else %}
+                {{ current_semester.start_date|date:"Y" }} - {{ current_semester.end_date|date:"Y" }}
+              {% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+      <!-- Subject Filter -->
+        <div class="col-md-6">
+          <label for="subject" class="form-label fw-bold">Subject:</label>
+          <select id="subject" name="subject" class="form-select select2" onchange="this.form.submit()">
+            <option value="">All Subjects</option>
+            {% for subject in available_subjects %}
+              <option value="{{ subject.id }}" {% if selected_subject and selected_subject.id == subject.id %}selected{% endif %}>
+                {{ subject.subject_name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  {% if user.profile.role.name.lower != 'teacher' and user.profile.role.name.lower != 'student' %}
+    {% if selected_semester.id == current_semester.id %}
+      <div class="mb-2 d-flex justify-content-start align-items-center">
+        <a href="{% url 'enrollStudent' %}" class="btn btn-primary me-2">
+          <i class="fas fa-user-plus"></i> Manual Enrollment
+        </a>
+        <a type="button" class="btn btn-info" id="openImportModalBtn">
+          <i class="fas fa-users"></i> Import
+        </a>
+      </div>
+    {% endif %}
+  {% endif %}
+  
+  <!-- Bootstrap 5 Accordion for Subjects -->
+  <div class="accordion" id="subjectsAccordion">
+    {% for subject, enrollments in subjects.items %}
+      <div class="accordion-item border-0 shadow-sm">
+        <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+          <button class="accordion-button collapsed d-flex justify-content-between align-items-center"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapse{{ forloop.counter }}"
+                  aria-expanded="false"
+                  aria-controls="collapse{{ forloop.counter }}">
+            <div>
+              <strong>{{ subject.subject_name }}</strong> - <span class="text-muted">({{ subject.assign_teacher }})</span>
+              <span class="badge bg-warning ms-3">{{ enrollments|length }} Students</span>
+            </div>
+          </button>
+        </h2>
+
+        <div id="collapse{{ forloop.counter }}"
+             class="accordion-collapse collapse"
+             aria-labelledby="heading{{ forloop.counter }}"
+             data-bs-parent="#subjectsAccordion">
+          <div class="accordion-body rounded">
+            <div class="table-responsive">
+              <table class="table mb-0 data-table table-hover table-bordered fs-10" data-datatables="data-datatables">
+                <thead class="bg-primary">
+                  <tr>
+                    <th>#</th>
+                    <th>Student Name</th>
+                    <th>Semester</th>
+                    <th>Enrollment Date</th>
+                    <th>Status</th>
+                    <th>Date Dropped</th>
+                    {% if selected_semester.id == current_semester.id %}
+                      {% if user.profile.role.name.lower != 'student' %}
+                        <th>Actions</th>
+                      {% endif %}
+                    {% endif %}
+                  </tr>
+                </thead>
+                <tbody class="text-center">
+                  {% for enrollment in enrollments %}
+                    <tr>
+                      <th scope="row">{{ forloop.counter }}</th>
+                      <td>{{ enrollment.student.get_full_name }}</td>
+                      <td>{{ enrollment.semester.semester_name }} - 
+                        {% if current_semester.start_date.year == current_semester.end_date.year %}
+                          {{ current_semester.start_date|date:"Y" }}
+                        {% else %}
+                          {{ current_semester.start_date|date:"Y" }} - {{ current_semester.end_date|date:"Y" }}
+                        {% endif %}
+                      </td>
+                      <td>{{ enrollment.enrollment_date }}</td>
+                      <td>
+                        {% if enrollment.status == 'dropped' %}
+                          <span class="badge bg-warning"><i class="fas fa-times-circle"></i> Dropped</span>
+                        {% elif enrollment.status == 'enrolled' %}
+                          <span class="badge bg-success"><i class="fas fa-check-circle"></i> Enrolled</span>
+                        {% elif enrollment.status == 'completed' %}
+                          <span class="badge bg-primary"><i class="fas fa-graduation-cap"></i> Completed</span>
+                        {% endif %}
+                      </td>
+                      <td>{{ enrollment.drop_date|default:"--" }}</td>
+                      {% if selected_semester.id == current_semester.id %}
+                        {% if user.profile.role.name.lower != 'student' %}
+                          <td>
+                            {% if enrollment.status != 'dropped' %}
+                              <button class="btn btn-warning btn-sm"
+                                      onclick="confirmDrop('{{ enrollment.student.get_full_name }}', '{% url 'dropStudentFromSubject' enrollment.id %}')">
+                                <i class="fas fa-user-minus"></i> Drop
+                              </button>
+                            {% endif %}
+                            {% if enrollment.status == 'dropped' %}
+                              <button class="btn btn-info btn-sm"
+                                      onclick="confirmRestore('{{ enrollment.student.get_full_name }}', '{% url 'restoreStudentFromSubject' enrollment.id %}')">
+                                <i class="fas fa-user-check"></i> Restore
+                              </button>
+                            {% endif %}
+                            <button class="btn btn-danger btn-sm"
+                                    onclick="confirmRemove('{{ enrollment.student.get_full_name }}', '{% url 'deleteStudentFromSubject' enrollment.id %}')">
+                              <i class="fas fa-trash"></i> Remove
+                            </button>
+                          </td>
+                        {% endif %}
+                      {% endif %}
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+
+  <!-- Import Students Modal -->
+  <div id="importModal" class="custom-modal">
+    <div class="custom-modal-header">
+      <button class="close-btn" id="closeImportModalBtn"></button>
+      <h5>Import Student to be Enrolled</h5>
+    </div>
+    <div class="custom-modal-body">
+      <form method="post" enctype="multipart/form-data" action="{% url 'import_students_and_enroll' %}">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="importFile">Choose CSV File:</label>
+          <input type="file" name="import_file" id="importFile" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary mt-2">Upload</button>
+      </form>
+      <div class="mt-2">
+        <a href="{{ MEDIA_URL|add:'template/Import Enrolled Student Template.csv' }}" class="btn btn-sm btn-secondary" download>
+          Download Template here.
+        </a>
+        <br>
+        <small>(Download the template above for guidance.)</small>
+      </div>
+    </div>
+  </div>
+  <div id="importModalBackdrop" class="custom-modal-backdrop"></div>
+
+
+  <!-- Include SweetAlert CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+
+  <script>
+
+    document.getElementById('openImportModalBtn').addEventListener('click', function () {
+      document.getElementById('importModal').classList.add('show');
+      document.getElementById('importModalBackdrop').classList.add('show');
+    });
+
+    document.getElementById('closeImportModalBtn').addEventListener('click', function () {
+      document.getElementById('importModal').classList.remove('show');
+      document.getElementById('importModalBackdrop').classList.remove('show');
+    });
+
+    // Custom SweetAlert Confirmation Script
+    function confirmDrop(studentName, url) {
+      Swal.fire({
+        title: 'Are you sure?',
+        text: `You are about to drop ${studentName}.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, drop!',
+        cancelButtonText: 'Cancel'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = url;
+        }
+      });
+    }
+
+    function confirmRestore(studentName, url) {
+      Swal.fire({
+        title: 'Are you sure?',
+        text: `You are about to restore ${studentName}.`,
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, restore!',
+        cancelButtonText: 'Cancel'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = url;
+        }
+      });
+    }
+
+    function confirmRemove(studentName, url) {
+      Swal.fire({
+        title: 'Are you sure?',
+        text: `You are about to remove ${studentName}.`,
+        icon: 'error',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, remove!',
+        cancelButtonText: 'Cancel'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = url;
+        }
+      });
+    }
+  </script>
+
+{% endblock %}

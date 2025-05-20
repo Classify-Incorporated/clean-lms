@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+  Student List
+{% endblock %}
+{% block content %}
+    <!-- Content Header -->
+  <div class="row mb-2">
+    <div class="col-12">
+      <h3>Student List</h3>
+    </div>
+  </div>
+
+        <!-- Search and Filter Section -->
+  <div class="card shadow-sm mb-3">
+    <div class="bg-holder d-none d-lg-block bg-card" 
+              style="background-image: url('{% static 'assets/img/icons/spot-illustrations/corner-3.png' %}');
+                      opacity: 0.7;
+                      pointer-events: none;">
+    </div>
+    <div class="card-body">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-center">
+
+                <!-- Search Form -->
+                {% comment %} <form method="GET" action="" class="d-flex w-100 w-md-auto">
+                  <input type="text" name="search" class="form-control" placeholder="Search by name or ID" value="{{ request.GET.search }}" />
+                  <button type="submit" class="btn btn-primary ml-2 mr-2"  ><i class="fas fa-search"></i></button>
+                </form> {% endcomment %}
+
+                <!-- Course Filter & Import Button in One Line -->
+        <div class="d-flex w-100 w-md-auto mt-2 mt-md-0 align-items-center">
+          <select name="course" class="form-control" style="height: 38px;">
+            <option value="">All Courses</option>
+            <option value="None" {% if request.GET.course == "None" %}selected{% endif %}>No Course</option>
+            {% for course in courses %}
+              <option value="{{ course }}" {% if request.GET.course == course %}selected{% endif %}>{{ course }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+        <!-- Table Layout -->
+  <div class="card shadow mb-4">
+    <div class="card-header bg-success text-white">
+      <h5 class="mb-0">Student Master Data</h5>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table mb-0 data-table fs-10 table-bordered" data-datatables="data-datatables">
+          <thead class="bg-primary">
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Course</th>
+              <th>Year Level</th>
+              <th>Email</th>
+              <th>Identification</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+              {% for profiles in profiles %}
+                <tr>
+                  <td>{{ forloop.counter }}</td>
+                  <td>{{ profiles.first_name }} {{ profiles.last_name }}</td>
+                  <td>{{ profiles.course|default:"--" }}</td>
+                  <td>{{ profiles.grade_year_level|default:"--" }}</td>
+                  <td class="text-truncate" style="max-width: 150px;">{{ profiles.user.email }}</td>
+                  <td>{{ profiles.identification|default:"--" }}</td>
+                  <td class="align-middle white-space-nowrap text-end">
+                    <div class="font-sans-serif position-static d-inline-block">
+                      <button class="btn btn-link text-600 btn-sm dropdown-toggle btn-reveal d-inline-flex align-items-center" type="button" id="dropdown-admin-{{ admin_and_staff.id }}" data-bs-toggle="dropdown" data-boundary="window" aria-haspopup="true" aria-expanded="false" data-bs-reference="parent"><span class="fas fa-ellipsis-h fs-10"></span></button>
+                      <div class="dropdown-menu dropdown-menu-end border py-2" aria-labelledby="dropdown-admin-{{ admin_and_staff.id }}">
+                        <a href="{% url 'profile_view' profiles.id %}" class="dropdown-item"><i class="fas fa-eye"></i> View</a>
+                        <a href="javascript:void(0);" class="dropdown-item" onclick="openEditModal({{ profiles.id }})"><i class="fas fa-edit"></i> Update</a>
+                        <a href="{% url 'get_enrolled_subjects' profiles.id %}" class="dropdown-item">
+                          <i class="fas fa-book"></i> View Enrolled Subjects
+                      </a>                      
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+        <!-- Edit Student Profile Modal -->
+  <div id="editModal" class="custom-modal">
+    <div class="custom-modal-header">
+      <button class="close-btn" id="closeEditModalBtn"></button>
+      <h5>Edit Student Profile</h5>
+    </div>
+    <div class="custom-modal-body" id="editModalBody">
+            <!-- The content will be loaded dynamically here -->
+    </div>
+  </div>
+  <div id="editModalBackdrop" class="custom-modal-backdrop"></div>
+
+  <!-- JavaScript for Modal and Selectpicker -->
+  <script>
+    function openEditModal(profileId) {
+      const userRole = '{{ role|lower }}';
+      let fetchUrl;
+      if (userRole === 'admin') {
+        fetchUrl = `/admin_update_student_profile/${profileId}/`;
+      } else if (userRole === 'registrar') {
+        fetchUrl = `/updateRegistrarStudent/${profileId}/`;
+      }
+
+      fetch(fetchUrl)
+        .then((response) => response.text())
+        .then((html) => {
+          document.getElementById('editModalBody').innerHTML = html;
+          document.getElementById('editModal').classList.add('show');
+          document.getElementById('editModalBackdrop').classList.add('show');
+          $('.selectpicker').selectpicker('refresh')
+        });
+    }
+
+    // Close button functionality for modal
+    document.getElementById('closeEditModalBtn').addEventListener('click', function () {
+      document.getElementById('editModal').classList.remove('show');
+      document.getElementById('editModalBackdrop').classList.remove('show');
+    });
+  </script>
+
+  <style>
+    @media (max-width: 768px) {
+      .custom-modal {
+        width: 90%;
+        max-width: none;
+      }
+
+      .table-responsive {
+        overflow-x: auto;
+      }
+
+      .btn {
+        font-size: 14px;
+      }
+
+      input.form-control, select.form-control {
+        font-size: 14px;
+      }
+    }
+  </style>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}
+  Subject List
+{% endblock %}
+{% block content %}
+  <!-- Page Heading with LMS Icon -->
+    <!-- Main content -->
+    
+        <!-- DataTales Example -->
+        <div class="card shadow mb-4">
+          <div class="card-body">
+            <div class="table-responsive scrollbar">
+              <table class="table mb-0 data-table table-hover table-bordered fs-10" data-datatables="data-datatables">
+                <thead>
+                  <tr>
+                    <th>Teacher</th>
+                    <th>Subject</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody class="text-center">
+                  {% for subject in subject %}
+                    <tr>
+                      <td>{{ subject.subject_name }}</td>
+                      <td>{{ subject.assign_teacher.first_name }} {{ subject.assign_teacher.last_name }}</td>
+                      <td>
+                        <a href="{% url 'teacher_attendance_details' subject.id %}" class="btn btn-primary">
+                          View
+                        </a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+ 
+{% block title %}
+  {{ announcement.title }}
+{% endblock %}
+ 
+{% block content %}
+  <style>
+    .formatted-text {
+      font-size: 1.1rem;
+      line-height: 1.6;
+    }
+ 
+    /* Adapting text color to Bootstrap 5 dark/light theme */
+    .formatted-text,
+    .card-footer,
+    .text-muted {
+      color: var(--bs-body-color);
+    }
+ 
+    .formatted-text img {
+      max-width: 100%;
+      height: auto;
+    }
+ 
+    .formatted-text table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+ 
+    .formatted-text table,
+    .formatted-text th,
+    .formatted-text td {
+      border: 1px solid var(--bs-border-color);
+      padding: 8px;
+    }
+  </style>
+  <div class="container mt-4">
+    <div class="card shadow-lg">
+      <div class="card-header bg-primary text-white">
+        <h3 class="mb-0">{{ announcement.title }}</h3>
+      </div>
+      <div class="card-body">
+        <p class="text-muted">
+          <i class="fas fa-calendar-alt"></i> {{ announcement.date|date:'F d, Y' }}
+        </p>
+        <div class="formatted-text">{{ announcement.description|safe }}</div>
+      </div>
+      <div class="card-footer">
+        <small>Created by: {{ announcement.created_by }} | {{ announcement.created_at|date:'F d, Y H:i A' }}</small>
+      </div>
+    </div>
+  </div>
+{% endblock %}

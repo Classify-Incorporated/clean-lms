@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+  Update Lesson
+{% endblock %}
+{% block content %}
+
+  <div class="row mb-2">
+    <div class="col-sm-6">
+      <h3 class="m-0">Update Lesson</h3>
+    </div>
+    <div class="col-sm-6"></div>
+  </div>
+
+<div class="card shadow mb-4">
+  <div class="card-body">
+
+
+  <form method="post" action="{% url 'updateModule' module.id %}" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <!-- File name input -->
+    <div class="form-group">
+      <label for="file_name">File name:</label>
+      {{ form.file_name }}
+    </div>
+
+    {% if module.file %}
+      <!-- Custom file input for file (shown if a file exists) -->
+      <div class="form-group" id="fileInputDiv">
+        <label for="customFile">File:</label>
+        <div class="custom-file">
+          <input type="file" class="custom-file-input" id="customFile" name="file" />
+          <label class="custom-file-label" for="customFile">{{ module.file.name }}</label>
+          <small class="form-text text-muted">Allowed file types: PDF, JPG, JPEG, PNG, MP4, AVI, MOV, WMV (Max size: 25MB)</small>
+          <div class="invalid-feedback" id="file-error" style="display: none;"></div>
+        </div>
+      </div>
+    {% elif module.url %}
+      <!-- URL input (shown if no file exists) -->
+      <div class="form-group" id="urlInputDiv">
+        <label for="url">Url:</label>
+        {{ form.url }}
+      </div>
+    {% else %}
+      <div class="form-group" id="embedInputDiv">
+        <label for="iframe_code">Embed Code:</label>
+        {{ form.iframe_code }}
+        <small class="form-text text-muted">Paste the full iframe embed code (e.g., from Microsoft Sway).</small>
+      </div>
+    {% endif %}
+
+    <!-- Term input -->
+    <div class="form-group">
+      <label for="term">Term:</label>
+      {{ form.term }}
+    </div>
+
+    <!-- Select multiple users -->
+    <div class="form-group">
+      <label for="display_lesson_for_selected_users">Display lesson for selected users:</label>
+      {{ form.display_lesson_for_selected_users }}
+    </div>
+
+    <!-- Select start_date -->
+    <div class="form-group">
+      <label for="start_date">Start Date:</label>
+      {{ form.start_date }}
+    </div>
+
+    <!-- Select end_date -->
+    <div class="form-group">
+      <label for="end_date">End Date:</label>
+      {{ form.end_date }}
+    </div>
+
+    <!-- Select description -->
+    <div class="form-group">
+      <label for="description">Description:</label>
+      {{ form.description }}
+    </div>
+
+    <!-- Checkbox field for allow download -->
+    <div class="form-check">
+      {{ form.allow_download }}
+      <label for="allow_download" class="form-check-label">Allow download:</label>
+    </div>
+
+    <!-- Submit and back buttons -->
+    <button type="submit" class="btn btn-primary mt-3">Save</button>
+    <a href="javascript:history.back()" class="btn btn-secondary mt-3">Back</a>
+  </form>
+  <br />
+</div>
+</div>
+
+{% endblock %}

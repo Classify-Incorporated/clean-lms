@@ -1,0 +1,29 @@
+<form method="post" enctype="multipart/form-data" action="{% url 'updateSchedule' schedule.id %}" class="needs-validation" novalidate>
+  {% csrf_token %}
+  <div class="mb-3">
+    <label for="{{ form.subject.id_for_label }}" class="form-label">Subject</label>
+    {{ form.subject }}
+  </div>
+
+  <div class="mb-3">
+    <label for="{{ form.schedule_start_time.id_for_label }}" class="form-label">Start Time</label>
+    {{ form.schedule_start_time }}
+  </div>
+
+  <div class="mb-3">
+    <label for="{{ form.schedule_end_time.id_for_label }}" class="form-label">End Time</label>
+    {{ form.schedule_end_time }}
+  </div>
+
+  <div class="mb-3">
+    <label for="{{ form.days_of_week.id_for_label }}" class="form-label">Days of the Week</label>
+    {{ form.days_of_week }}
+  </div>
+
+  <div class="mb-3">
+    <label for="{{ form.schedule_type.id_for_label }}" class="form-label">Schedule Type</label>
+    {{ form.schedule_type }}
+  </div>
+
+  <button type="submit" class="btn btn-primary">Submit</button>
+</form>

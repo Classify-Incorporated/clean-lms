@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+  Student Per Course Reports
+{% endblock %}
+
+{% block content %}
+  <!-- Content Header -->
+  <div class="row mb-2">
+    <div class="col-sm-6">
+      <h3 class="m-0">Students Per Course Reports</h3>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card shadow mb-4">
+    <div class="card-header bg-success text-white">
+      <h5 class="mb-0">Student Per Course</h5>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table mb-0 data-table fs-10 table-bordered" data-datatables="data-datatables">
+          <thead class="bg-primary">
+            <tr>
+              <th>#</th>
+              <th>Course Name</th>
+              <th>Course Short Name</th>
+              <th>Year Level</th>
+              <th>Student Count</th>
+            </tr>
+          </thead>
+          <tbody>
+              {% for course in courses %}
+                <tr>
+                  <td>{{ forloop.counter }}</td>
+                  <td>{{ course.course_name }}</td>
+                  <td>{{ course.course_short_name }}</td>
+                  <td>{{ course.year_level }}</td>
+                  <td>{{ course.student_count }}</td>
+                </tr>
+              {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock %}

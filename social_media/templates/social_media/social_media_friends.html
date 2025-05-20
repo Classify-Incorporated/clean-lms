@@ -1,0 +1,304 @@
+{% extends 'base.html' %}
+
+{% block title %}Friends{% endblock %}
+
+{% block content %}
+{% load static %}
+<script>
+  const currentUserId = {{ request.user.id }};
+</script>
+
+<div class="container-fluid">
+  <div class="row mb-2">
+    <div class="col-sm-6">
+      <h1 class="m-0">Friends</h1>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid">
+  <div class="card mb-4">
+    <div class="card-header">
+      <ul class="nav nav-tabs card-header-tabs" id="mainTabs" role="tablist">
+        <li class="nav-item">
+          <a class="nav-link active" id="chat-tab" data-bs-toggle="tab" href="#chat" role="tab">Friends</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="friend-requests-tab" data-bs-toggle="tab" href="#friend-requests" role="tab">
+            <i class="fas fa-user-friends"></i> Friend Requests
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="friend-suggestions-tab" data-bs-toggle="tab" href="#friend-suggestions" role="tab">
+            <i class="fas fa-user-plus"></i> Friend Suggestions
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="card-body">
+      <div class="tab-content" id="mainTabsContent">
+        <div class="tab-pane fade show active" id="chat" role="tabpanel">
+          <div class="list-group" id="chat-list"><p>Loading friends...</p></div>
+        </div>
+        <div class="tab-pane fade" id="friend-requests" role="tabpanel">
+          <div class="list-group" id="friend-requests-list"><p>Loading friend requests...</p></div>
+        </div>
+        <div class="tab-pane fade" id="friend-suggestions" role="tabpanel">
+          <div class="mb-3">
+            <input type="text" id="friendSearchInput" class="form-control" placeholder="Search users by name...">
+          </div>
+          <div class="list-group" id="suggested-friends-list"><p>Loading friend suggestions...</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function getCSRFToken() {
+  return document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1] || '';
+}
+
+function loadFriendsList() {
+  const chatList = document.getElementById('chat-list');
+  chatList.innerHTML = '<p>Loading friends...</p>';
+
+  fetch('/social/friend/friends/')
+    .then(res => res.json())
+    .then(friends => {
+      chatList.innerHTML = friends.length ? '' : '<p>You have no friends yet.</p>';
+
+      friends.forEach(friend => {
+        const photo = friend.photo || '/static/assets/img/def_user.jpg';
+
+        const item = document.createElement('div');
+        item.className = 'list-group-item d-flex align-items-center justify-content-between';
+
+        item.innerHTML = `
+          <div class="d-flex align-items-center">
+            <img src="${photo}" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;">
+            <span class="flex-grow-1"><strong>${friend.name}</strong></span>
+          </div>
+          <button class="btn btn-outline-primary btn-sm start-chat-btn" data-user-id="${friend.id}" title="Start Chat">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        `;
+
+        const chatBtn = item.querySelector('.start-chat-btn');
+        chatBtn.addEventListener('click', () => {
+          localStorage.setItem('activeChatId', friend.id);
+          localStorage.setItem('activeChatName', friend.name);
+          localStorage.setItem('activeChatPhoto', photo);
+          localStorage.setItem('activeIsGroup', 'false');
+
+          // Redirect to inbox and open chat
+          window.location.href = `{% url 'social_media_inbox' %}?chat_with=${friend.id}&chat_name=${encodeURIComponent(friend.name)}&chat_photo=${encodeURIComponent(photo)}`;
+        });
+
+        chatList.appendChild(item);
+      });
+    });
+}
+
+function loadFriendSuggestions() {
+  const suggestionsList = document.getElementById('suggested-friends-list');
+  suggestionsList.innerHTML = '<p>Loading friend suggestions...</p>';
+
+  Promise.all([
+    fetch('/social/friend/suggestions/').then(res => res.json()),
+    fetch('/social/friend/sent-requests/').then(res => res.json()),
+    fetch('/social/friend/friends/').then(res => res.json()),
+    fetch('/social/friend/pending-requests/').then(res => res.json())
+  ])
+  .then(([users, sent, friends, pending]) => {
+    const sentIds = new Set(sent);
+    const friendIds = new Set(friends.map(f => f.id));
+    const pendingFromThem = new Set(pending.map(p => p.from_user_id));
+
+    suggestionsList.innerHTML = '';
+    const filtered = users.filter(u => !friendIds.has(u.id) && u.id !== currentUserId);
+
+    if (!filtered.length) {
+      suggestionsList.innerHTML = '<p>No new friend suggestions available.</p>';
+      return;
+    }
+
+    filtered.forEach(user => {
+      const displayName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username;
+      const photo = user.photo || '/static/assets/img/def_user.jpg';
+      let buttonHTML = '';
+
+      if (sentIds.has(user.id)) {
+        buttonHTML = `<button class="btn btn-outline-danger btn-sm cancel-friend-btn" data-user-id="${user.id}">Cancel Request</button>`;
+      } else if (pendingFromThem.has(user.id)) {
+        buttonHTML = `<span class="badge bg-warning text-dark">Requested You</span>`;
+      } else {
+        buttonHTML = `<button class="btn btn-primary btn-sm add-friend-btn" data-user-id="${user.id}">Add Friend</button>`;
+      }
+
+      const item = document.createElement('div');
+      item.className = 'list-group-item d-flex align-items-center';
+      item.innerHTML = `
+        <img src="${photo}" class="rounded-circle me-3" style="width: 60px; height: 60px; object-fit: cover;">
+        <span class="flex-grow-1"><strong>${displayName}</strong></span>
+        ${buttonHTML}
+      `;
+      suggestionsList.appendChild(item);
+    });
+
+    attachFriendButtons();
+  });
+}
+
+function attachFriendButtons() {
+  document.querySelectorAll('.add-friend-btn').forEach(btn =>
+    btn.addEventListener('click', handleSendFriendRequest));
+  document.querySelectorAll('.cancel-friend-btn').forEach(btn =>
+    btn.addEventListener('click', handleCancelFriendRequest));
+}
+
+function loadFriendRequests() {
+  const list = document.getElementById('friend-requests-list');
+  list.innerHTML = '<p>Loading friend requests...</p>';
+
+  fetch('/social/friend/pending-requests/')
+    .then(res => res.json())
+    .then(data => {
+      list.innerHTML = data.length ? '' : '<p>No friend requests at the moment.</p>';
+      data.forEach(req => {
+        const photo = req.from_user_photo || '/static/assets/img/def_user.jpg';
+        list.innerHTML += `
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+              <img src="${photo}" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;">
+              <span>${req.from_user_name}</span>
+            </div>
+            <div>
+              <button class="btn btn-success btn-sm accept-friend-btn" data-request-id="${req.id}">Accept</button>
+              <button class="btn btn-danger btn-sm reject-friend-btn" data-request-id="${req.id}">Reject</button>
+            </div>
+          </div>
+        `;
+      });
+    });
+}
+
+function handleSendFriendRequest(event) {
+  const btn = event.currentTarget;
+  const userId = btn.dataset.userId;
+  btn.disabled = true;
+
+  fetch('/social/friend/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
+    body: JSON.stringify({ to_user: userId })
+  })
+  .then(res => res.json().then(data => ({ status: res.status, data })))
+  .then(({ status }) => {
+    if (status === 201) {
+      loadFriendSuggestions();
+    }
+  });
+}
+
+function handleCancelFriendRequest(event) {
+  const btn = event.currentTarget;
+  const userId = btn.dataset.userId;
+  btn.disabled = true;
+
+  fetch('/social/friend/cancel-request/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
+    body: JSON.stringify({ to_user: userId })
+  })
+  .then(res => res.json())
+  .then(() => {
+    loadFriendSuggestions();
+  });
+}
+
+function handleFriendRequestAction(event) {
+  const btn = event.target;
+  const id = btn.dataset.requestId;
+  const url = `/social/friend/${id}/${btn.classList.contains('accept-friend-btn') ? 'accept' : 'reject'}/`;
+
+  fetch(url, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': getCSRFToken() }
+  })
+  .then(() => {
+    btn.closest('.list-group-item').remove();
+  });
+}
+
+function handleSearchInput(query) {
+  if (!query) return loadFriendSuggestions();
+
+  Promise.all([
+    fetch(`/social/friend/search/?q=${encodeURIComponent(query)}`).then(res => res.json()),
+    fetch('/social/friend/sent-requests/').then(res => res.json()),
+    fetch('/social/friend/friends/').then(res => res.json()),
+    fetch('/social/friend/pending-requests/').then(res => res.json())
+  ])
+  .then(([users, sent, friends, pending]) => {
+    const list = document.getElementById('suggested-friends-list');
+    const sentIds = new Set(sent);
+    const friendIds = new Set(friends.map(f => f.id));
+    const pendingFromThem = new Set(pending.map(p => p.from_user_id));
+
+    list.innerHTML = '';
+    users.forEach(user => {
+      if (friendIds.has(user.id) || user.id === currentUserId) return;
+      const displayName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username;
+      const photo = user.photo || '/static/assets/img/def_user.jpg';
+      let buttonHTML = '';
+
+      if (sentIds.has(user.id)) {
+        buttonHTML = `<button class="btn btn-outline-danger btn-sm cancel-friend-btn" data-user-id="${user.id}">Cancel Request</button>`;
+      } else if (pendingFromThem.has(user.id)) {
+        buttonHTML = `<span class="badge bg-warning text-dark">Requested You</span>`;
+      } else {
+        buttonHTML = `<button class="btn btn-primary btn-sm add-friend-btn" data-user-id="${user.id}">Add Friend</button>`;
+      }
+
+      list.innerHTML += `
+        <div class="list-group-item d-flex align-items-center">
+          <img src="${photo}" class="rounded-circle me-3" style="width: 60px; height: 60px; object-fit: cover;">
+          <span class="flex-grow-1"><strong>${displayName}</strong></span>
+          ${buttonHTML}
+        </div>
+      `;
+    });
+
+    attachFriendButtons();
+  });
+}
+
+function debounce(func, delay) {
+  let timeout;
+  return function (...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), delay);
+  };
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadFriendsList();
+  document.getElementById('chat-tab').addEventListener('click', loadFriendsList);
+  document.getElementById('friend-requests-tab').addEventListener('click', loadFriendRequests);
+  document.getElementById('friend-suggestions-tab').addEventListener('click', loadFriendSuggestions);
+
+  const debouncedSearch = debounce(function (e) {
+    handleSearchInput(e.target.value.trim());
+  }, 300);
+  
+  document.getElementById('friendSearchInput').addEventListener('input', debouncedSearch);
+
+  document.getElementById('friend-requests-list').addEventListener('click', e => {
+    if (e.target.classList.contains('accept-friend-btn') || e.target.classList.contains('reject-friend-btn')) {
+      handleFriendRequestAction(e);
+    }
+  });
+});
+</script>
+{% endblock %}

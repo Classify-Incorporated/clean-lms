@@ -1,0 +1,18 @@
+<!-- Import User Modal -->
+<div id="importModal" class="custom-modal">
+  <div class="custom-modal-header">
+    <button class="close-btn" id="closeImportModalBtn"></button>
+    <h5>Import Student and Enroll</h5>
+  </div>
+  <div class="custom-modal-body">
+    <form method="post" enctype="multipart/form-data" action="{% url 'import_students_and_enroll' %}">
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="importFile">Choose CSV File:</label>
+        <input type="file" name="import_file" id="importFile" class="form-control" required>
+      </div>
+      <button type="submit" class="btn btn-primary mt-2">Upload</button>
+    </form>
+  </div>
+</div>
+<div id="importModalBackdrop" class="custom-modal-backdrop"></div>

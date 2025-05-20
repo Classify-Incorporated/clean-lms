@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {% load static %}
+    <title>Classroom Mode - {{ subject.subject_name }}</title>
+    <link rel="icon" type="image/png" href="{% static 'favicon.ico' %}" />
+    <link rel="stylesheet" href="{% static 'css/all.min.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/adminlte.min.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/settings.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/css/custom_modal.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/subject_details.css' %}" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+  </head>
+  <body class="bg-light">
+    <!-- Classroom Header -->
+    <div class="classroom-header fade-in mb-4">
+      <div class="header-content">
+        <h1>Classroom Mode: {{ subject.subject_name }}</h1>
+        <a href="{% url 'subjectDetail' subject.id %}" class="btn btn-light">Exit Classroom Mode</a>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="classroom-container fade-in">
+      <!-- Main Content -->
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <h1>{{ activity.activity_name }}</h1>
+        <a href="{% url 'activity_detailCM' activity.id %}" class="btn btn-outline-secondary shadow-sm"><i class="fas fa-arrow-left"></i> Back to Activity</a>
+      </div>
+      <p>Passing Score: {{ activity.passing_score }}</p>
+      <div class="card shadow mb-4">
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped" width="100%" cellspacing="0">
+              <thead class="text-center">
+                <tr>
+                  <th>Student Name</th>
+                  <th>Submission Date</th>
+                  <th>Total Score</th>
+                </tr>
+              </thead>
+              <tbody class="text-center">
+                {% for entry in student_scores %}
+                  <tr>
+                    <td>{{ entry.student.first_name }} {{ entry.student.last_name }}</td>
+                    <td>
+                      {% if entry.submission_date %}
+                        {{ entry.submission_date|date:'F d, Y h:i A' }}
+                      {% else %}
+                        <span class="text-danger">Missed</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      <div class="progress-circle" data-score="{{ entry.total_score }}" data-max="{{ entry.max_score }}" data-passing="{{ entry.passing_score_value }}">
+                        <span class="progress-text">{{ entry.total_score|floatformat:'0' }} / {{ entry.max_score|floatformat:'0' }}</span>
+                        <div class="progress-inner-circle"></div>
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Styles -->
+    <style>
+      .progress-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: conic-gradient(#4caf50 0% 0%, transparent 0% 100%);
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: bold;
+        color: #000;
+        margin: auto;
+        transition: transform 0.3s ease;
+      }
+      .progress-circle.warning {
+        background: conic-gradient(#ff9800 0% 0%, transparent 0% 100%);
+      }
+      .progress-circle:hover {
+        transform: scale(1.1);
+      }
+      .progress-inner-circle {
+        width: 66px;
+        height: 66px;
+        border-radius: 50%;
+        background-color: #f3f3f3;
+        position: absolute;
+        top: 7px;
+        left: 7px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .progress-text {
+        position: absolute;
+        z-index: 1;
+      }
+    </style>
+
+    <!-- Scripts -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.progress-circle').forEach(function (circle) {
+          const score = parseFloat(circle.getAttribute('data-score'))
+          const max = parseFloat(circle.getAttribute('data-max'))
+          let passing = parseFloat(circle.getAttribute('data-passing'))
+      
+          if (!isNaN(passing) && passing <= 1) {
+            passing = passing * max
+          }
+      
+          if (!isNaN(score) && !isNaN(max) && max > 0) {
+            const percentage = (score / max) * 100
+      
+            if (score < passing) {
+              circle.classList.add('warning')
+            }
+      
+            circle.style.background = `conic-gradient(${score >= passing ? '#4caf50' : '#ff9800'} 0% ${percentage}%, transparent ${percentage}% 100%)`
+          }
+        })
+      })
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{% static 'js/classroom-mode.js' %}"></script>
+    <script src="{% static 'js/classroom-mode-full-screen.js' %}"></script>
+    <script src="{% static 'js/file-validation.js' %}"></script>
+    <script src="{% static 'js/modal.js' %}"></script>
+  </body>
+</html>

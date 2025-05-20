@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}Edit Participation{% endblock %}
+
+{% block content %}
+<h3>Edit Participation Scores for {{ activity.activity_name }}</h3>
+<form method="post">
+  {% csrf_token %}
+  <input type="hidden" name="max_score" value="{{ max_score }}">
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Student</th>
+        <th>Score</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for student in participation_data %}
+        <tr>
+          <td>
+            {{ student.student_name }}
+            <input type="hidden" name="name_{{ student.student_id }}" value="{{ student.student_name }}">
+          </td>
+          <td>
+            <input type="number" name="score_{{ student.student_id }}" class="form-control"
+                   value="{{ student.score }}" min="0" max="{{ max_score }}" required>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <button type="submit" class="btn btn-primary">Update Scores</button>
+  <a href="{% url 'add_quiz_type' activity.id %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

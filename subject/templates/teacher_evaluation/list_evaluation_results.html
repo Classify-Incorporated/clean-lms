@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block content %}
+  <!-- Page Header -->
+
+  <div class="row mb-2">
+    <div class="col-sm-6">
+      <h3 class="m-0">Evaluation Results</h3>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="row">
+    {% for result in evaluation_results %}
+      <div class="col-lg-3 col-md-3 mb-4">
+        <div class="card shadow-sm border-0">
+          <div class="card-body">
+            <!-- If the user is a teacher, show only subject, room, and button -->
+            {% if user_role == "teacher" %}
+              <h5 class="card-title text-primary font-weight-bold mb-2">{{ result.subject_name }}</h5>
+              <p class="card-text text-muted mb-3">
+                <strong>Room:</strong> {{ result.room_number }}
+              </p>
+            {% else %}
+              <!-- If the user is NOT a teacher, show everything -->
+              <h5 class="card-title text-primary font-weight-bold mb-2">{{ result.subject_name }}</h5>
+              <p class="card-text text-muted mb-1">
+                <strong>Teacher:</strong> {{ result.teacher_name }}
+              </p>
+              <p class="card-text text-muted mb-3">
+                <strong>Room:</strong> {{ result.room_number }}
+              </p>
+            {% endif %}
+            
+            <a href="{{ result.result_url }}" class="btn btn-primary btn-sm">View Evaluation</a>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- CSS for enhancing the card styling -->
+  <style>
+    .content-header h1 {
+      font-size: 1.8rem;
+      font-weight: 600;
+    }
+    .card {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .card-title {
+      font-size: 1.25rem;
+    }
+    .btn-outline-primary {
+      border-width: 2px;
+      padding: 0.4rem 0.8rem;
+    }
+  </style>
+{% endblock %}

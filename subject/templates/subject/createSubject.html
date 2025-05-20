@@ -1,0 +1,101 @@
+{% load static %}
+{% block content %}
+  <div id="customModal" class="custom-modal">
+    <div class="custom-modal-header">
+      <button class="close-btn" id="closeModalBtn"></button>
+      <h5>Create Subject</h5>
+    </div>
+    <div class="custom-modal-body">
+      <form method="post" enctype="multipart/form-data" action="{% url 'createSubject' %}" id="subjectForm" class="needs-validation" novalidate>
+        {% csrf_token %}
+
+        <!-- Subject Name -->
+        <div class="form-group">
+          {{ form.subject_name.label_tag }}
+          {{ form.subject_name }}
+          <div class="invalid-feedback">Please provide a subject name.</div>
+        </div>
+
+        <!-- Subject Short Name -->
+        <div class="form-group">
+          {{ form.subject_short_name.label_tag }}
+          {{ form.subject_short_name }}
+          <div class="invalid-feedback">Please provide a subject short name.</div>
+        </div>
+
+        <!-- Custom File Input for Subject Photo -->
+        <div class="form-group">
+          {{ form.subject_photo.label_tag }}
+          <div class="custom-file">{{ form.subject_photo }}</div>
+        </div>
+
+        <div class="form-group">{{ form.unit.label_tag }}
+          {{ form.unit }}</div>
+
+        <!-- Assign Teacher -->
+        <div class="form-group">
+          {{ form.assign_teacher.label_tag }}
+          {{ form.assign_teacher }}
+          <div class="invalid-feedback">Please assign a teacher.</div>
+        </div>
+
+        <!-- Substitute Teacher -->
+        <div class="form-group">
+          {{ form.substitute_teacher.label_tag }}
+          {{ form.substitute_teacher }}
+          <div class="invalid-feedback">Please assign a substitute teacher.</div>
+        </div>
+
+        <div class="form-group">{{ form.is_coil.label_tag }}
+          {{ form.is_coil }}</div>
+
+        <div class="form-group">{{ form.is_hali.label_tag }}
+          {{ form.is_hali }}</div>
+
+        <div class="form-group coil-hali-fields d-none">{{ form.max_number_of_enrollees.label_tag }}
+          {{ form.max_number_of_enrollees }}</div>
+
+        <div class="form-group coil-hali-fields d-none">{{ form.duration.label_tag }}
+          {{ form.duration }}</div>
+        
+        <div class="form-group coil-hali-fields d-none">{{ form.industry_partners.label_tag }}
+          {{ form.industry_partners }}</div>
+        
+        <div class="form-group coil-hali-fields d-none">{{ form.highlight.label_tag }}
+          {{ form.highlight }}</div>
+
+        <div class="form-group coil-hali-fields d-none">{{ form.target_sdgs.label_tag }}
+          {{ form.target_sdgs }}</div>
+
+        <div class="form-group coil-hali-fields d-none">{{ form.country.label_tag }}
+          {{ form.country }}</div>
+
+        <div class="form-group coil-hali-fields d-none">
+          {{ form.status.label_tag }}
+          {{ form.status }}
+          <div class="invalid-feedback">Please select a status.</div>
+        </div>
+
+        <div class="form-group">{{ form.allow_substitute_teacher.label_tag }}
+          {{ form.allow_substitute_teacher }}</div>
+
+        <!-- Subject Description -->
+        <div class="form-group">{{ form.subject_description.label_tag }}
+          {{ form.subject_description }}</div>
+
+        <!-- Subject Code -->
+        <div class="form-group">{{ form.subject_code.label_tag }}
+          {{ form.subject_code }}</div>
+
+        <div class="form-group">{{ form.room_number.label_tag }}
+          {{ form.room_number }}</div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary mt-2">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Custom Modal Backdrop -->
+  <div id="customModalBackdrop" class="custom-modal-backdrop"></div>
+{% endblock %}

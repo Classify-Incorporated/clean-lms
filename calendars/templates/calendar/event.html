@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+  Event List
+{% endblock %}
+{% block content %}
+  {% load static %}
+  <div class="row mb-2">
+    <div class="col-sm-6">
+      <h3 class="m-0">Event List</h3>
+    </div>
+  </div>
+
+  <div class="card shadow mb-4">
+    <div class="card-header py-3 bg-success">
+      <button class="btn btn-primary" id="openAddModalBtn">Add Event</button>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table mb-0 data-table table-hover table-bordered fs-10" data-datatables="data-datatables" id="dataTable">
+          <thead class="bg-primary">
+            <tr>
+              <th>#</th>
+              <th>Title</th>
+              <th>Description</th>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Location</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody class="text-center">
+            <!-- Data will be inserted dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Event Modal -->
+  <div id="addModal" class="custom-modal">
+    <div class="custom-modal-header">
+      <button class="close-btn" id="closeAddModalBtn"></button>
+      <h5>Add Event</h5>
+    </div>
+    <div class="custom-modal-body">
+      <form id="addEventForm" method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="newEventTitle">Title</label>
+          <input type="text" class="form-control" id="newEventTitle" name="title" required />
+        </div>
+
+        <div class="form-group">
+          <label for="newEventDescription">Description</label>
+          <textarea class="form-control tinymce" id="newEventDescription" name="description" required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="newEventDate">Date</label>
+          <input type="date" class="form-control" id="newEventDate" name="date" required />
+        </div>
+
+        <div class="form-group">
+          <label for="newEventTime">Time</label>
+          <input type="time" class="form-control" id="newEventTime" name="time" />
+        </div>
+
+        <div class="form-group">
+          <label for="newEventLocation">Location</label>
+          <input type="text" class="form-control" id="newEventLocation" name="location" />
+        </div>
+
+        <button type="submit" class="btn btn-success mt-2">Create</button>
+      </form>
+    </div>
+  </div>
+  <div id="addModalBackdrop" class="custom-modal-backdrop"></div>
+
+  <!-- Update Event Modal -->
+  <div id="editModal" class="custom-modal">
+    <div class="custom-modal-header">
+      <button class="close-btn" id="close_update_modal"></button>
+      <h5>Update Event</h5>
+    </div>
+    <div class="custom-modal-body">
+      <form id="updateEventForm" method="POST">
+        {% csrf_token %}
+        <input type="hidden" id="eventId" name="id" />
+
+        <div class="form-group">
+          <label for="eventTitle">Title</label>
+          <input type="text" class="form-control" id="eventTitle" name="title" required />
+        </div>
+
+        <div class="form-group">
+          <label for="eventDescription">Description</label>
+          <textarea class="form-control tinymce" id="eventDescription" name="description" required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="eventDate">Date</label>
+          <input type="date" class="form-control" id="eventDate" name="date" required />
+        </div>
+
+        <div class="form-group">
+          <label for="eventTime">Time</label>
+          <input type="time" class="form-control" id="eventTime" name="time" />
+        </div>
+
+        <div class="form-group">
+          <label for="eventLocation">Location</label>
+          <input type="text" class="form-control" id="eventLocation" name="location" />
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-2">Update</button>
+      </form>
+    </div>
+  </div>
+  <div id="editModalBackdrop" class="custom-modal-backdrop"></div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="{% static 'js/event_and_announcement/event.js' %}"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Initialize TinyMCE
+      tinymce.init({
+        selector: 'textarea.tinymce',
+        menubar: false,
+        plugins: 'lists link code',
+        toolbar: 'bold italic | alignleft aligncenter alignright | bullist numlist | link code',
+        setup: function (editor) {
+          editor.on('change', function () {
+            editor.save() // Ensures the content is saved to textarea
+          })
+        }
+      })
+    
+      // Initialize Select2
+      $('#recipient_id').select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Select Friend',
+        allowClear: true,
+        width: '100%',
+        dropdownParent: $('#sendMessageModal'),
+        multiple: true
+      })
+    
+      // Handle form submission to fix the double-click issue
+      document.getElementById('messageForm').addEventListener('submit', function (event) {
+        event.preventDefault() // Prevent default for debugging
+    
+        tinyMCE.triggerSave() // Ensure TinyMCE saves content to textarea
+        const form = this
+    
+        if (form.checkValidity()) {
+          form.submit() // Submit only if form is valid
+        } else {
+          form.classList.add('was-validated') // Show validation messages
+        }
+      })
+    })
+  </script>
+{% endblock %}

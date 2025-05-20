@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% block title %}
+  Teacher Attendance Calendar
+{% endblock %}
+{% load static %}
+{% block content %}
+  <h3 class="mb-4">Teacher Attendance Calendar</h3>
+
+  <!-- Display Teacher and Subject -->
+  <div class="alert alert-info shadow-sm border-left-primary p-4 d-flex justify-content-between align-items-center">
+    <div>
+      <h4 class="fw-bold text-primary mb-2">
+        <i class="fas fa-user-tie me-2"></i> Teacher:
+        {{ subject.subject__assign_teacher__first_name }} {{ subject.subject__assign_teacher__last_name }}
+      </h4>
+      <h5 class="fw-semibold mb-0"><i class="fas fa-book-open me-2"></i> Subject: {{ subject.subject__subject_name }}</h5>
+    </div>
+    <a href="{% url 'teacher_attendance_details' subject_id %}" class="btn btn-outline-primary fw-semibold"><i class="fas fa-images me-2"></i> View All Screenshots</a>
+  </div>
+
+  <!-- Date Range Filter -->
+  <div class="row mb-3">
+    <div class="col-md-4">
+      <label for="start_date">Start Date:</label>
+      <input type="date" id="start_date" class="form-control" />
+    </div>
+    <div class="col-md-4">
+      <label for="end_date">End Date:</label>
+      <input type="date" id="end_date" class="form-control" />
+    </div>
+    <div class="col-md-4 d-flex align-items-end">
+      <button id="exportPDF" class="btn btn-danger w-100">Export PDF</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <div class="card position-relative">
+        <div class="card-body position-relative">
+          <div class="bg-holder position-absolute top-0 start-0 w-100 h-100" style="background-image: url('{% static 'assets/img/icons/spot-illustrations/corner-4.png' %}');
+                                background-size: cover;
+                                background-position: center;
+                                background-repeat: no-repeat;
+                                opacity: 0.7;
+                                z-index: 0;"></div>
+          <div id="calendar" class="position-relative" style="z-index: 1;"></div>
+        </div>
+      </div>
+      <div id="calendar"></div>
+    </div>
+  </div>
+
+  <!-- Include FullCalendar -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
+    /* Remove background color from event time */
+    .fc-daygrid-event {
+      background: none !important;
+      border: none !important;
+      padding: 0 !important;
+    }
+    
+    /* Remove any extra styling on the event link */
+    .fc-daygrid-event a {
+      color: inherit !important; /* Use default text color */
+      text-decoration: none !important;
+      font-weight: bold;
+      font-size: 12px;
+      background: none !important; /* Remove background */
+      border-radius: 0 !important;
+      display: inline-block;
+      padding: 2px;
+    }
+    
+    /* Ensure text remains visible in dark mode */
+    body.dark-mode .fc-daygrid-event a {
+      color: #ffffff !important; /* White text in dark mode */
+    }
+    
+    /* Ensure text remains visible in light mode */
+    body.light-mode .fc-daygrid-event a {
+      color: #000000 !important; /* Black text in light mode */
+    }
+    
+    /* Remove hover effect that adds background */
+    .fc-daygrid-event:hover {
+      background: none !important;
+    }
+  </style>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var calendarEl = document.getElementById('calendar');
+        var subjectId = "{{ subject_id }}";
+        var eventDates = new Set(); // Store dates with attendance
+
+        function fetchEvents(startDate = "", endDate = "") {
+            var url = `/api/teacher_attendance/?subject_id=${subjectId}`;
+            if (startDate && endDate) {
+                url += `&start_date=${startDate}&end_date=${endDate}`;
+            }
+
+            return fetch(url)
+                .then(response => response.json())
+                .then(events => {
+                    eventDates.clear();
+                    events.forEach(event => eventDates.add(event.start)); // Store clickable dates
+                    return events;
+                })
+                .catch(error => console.error("Error fetching events:", error));
+        }
+
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            events: function (fetchInfo, successCallback, failureCallback) {
+                var startDate = document.getElementById("start_date").value;
+                var endDate = document.getElementById("end_date").value;
+                fetchEvents(startDate, endDate).then(events => successCallback(events));
+            },
+            eventClick: function (info) {
+                var selectedDate = info.event.startStr;
+                window.location.href = `/view_screenshots_per_date/${subjectId}/${selectedDate}/`;
+            },
+            dateClick: function (info) {
+                var selectedDate = info.dateStr;
+                if (eventDates.has(selectedDate)) { // Only allow clicks on dates with attendance
+                window.location.href = `/view_screenshots_per_date/${subjectId}/${selectedDate}/`;
+                }
+            },
+            eventTimeFormat: { hour: '2-digit', minute: '2-digit', meridiem: 'short' },
+            locale: 'en',
+            themeSystem: 'bootstrap5',
+        });
+
+        calendar.render();
+
+        function updateCalendarView() {
+            var startDate = document.getElementById("start_date").value;
+            if (startDate) {
+                var selectedDate = new Date(startDate);
+                calendar.gotoDate(selectedDate); // Move calendar view to selected date
+            }
+            calendar.refetchEvents();
+        }
+
+        document.getElementById("start_date").addEventListener("change", updateCalendarView);
+        document.getElementById("end_date").addEventListener("change", updateCalendarView);
+    });
+</script>
+
+{% endblock %}

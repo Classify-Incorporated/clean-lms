@@ -1,0 +1,698 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+  Dashboard
+{% endblock %}
+{% block content %}
+<div class="row mb-2 align-items-center d-flex justify-content-between">
+  <!-- Left Section: Greeting -->
+  <div class="col-sm-6">
+    <h1>{{ greeting }} {{ user_name }}!</h1>
+    <p>Welcome to the {{ SCHOOL_SHORT_NAME }} Learning Management System</p>
+  </div>
+
+  <!-- Right Section: Semester -->
+    <div class="col-sm-6 text-end">
+      <h3 class="mb-0">
+        {% if current_semester %}
+          {% if current_semester.semester_name == "First Semester" %}
+            1st Sem -
+          {% elif current_semester.semester_name == "Second Semester" %}
+            2nd Sem -
+          {% elif current_semester.semester_name == "Third Semester" %}
+            3rd Sem -
+          {% elif current_semester.semester_name == "Fourth Semester" %}
+            4th Sem -
+          {% else %}
+            {{ current_semester.semester_name }}
+          {% endif %}
+          SY.
+          {% if current_semester.start_date.year == current_semester.end_date.year %}
+            {{ current_semester.start_date|date:"Y" }}
+          {% else %}
+            {{ current_semester.start_date|date:"Y" }} - {{ current_semester.end_date|date:"Y" }}
+          {% endif %}
+        {% else %}
+          No Active Semester
+        {% endif %}
+      </h3>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <!-- Students Enrolled Per Course -->
+  <div class="col-xxl-3 col-md-6">
+      <div class="card position-relative border shadow-lg" style="background-color:rgb(252, 220, 218); border-radius: 12px; border-color: #D6D6D6;">
+          <div class="bg-holder d-none d-lg-block bg-card" 
+              style="background-image: url('{% static 'assets/img/icons/spot-illustrations/corner-1.png' %}'); opacity: 0.7;">
+          </div>
+          <div class="card-body text-center">
+              <div class="icon-circle" style="border: 2px solid #FF8A9E;">
+                  <span class="fs-5 fas fa-user-graduate text-danger"></span>
+              </div>
+              <h4 class="mt-2 mb-0 font-sans-serif fw-semi-bold text-700">
+                  <span class="mx-2" data-countup='{"endValue": "{{ total_enrolled_students }}"}'>{{ total_enrolled_students }}</span>
+                  <span style="font-size: medium;">Total Enrolled Students</span>
+              </h4>
+          </div>
+      </div>
+  </div>
+
+  <!-- Subjects For This Semester -->
+  <div class="col-xxl-3 col-md-6">
+      <div class="card position-relative border shadow-lg" style="background-color: #C5E1FA; border-radius: 12px; border-color: #D6D6D6;">
+          <div class="bg-holder d-none d-lg-block bg-card" 
+              style="background-image: url('{% static 'assets/img/icons/spot-illustrations/corner-2.png' %}'); opacity: 0.7;">
+          </div>
+          <div class="card-body text-center">
+              <div class="icon-circle" style="border: 2px solid #64B5F6;">
+                  <span class="fs-5 fas fa-chalkboard-teacher text-primary"></span>
+              </div>
+              <h4 class="mt-2 mb-0 font-sans-serif fw-semi-bold text-700">
+                  <span class="mx-2" data-countup='{"endValue": "{{ subject_count }}"}'>{{ subject_count }}</span>
+                  <span style="font-size: medium;">Your Subjects</span>
+              </h4>
+          </div>
+      </div>
+  </div>
+
+  <!-- Announcements -->
+  <div class="col-xxl-3 col-md-6">
+      <div class="card position-relative border shadow-lg" style="background-color: #B2E5C4; border-radius: 12px; border-color: #D6D6D6;">
+          <div class="bg-holder d-none d-lg-block bg-card" 
+              style="background-image: url('{% static 'assets/img/icons/spot-illustrations/corner-3.png' %}'); opacity: 0.7;">
+          </div>
+          <div class="card-body text-center">
+              <div class="icon-circle" style="border: 2px solid #66BB6A;">
+                  <span class="fs-5 fas fa-bullhorn text-success"></span>
+              </div>
+              <h4 class="mt-2 mb-0 font-sans-serif fw-semi-bold text-700">
+                  <span class="mx-2" data-countup='{"endValue":"{{ announcement_count }}"}'>{{ announcement_count }}</span>
+                  <span style="font-size: medium;">Important Announcements</span>
+              </h4>
+          </div>
+      </div>
+  </div>
+
+  <!-- Financials -->
+  <div class="col-xxl-3 col-md-6">
+      <div class="card position-relative border shadow-lg" style="background-color:rgb(240, 206, 156); border-radius: 12px; border-color: #D6D6D6;">
+          <div class="bg-holder d-none d-lg-block bg-card" 
+              style="background-image: url('{% static 'assets/img/icons/spot-illustrations/corner-4.png' %}'); opacity: 0.7;">
+          </div>
+          <div class="card-body text-center">
+              <div class="icon-circle" style="border: 2px solid #FFB74D;">
+                  <span class="fs-5 fas fa-money-check text-secondary"></span>
+              </div>
+              <h4 class="mt-2 mb-0 font-sans-serif fw-semi-bold text-700">
+                  <span class="mx-2" data-countup='{"endValue":"5"}'>0</span>
+                  <span style="font-size: medium;">Financials</span>
+              </h4>
+          </div>
+      </div>
+  </div>
+</div>
+
+  <div class="row g-3 mb-3">
+          <!-- Upcoming School Events -->
+    <div class="col-xxl-4">
+      <div class="card h-100">
+        <div class="card-header bg-body-tertiary d-flex flex-between-center py-2">
+          <h6 class="mb-0">Upcoming School Event and Announcement</h6>
+          <div class="dropdown font-sans-serif btn-reveal-trigger">
+            <button class="btn btn-link text-600 btn-sm dropdown-toggle dropdown-caret-none btn-reveal" type="button" id="dropdown-school-events" data-bs-toggle="dropdown" data-boundary="viewport" aria-haspopup="true" aria-expanded="false">
+              {% comment %} <span class="fas fa-ellipsis-h fs-11"></span> {% endcomment %}
+            </button>
+            {% comment %} <div class="dropdown-menu dropdown-menu-end border py-2" aria-labelledby="dropdown-school-events">
+              <a class="dropdown-item" href="#">View</a>
+              <a class="dropdown-item" href="#">Export</a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item text-danger" href="#">Remove</a>
+            </div> {% endcomment %}
+          </div>
+        </div>
+        <div class="card-body p-2">
+          <ul class="list-group">
+              {% if combined_list %}
+                  {% for item in combined_list %}
+                      <li class="list-group-item d-flex justify-content-between align-items-center" 
+                          style="border-left: 5px solid {% if item.type == 'event' %} #6BAED6 {% else %} #EAC54F {% endif %}; 
+                                 background-color: {% if item.type == 'event' %} #D9EAF7 {% else %} #FEF3C7 {% endif %};
+                                 padding: 12px; border-radius: 8px; margin-bottom: 6px;">
+      
+                          <div>
+                              <strong>
+                                  {% if item.type == "announcement" %}
+                                      <a href="{% url 'announcement_details' item.id %}" class="text-reset text-decoration-none" style="color: #6B4226;">
+                                          <i class="fas fa-bullhorn" style="color: #D4A017;"></i> {{ item.title }}
+                                      </a>
+                                  {% else %}
+                                      <i class="fas fa-calendar-alt" style="color: #3182BD;"></i> {{ item.title }}
+                                  {% endif %}
+                              </strong>
+                              <br>
+      
+                              {% if item.location %}
+                                  <small style="color: #5E5E5E;">
+                                      <i class="fas fa-map-marker-alt" style="color: #B56576;"></i> {{ item.location }}
+                                  </small><br>
+                              {% endif %}
+      
+                              <small style="font-weight: bold; color: {% if item.type == 'event' %} #3182BD {% else %} #B56576 {% endif %};">
+                                  {% if item.type == "event" %}
+                                      📅 Event
+                                  {% else %}
+                                      📰 Announcement
+                                  {% endif %}
+                              </small>
+                          </div>
+      
+                          <span style="background-color: #333; color: white; padding: 6px 12px; border-radius: 12px; font-size: 0.85rem;">
+                              {{ item.date|date:"M d, Y" }}
+                              {% if item.type == "event" and item.time %}
+                                  <br><small style="color: #EAEAEA;">{{ item.time|time:"g:i A" }}</small>
+                              {% endif %}
+                          </span>
+                      </li>
+                  {% endfor %}
+              {% else %}
+                  <li class="list-group-item text-center" style="color: #888; padding: 12px;">
+                      <i class="fas fa-exclamation-circle" style="color: #D95F5F;"></i> No upcoming events or announcements.
+                  </li>
+              {% endif %}
+          </ul>
+      </div>
+      </div>
+    </div>
+
+          <!-- Campus News Carousel -->
+    <div class="col-xxl-8">
+      <div class="card h-100">
+        <div class="card-header bg-body-tertiary d-flex flex-between-center py-2">
+          <h6 class="mb-0">Campus News</h6>
+          <div class="dropdown font-sans-serif btn-reveal-trigger">
+            <button class="btn btn-link text-600 btn-sm dropdown-toggle dropdown-caret-none btn-reveal" type="button" id="dropdown-trending-keywords" data-bs-toggle="dropdown" data-boundary="viewport" aria-haspopup="true" aria-expanded="false">
+              {% comment %} <span class="fas fa-ellipsis-h fs-11"></span> {% endcomment %}
+            </button>
+            {% comment %} <div class="dropdown-menu dropdown-menu-end border py-2" aria-labelledby="dropdown-trending-keywords"><a class="dropdown-item" href="#!">View</a><a class="dropdown-item" href="#!">Export</a>
+              <div class="dropdown-divider"></div><a class="dropdown-item text-danger" href="#!">Remove</a>
+            </div> {% endcomment %}
+          </div>
+        </div>
+        <div class="card-body pb-0">
+          <div id="newsCarousel" class="carousel slide mb-3" data-bs-ride="carousel" data-bs-interval="5000">
+            <div class="carousel-indicators">
+              {% for article in articles %}
+                <button type="button" data-bs-target="#newsCarousel" data-bs-slide-to="{{ forloop.counter0 }}" class="{% if forloop.first %}active{% endif %}" aria-label="Slide {{ forloop.counter }}"></button>
+              {% endfor %}
+            </div>
+            <div class="carousel-inner carousel-fade">
+              {% for article in articles %}
+              <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                <a href="{{ article.permalink_url }}" target="_blank" style="text-decoration: none; color: inherit;">
+                  <div class="row no-gutters">
+                    <div class="col-md-12 position-relative">
+                      {% if article.image_url %}
+                      <img src="{{ article.image_url }}" class="d-block w-100" alt="Post Image"
+                        style="height: 400px; object-fit: cover; opacity: 0.9; border-radius: 10px;" />
+                      {% else %}
+                      <img src="{% static 'images/SNCFI-logo.png' %}" class="d-block w-100" alt="Default Image"
+                        style="height: 380px; object-fit: cover; opacity: 0.9; border-radius: 5px;" />
+                      {% endif %}
+                      <div class="carousel-caption d-block text-white p-3">
+                        <div class="d-flex align-items-center mb-2">
+                          {% if article.profile_picture_url %}
+                          <img src="{{ article.profile_picture_url }}" alt="Profile Picture" class="img-fluid"
+                            style="width: 30px; height: 30px; border-radius: 50%; margin-right: 10px;" />
+                          {% endif %}
+                          <div>
+                            <small class="font-weight-bold">{{ article.posted_by }}</small>
+                            <small class="text-muted d-none d-sm-inline">&bull; {{ article.created_time }}</small>
+                          </div>
+                        </div>
+                        <h4 class="font-weight-bold text-light">{{ article.message }}</h4>
+                      </div>
+                    </div>
+                  </div>
+                </a>
+              </div>
+              {% endfor %}
+            </div>            
+            <button class="carousel-control-prev" type="button" data-bs-target="#newsCarousel" data-bs-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#newsCarousel" data-bs-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Next</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-lg-6 col-xxl-7">
+      <div class="card" id="StudentPopulationChart">
+        <div class="card-header d-flex flex-between-center bg-body-tertiary py-2">
+          <h6 class="mb-0">Student Population Per Course</h6>
+          <div class="dropdown font-sans-serif btn-reveal-trigger">
+            <button class="btn btn-link text-600 btn-sm dropdown-toggle dropdown-caret-none btn-reveal" type="button" id="student-population" data-bs-toggle="dropdown" data-boundary="viewport" aria-haspopup="true" aria-expanded="false">
+              {% comment %} <span class="fas fa-ellipsis-h fs-11"></span> {% endcomment %}
+            </button>
+            {% comment %} <div class="dropdown-menu dropdown-menu-end border py-2" aria-labelledby="student-population">
+              <a class="dropdown-item" href="#">View</a>
+              <a class="dropdown-item" href="#">Export</a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item text-danger" href="#">Remove</a>
+            </div> {% endcomment %}
+          </div>
+        </div>
+        <div class="card-body pb-0 position-relative">
+          <div id="student-population-chart" style="height: 350px;"></div>
+        </div>
+      </div>
+    </div>    
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        var chartDom = document.getElementById('student-population-chart');
+        var myChart = echarts.init(chartDom);
+      
+        fetch('/api/student-per-course/')  // Django API endpoint
+          .then(response => response.json())
+          .then(data => {
+            var years = ['1st Year College', '2nd Year College', '3rd Year College', '4th Year College'];
+            var courses = Object.keys(data);  // Get course names
+            var courseShortNames = courses.map(course => data[course].short_name);
+      
+            // Define color scheme
+            var colors = {
+              "1st Year College": "#4CAF50",
+              "2nd Year College": "#FF5733",
+              "3rd Year College": "#3498DB",
+              "4th Year College": "#F1C40F"
+            };
+      
+            // Organize data for each year level
+            var timelineData = years.map(year => ({
+              title: { 
+                text: `${year} Student Population`,
+                left: 'center',
+                textStyle: { fontSize: 16, fontWeight: 'bold' } // Better font for title
+              },
+              series: [
+                {
+                  name: year,
+                  type: 'bar',
+                  barWidth: '50%',  // Adjust bar width for better visibility
+                  data: courses.map(course => data[course].year_levels[year] || 0),  // Fill missing values with 0
+                  itemStyle: { color: colors[year] },
+                  label: {
+                    show: true,
+                    position: 'top',
+                    color: '#333', // Display numbers on top of bars
+                    fontSize: 12
+                  }
+                }
+              ]
+            }));
+      
+            var option = {
+              baseOption: {
+                timeline: {
+                  axisType: 'category',
+                  autoPlay: false, // Prevent auto-slide so users control navigation
+                  playInterval: 2500,
+                  data: years
+                },
+                tooltip: {
+                  trigger: 'axis',
+                  axisPointer: { type: 'shadow' },
+                  backgroundColor: 'rgba(0,0,0,0.8)',
+                  textStyle: { color: '#fff' }
+                },
+                legend: {
+                  data: years,
+                  top: 20,
+                  left: 'center',
+                  textStyle: { color: '#6c757d', fontSize: 12 }
+                },
+                xAxis: {
+                  type: 'category',
+                  data: courseShortNames,  // Courses on X-axis
+                  axisLabel: { 
+                    color: '#6c757d',
+                    fontSize: 12,
+                    interval: 0,  // Prevent skipping labels
+                    rotate: 25  // Adjust rotation for better spacing
+                  },
+                  axisTick: { alignWithLabel: true }
+                },
+                yAxis: {
+                  type: 'value',
+                  axisLabel: { color: '#6c757d', fontSize: 12 },
+                  splitLine: { lineStyle: { color: '#e0e0e0' } }
+                },
+                grid: {
+                  left: '5%', right: '5%', bottom: '15%', containLabel: true  // Adjust grid for better spacing
+                },
+                series: []
+              },
+              options: timelineData
+            };
+      
+            myChart.setOption(option);
+          })
+          .catch(error => console.error("Error loading student population data:", error));
+      });
+      
+    </script>
+
+    <div class="col-lg-6 col-xxl-5">
+      <div class="card h-100">
+        <div class="card-header bg-body-tertiary d-flex flex-between-center py-2">
+          <h6 class="mb-0">Student Population Per Subject</h6>
+          <div class="dropdown font-sans-serif btn-reveal-trigger">
+            <button class="btn btn-link text-600 btn-sm dropdown-toggle dropdown-caret-none btn-reveal" type="button" id="student-population" data-bs-toggle="dropdown" data-boundary="viewport" aria-haspopup="true" aria-expanded="false">
+              {% comment %} <span class="fas fa-ellipsis-h fs-11"></span> {% endcomment %}
+            </button>
+            {% comment %} <div class="dropdown-menu dropdown-menu-end border py-2" aria-labelledby="student-population">
+              <a class="dropdown-item" href="#">View</a>
+              <a class="dropdown-item" href="#">Export</a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item text-danger" href="#">Remove</a>
+            </div> {% endcomment %}
+          </div>
+        </div>
+        <div class="card-body pb-0 position-relative">
+          <div id="student-population-subject-chart" style="height: 350px;" <div class="echart-bar-timeline-chart-example"></div>
+        </div>
+      </div>
+
+      <script>
+        document.addEventListener("DOMContentLoaded", function () {
+          var chartDom = document.getElementById('student-population-subject-chart');
+          var myChart = echarts.init(chartDom);
+        
+          fetch('/api/student-per-subject/')  // Update with the correct Django API URL
+            .then(response => response.json())
+            .then(data => {
+              var subjects = data.subjects;  // Extract subject names
+              var studentCounts = data.student_counts;  // Extract student count per subject
+        
+              // Define an array of different colors
+              var colors = [
+                "#4CAF50", "#FF5733", "#3498DB", "#F1C40F", "#9B59B6",
+                "#E74C3C", "#1ABC9C", "#2ECC71", "#F39C12", "#D35400"
+              ];
+        
+              // Ensure each subject gets a unique color
+              var colorMapping = subjects.reduce((acc, subject, index) => {
+                acc[subject] = colors[index % colors.length];
+                return acc;
+              }, {});
+        
+              var option = {
+                tooltip: {
+                  trigger: 'axis',
+                  axisPointer: { type: 'shadow' }
+                },
+                legend: {
+                  data: subjects,
+                  textStyle: { color: '#6c757d' }
+                },
+                xAxis: {
+                  type: 'category',
+                  data: subjects,  // Set subjects on X-axis
+                  axisLabel: { color: '#6c757d', rotate: 30 } // Rotates labels to prevent overlap
+                },
+                yAxis: {
+                  type: 'value',
+                  axisLabel: { color: '#6c757d' },
+                  splitLine: { lineStyle: { color: '#e0e0e0' } }
+                },
+                series: [{
+                  name: 'Students',
+                  type: 'bar',
+                  data: studentCounts,  // Assign student counts to the bars
+                  itemStyle: {
+                    color: function (params) {
+                      return colorMapping[subjects[params.dataIndex]];
+                    }
+                  }
+                }]
+              };
+        
+              myChart.setOption(option);
+            })
+            .catch(error => console.error("Error loading student population data:", error));
+        });                
+      </script>
+    </div>
+  </div>
+  <div class="row g-3">
+    <div class="col-lg-6 col-xxl-6">
+      <div class="card h-100">
+        <div class="card-header bg-body-tertiary d-flex flex-between-center py-2">
+          <h6 class="mb-0">
+            {% if not is_student %} Feedback Score Per Subject {% endif %}
+            {% if is_student %} Your Activities Per Subject {% endif %}
+        </h6>
+          <div class="dropdown font-sans-serif btn-reveal-trigger">
+            <button class="btn btn-link text-600 btn-sm dropdown-toggle dropdown-caret-none btn-reveal" type="button" id="feedback-score" data-bs-toggle="dropdown" data-boundary="viewport" aria-haspopup="true" aria-expanded="false">
+              {% comment %} <span class="fas fa-ellipsis-h fs-11"></span> {% endcomment %}
+            </button>
+            <div class="dropdown-menu dropdown-menu-end border py-2" aria-labelledby="feedback-score">
+              {% comment %} <a class="dropdown-item" href="#">View</a>
+              <a class="dropdown-item" href="#">Export</a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item text-danger" href="#">Remove</a> {% endcomment %}
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- ✅ Title for the Activities Chart -->
+          {% if is_student %}
+          <div id="activity-chart" style="height: 400px;"></div>
+          {% endif %}
+          
+          <!-- ✅ Title for the Teacher Feedback Chart -->
+          {% if not is_student %}
+          <div id="feedback-score-chart" style="height: 400px;"></div>
+          {% endif %}
+      </div>
+      </div>
+    </div>    
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        let chartDom = document.getElementById('feedback-score-chart');
+    
+        if (!chartDom) {
+            console.log("DEBUG: #feedback-score-chart not found. Exiting script.");
+            return;
+        }
+    
+        fetch('/api/get_all_teachers_average_ratings_json/')  
+            .then(response => response.json())
+            .then(data => {
+                console.log("DEBUG: Teacher Feedback API Response:", data);
+    
+                var myChart = echarts.init(chartDom);
+    
+                // Process API data into chart format
+                var chartData = data.ratings.map(item => ({
+                    value: item.average_rating,
+                    name: `${item.subject_name} (${item.teacher_name})`
+                }));
+    
+                let option = {
+                    title: {
+                        text: "Teacher Feedback Score", // ✅ Add Chart Title Here
+                        left: "center",
+                        textStyle: {
+                            fontSize: 18,
+                            fontWeight: "bold",
+                            color: "#2c3e50"
+                        }
+                    },
+                    tooltip: {
+                        trigger: 'item'
+                    },
+                    series: [
+                        {
+                            name: 'Feedback Score',
+                            type: 'pie',
+                            radius: ['30%', '70%'],
+                            center: ['50%', '50%'],
+                            label: {
+                                position: 'outside',
+                                alignTo: 'labelLine',
+                                formatter: '{b}: {c}',
+                                color: '#6c757d'
+                            },
+                            labelLine: {
+                                show: true,
+                                length: 8,
+                                length2: 15,
+                                smooth: true
+                            },
+                            data: chartData,  // Use the API data
+                            emphasis: {
+                                itemStyle: {
+                                    shadowBlur: 10,
+                                    shadowOffsetX: 0,
+                                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+                                }
+                            }
+                        }
+                    ]
+                };
+    
+                console.log("DEBUG: Setting Teacher Feedback Chart options:", option);
+                myChart.setOption(option);
+            })
+            .catch(error => console.error('Error fetching ratings data:', error));
+    });
+    
+    </script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+          let chartDom = document.getElementById('activity-chart');
+    
+          // ✅ Check if the chart container exists before running script
+          if (!chartDom) {
+              console.log("DEBUG: #activity-chart not found. Exiting script.");
+              return;
+          }
+    
+          // ✅ Fetch the activities per subject from the new API
+          fetch('/api/student_activities_json/')
+              .then(response => response.json())
+              .then(data => {
+                  console.log("DEBUG: Student Activities API Response:", data);
+    
+                  if (!Array.isArray(data) || data.length === 0) {
+                      console.log("DEBUG: No activities found.");
+                      chartDom.innerHTML = "<p style='text-align:center; color:#6c757d; font-size:16px;'>No activity data available.</p>";
+                      return;
+                  }
+    
+                  let subjectLabels = data.map(subject => subject.subject__subject_name);
+                  let activityCounts = data.map(subject => subject.activity_count);
+    
+                  console.log("DEBUG: Subject Labels:", subjectLabels);
+                  console.log("DEBUG: Activity Counts:", activityCounts);
+    
+                  var myChart = echarts.init(chartDom);
+    
+                  let option = {
+                      title: {
+                          text: "Your Activities Per Subject",
+                          left: "center",
+                          textStyle: {
+                              fontSize: 18,
+                              fontWeight: "bold",
+                              color: "#2c3e50"
+                          }
+                      },
+                      tooltip: { trigger: 'axis' },
+                      xAxis: {
+                          type: 'category',
+                          data: subjectLabels
+                      },
+                      yAxis: {
+                          type: 'value',
+                          min: 0
+                      },
+                      series: [
+                          {
+                              name: 'Activity Count',
+                              type: 'bar',
+                              data: activityCounts,
+                              color: '#2c7be5'
+                          }
+                      ]
+                  };
+    
+                  console.log("DEBUG: Setting chart options:", option);
+                  myChart.setOption(option);
+              })
+              .catch(error => console.error('Error fetching student activity data:', error));
+      });
+    </script>
+    
+    
+
+    <div class="col-lg-6 col-xxl-6">
+      <div class="card h-100">
+        <div class="card-header bg-body-tertiary d-flex flex-between-center py-2">
+          <h6 class="mb-0">Active Students (Last 7 Days)</h6>
+          <div class="dropdown font-sans-serif btn-reveal-trigger">
+            <button class="btn btn-link text-600 btn-sm dropdown-toggle dropdown-caret-none btn-reveal" type="button" id="active-students" data-bs-toggle="dropdown" data-boundary="viewport" aria-haspopup="true" aria-expanded="false">
+              {% comment %} <span class="fas fa-ellipsis-h fs-11"></span> {% endcomment %}
+            </button>
+            <div class="dropdown-menu dropdown-menu-end border py-2" aria-labelledby="active-students">
+              {% comment %} <a class="dropdown-item" href="#">View</a>
+              <a class="dropdown-item" href="#">Export</a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item text-danger" href="#">Remove</a> {% endcomment %}
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="active-students-chart" style="height: 350px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        fetch('/api/student_last_login_list/')
+          .then(response => response.json())
+          .then(data => {
+            var chartDom = document.getElementById('active-students-chart');
+            var myChart = echarts.init(chartDom);
+    
+            var option = {
+              tooltip: {
+                trigger: 'axis',
+                axisPointer: { type: 'cross' }
+              },
+              xAxis: {
+                type: 'category',
+                data: data.daily_logins.labels, // Use API labels
+                axisLabel: { color: '#6c757d' }
+              },
+              yAxis: {
+                type: 'value',
+                axisLabel: { color: '#6c757d' },
+                splitLine: { lineStyle: { color: '#e0e0e0' } }
+              },
+              series: [{
+                name: 'Daily Logins',
+                type: 'line',
+                smooth: true,
+                data: data.daily_logins.data, // Use API login counts
+                lineStyle: { width: 2, color: 'rgba(255, 87, 34, 1)' },
+                areaStyle: {
+                  color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                    { offset: 0, color: 'rgba(255, 87, 34, 0.6)' },
+                    { offset: 1, color: 'rgba(255, 87, 34, 0.1)' }
+                  ])
+                },
+                itemStyle: { color: 'rgba(255, 87, 34, 1)' }
+              }]
+            };
+    
+            myChart.setOption(option);
+          })
+          .catch(error => console.error('Error fetching login data:', error));
+      });
+    </script>    
+  </div>
+
+{% endblock %}

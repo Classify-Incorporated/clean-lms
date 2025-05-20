@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Activity Logs
+{% endblock %}
+
+{% block content %}
+  <!-- Content Header (Page header) -->
+
+  <div class="row mb-2">
+    <div class="col-sm-6">
+      <h3 class="m-0">Activity Logs</h3>
+    </div>
+    <!-- /.col -->
+  </div>
+  <!-- /.row -->
+
+  <!-- Main content -->
+
+  <div class="activity-log">
+    {% for log in latest_logs %}
+      <div class="card mb-3 shadow-sm">
+        <div class="card-body d-flex align-items-start flex-column flex-md-row">
+          <div class="log-icon me-3 d-flex align-items-center">
+            {% if 'new activity' in log.message|lower %}
+              <i class="fas fa-edit text-primary" style="font-size: 40px;">&nbsp;</i> <!-- Edit icon for new activity -->
+            {% elif 'new module' in log.message|lower %}
+              <i class="fas fa-book text-primary" style="font-size: 40px;">&nbsp;</i> <!-- Book icon for new module -->
+            {% else %}
+              <i class="fas fa-info-circle text-secondary" style="font-size: 40px;">&nbsp;</i> <!-- Default icon for other types -->
+            {% endif %}
+          </div>
+          <div class="log-content w-100 mt-3 mt-md-0">
+            <div class="d-flex justify-content-between flex-column flex-md-row">
+              <div class="log-date small">{{ log.created_at|date:'d M Y, h:i A' }}</div>
+              <div class="badge bg-success text-white mt-2 mt-md-0">{{ log.subject }}</div> <!-- Use badge to highlight subject -->
+            </div>
+            <p class="mb-0 mt-2">{{ log.message }}</p>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- /.content -->
+{% endblock %}
+
+{% block extra_css %}
+  <style>
+    body {
+      background-color: #f0f2f5;
+    }
+
+    .container {
+      max-width: 100%;
+      padding: 0 15px;
+    }
+
+    .card {
+      border: none;
+      border-radius: 8px;
+    }
+
+    .log-icon {
+      font-size: 48px;
+      color: #007bff;
+      height: 100%;
+      display: flex;
+      align-items: center;
+    }
+
+    .log-content p {
+      font-size: 15px;
+      color: #333;
+    }
+
+    .log-content .badge {
+      font-size: 13px;
+      padding: 0.4em 0.7em;
+    }
+
+    .card:hover {
+      background-color: #f8f9fa;
+      transition: background-color 0.3s ease;
+    }
+
+    /* Add responsiveness for small devices */
+    @media (max-width: 768px) {
+      .card-body {
+        flex-direction: column; /* Stack icon and content vertically on small screens */
+      }
+
+      .log-icon {
+        font-size: 36px;
+      }
+
+      .log-content .badge {
+        font-size: 12px;
+        margin-top: 5px;
+      }
+    }
+  </style>
+{% endblock %}

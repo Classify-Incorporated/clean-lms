@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}School Information{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="card shadow">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">School Information</h5>
+    </div>
+   <div class="container mt-5">
+    <form method="POST">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="btn btn-primary mb-2">Submit</button>
+      <a href="{% url 'coil_school_list' %}" class="btn btn-secondary mb-2">Cancel</a>
+    </form>
+  </div>
+  </div>
+</div>
+{% endblock %}

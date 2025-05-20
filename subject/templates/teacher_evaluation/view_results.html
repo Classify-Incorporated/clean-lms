@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="container mt-4">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0 text-primary">Teacher Evaluation Results</h1>
+        <p class="text-muted">Summary of student feedback and ratings for the teacher's performance</p>
+      </div>
+    </div>
+
+    <!-- Average Ratings with Circular Progress -->
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">Average Ratings</h4>
+      </div>
+      <div class="card-body">
+        <p class="text-muted">Below are the average ratings based on student responses:</p>
+        <div class="row">
+          {% for question, avg_rating in average_ratings.items %}
+            <div class="col-md-4 text-center mb-3">
+              <div class="position-relative d-inline-block">
+                <svg width="100" height="100" class="circular-chart">
+                  <circle cx="50" cy="50" r="45" class="bg-circle"></circle>
+                  <circle cx="50" cy="50" r="45" class="progress-circle" stroke-dasharray="{{ avg_rating|floatformat:1 }} 100"></circle>
+                </svg>
+                <div class="position-absolute top-50 start-50 translate-middle text-secondary fw-bold">{{ avg_rating|floatformat:1 }}/5</div>
+              </div>
+              <p class="mt-2 fw-bold">{{ question }}</p>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Likert Scale Visualization -->
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">Liker Scale Ratings</h4>
+      </div>
+      <div class="card-body">
+        <p class="text-muted">Below are the distributions of responses for each evaluation criterion.</p>
+
+        {% if likert_data %}
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                <th>Question</th>
+                <th class="text-center">Strongly Disagree</th>
+                <th class="text-center">Disagree</th>
+                <th class="text-center">Neutral</th>
+                <th class="text-center">Agree</th>
+                <th class="text-center">Strongly Agree</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for question, data in likert_data.items %}
+                <tr>
+                  <td class="fw-bold">{{ question }}</td>
+                  {% for rating in data.ratings %}
+                    <td class="text-center">{{ rating.count }}</td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p class="text-muted">No evaluation data available yet.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Student Feedback Section -->
+    <div class="card shadow-sm border-0">
+      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">Student Feedback</h4>
+        <i class="fas fa-comments"></i>
+      </div>
+      <div class="card-body">
+        <p class="text-muted">Students provided the following comments regarding the teacher’s performance:</p>
+
+        {% if feedback_with_students %}
+          <div class="list-group">
+            {% for item in feedback_with_students %}
+              <div class="list-group-item border-0">
+                <blockquote class="blockquote">
+                  <p class="mt-2 text-muted">
+                    <i class="fas fa-quote-left text-primary"></i> {{ item.general_feedback }} <i class="fas fa-quote-right text-primary"></i>
+                  </p>
+                  {% if not is_teacher %}
+                    <footer class="blockquote-footer">{{ item.student__first_name }} {{ item.student__last_name }}</footer>
+                  {% endif %}
+                </blockquote>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="alert alert-light text-muted text-center">
+            <i class="fas fa-info-circle"></i> No feedback submitted yet.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* Circular Chart */
+    .circular-chart {
+      transform: rotate(-90deg);
+    }
+    .bg-circle {
+      fill: none;
+      stroke: #eee;
+      stroke-width: 8;
+    }
+    .progress-circle {
+      fill: none;
+      stroke: #4caf50;
+      stroke-width: 8;
+      stroke-dasharray: 0 100;
+      transition: stroke-dasharray 0.5s ease;
+    }
+  </style>
+{% endblock %}

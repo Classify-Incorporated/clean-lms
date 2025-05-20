@@ -1,0 +1,352 @@
+{% extends 'base.html' %}
+{% block title %}
+  Subjects
+{% endblock %}
+{% block content %}
+  <!-- Page Heading with LMS Icon -->
+
+     
+        <div class="d-flex align-items-center mb-3">
+          <i class="fas fa-book text-success" style="font-size: 2.0rem; margin-right: 10px;"></i>
+          <h1 class="text-left mb-0 display-10">
+            {% now 'Y' as current_year %}
+            {% if selected_semester %}
+              <h3 class="font-weight-bold">{{ selected_semester.semester_name }} - {{ current_year }}-{{ current_year|add:'1' }} Subjects</h3>
+            {% else %}
+              <h3 class="font-weight-bold">Subjects ({{ current_year }}-{{ current_year|add:'1' }})</h3>
+            {% endif %}
+          </h1>
+        </div>
+    
+
+
+    <!-- Main content -->
+    
+        <!-- DataTales Example -->
+        <div class="card shadow mb-4">
+          <div class="card-header py-3 bg-success">
+            {% if perms.subject.add_subject %}
+              <button class="btn btn-primary" id="openAddModalBtn">Add New Subject</button>
+              <button class="btn btn-info" id="openImportModalBtn">Import Subjects</button>
+            {% endif %}
+          </div>
+          <div class="card-body">
+            <div class="table-responsive scrollbar">
+              <table class="table mb-0 data-table table-hover table-bordered fs-10" data-datatables="data-datatables">
+                <thead class="bg-primary">
+                  <tr>
+                    <th>Subject Name</th>
+                    <th>Subject Short Name</th>
+                    <th>Subject Code</th>
+                    <th>Teacher Name</th>
+                    <th>Substitute Teacher Name</th>
+                    <th>Room Number</th>
+                    {% if perms.subject.view_subject and user_role != 'time keeper' %}
+                      <th>Action</th>
+                    {% endif %}
+                  </tr>
+                </thead>
+                <tbody class="text-center">
+                  {% for subject in subjects %}
+                    <tr>
+                      <td>{{ subject.subject_name }}</td>
+                      <td>{{ subject.subject_short_name }}</td>
+                      <td>{{ subject.subject_code }}</td>
+                      <td>{{ subject.assign_teacher.first_name }} {{ subject.assign_teacher.last_name }}</td>
+                      <td>{% if subject.substitute_teacher %}
+                        {{ subject.substitute_teacher.first_name }} {{ subject.substitute_teacher.last_name }}
+                      {% else %}
+                        --
+                      {% endif %}
+                    </td>
+                      <td>{{ subject.room_number|default:"--" }}</td>
+                      {% if perms.subject.view_subject and user_role != 'time keeper' %}
+                        <td>
+                          <div class="dropdown">
+                            <a type="button" id="dropdownMenuButton{{ subject.id }}" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                              <i class="fas fa-ellipsis-h"></i>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton{{ subject.id }}">
+                              {% if perms.subject.change_subject %}
+                              <a class="dropdown-item" href="javascript:void(0);" onclick="openEditModal({{ subject.id }});"><i class="fas fa-edit"></i> Update</a>              
+                              <a class="dropdown-item" href="javascript:void(0);" onclick="confirmDelete({{ subject.id }});"><i class="fas fa-trash"></i> Delete</a>             
+                              {% endif %}
+                              {% if request.user.profile.role.name|lower == "teacher" %}
+                                <a class="dropdown-item" href="{% url 'updateSubjectPhoto' subject.id %}">
+                                  <i class="fas fa-edit"></i> Update
+                                </a> 
+                              {% endif %}
+                            </div>
+                          </div>                          
+                        </td>
+                      {% endif %}
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+     
+
+  <!-- Add Subject Modal -->
+  {% include 'subject/createSubject.html' %}
+
+  <!-- Import Subjects Modal -->
+  <div id="importModal" class="custom-modal">
+    <div class="custom-modal-header">
+      <button class="close-btn" id="closeImportModalBtn"></button>
+      <h5>Import Subjects</h5>
+    </div>
+    <div class="custom-modal-body">
+      <form method="post" enctype="multipart/form-data" action="{% url 'import_subjects_and_schedules' %}">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="importFile">Choose CSV File:</label>
+          <input type="file" name="import_file" id="importFile" class="form-control" required />
+        </div>
+        <button type="submit" class="btn btn-primary mt-2">Upload</button>
+      </form>
+      <div class="mt-2">
+        <a href="{{ MEDIA_URL|add:'template/Import Subject Template.csv' }}" class="btn btn-sm btn-secondary" download>
+          Download Template here.
+        </a>        
+        <br>
+              <small>(Download the template above for guidance.)</small>     
+      </div>      
+    </div>
+  </div>
+  <div id="importModalBackdrop" class="custom-modal-backdrop"></div>
+
+  <!-- Edit Subject Modal -->
+  <div id="editModal" class="custom-modal">
+    <div class="custom-modal-header">
+      <button class="close-btn" id="closeEditModalBtn"></button>
+      <h5>Edit Subject</h5>
+    </div>
+    <div class="custom-modal-body" id="editModalBody">
+      <!-- The content will be loaded dynamically here -->
+    </div>
+  </div>
+  <div id="editModalBackdrop" class="custom-modal-backdrop"></div>
+
+
+  <!-- Custom Scripts for Modal and SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <script>
+    function toggleCoilHaliFields() {
+      const coilCheckboxes = document.querySelectorAll('.coil-input');
+      const haliCheckboxes = document.querySelectorAll('.hali-input');
+
+      const shouldShow = Array.from(coilCheckboxes).some(cb => cb.checked) ||
+                        Array.from(haliCheckboxes).some(cb => cb.checked);
+
+      document.querySelectorAll('.coil-hali-fields').forEach(field => {
+        field.classList.toggle('d-none', !shouldShow);
+      });
+    }
+
+    function attachCheckboxListeners() {
+      const coilCheckboxes = document.querySelectorAll('.coil-input');
+      const haliCheckboxes = document.querySelectorAll('.hali-input');
+
+      coilCheckboxes.forEach((coilCheckbox, index) => {
+        const haliCheckbox = haliCheckboxes[index];
+
+        if (!coilCheckbox._listenerAttached) {
+          coilCheckbox.addEventListener('change', () => {
+            if (coilCheckbox.checked && haliCheckbox) haliCheckbox.checked = false;
+            toggleCoilHaliFields();
+          });
+          coilCheckbox._listenerAttached = true;
+        }
+
+        if (!haliCheckbox._listenerAttached) {
+          haliCheckbox.addEventListener('change', () => {
+            if (haliCheckbox.checked && coilCheckbox) coilCheckbox.checked = false;
+            toggleCoilHaliFields();
+          });
+          haliCheckbox._listenerAttached = true;
+        }
+      });
+
+      toggleCoilHaliFields(); // Ensure visibility is updated
+    }
+
+    // Initial setup
+    document.addEventListener('DOMContentLoaded', attachCheckboxListeners);
+
+    // MutationObserver to watch for dynamically added checkboxes
+    const observer = new MutationObserver(() => {
+      attachCheckboxListeners();
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+    toggleCoilHaliFields();
+  </script>
+
+  <script>
+    // Script to open the Add Subject modal
+    document.getElementById('openAddModalBtn').addEventListener('click', function () {
+      document.getElementById('customModal').classList.add('show')
+      document.getElementById('customModalBackdrop').classList.add('show')
+    })
+    
+    document.getElementById('openImportModalBtn').addEventListener('click', function () {
+      document.getElementById('importModal').classList.add('show')
+      document.getElementById('importModalBackdrop').classList.add('show')
+    })
+    
+    document.getElementById('closeImportModalBtn').addEventListener('click', function () {
+      document.getElementById('importModal').classList.remove('show')
+      document.getElementById('importModalBackdrop').classList.remove('show')
+    })
+    
+    // Script to close the Add Subject modal
+    document.getElementById('closeModalBtn').addEventListener('click', function () {
+      document.getElementById('customModal').classList.remove('show')
+      document.getElementById('customModalBackdrop').classList.remove('show')
+    })
+    
+    // Function to open the Edit Subject modal and load the content dynamically
+    function openEditModal(subjectId) {
+      fetch(`/updateSubject/${subjectId}/`)
+        .then((response) => response.text())
+        .then((html) => {
+          document.getElementById('editModalBody').innerHTML = html
+          document.getElementById('editModal').classList.add('show')
+          document.getElementById('editModalBackdrop').classList.add('show')
+    
+          // Initialize or refresh selectpicker after loading the modal content
+          $('.selectpicker').selectpicker('refresh')
+
+          requestAnimationFrame(() => {
+          //initCoilHaliToggle();  // Now it will read `checked` state correctly
+        });
+        });
+    }
+    
+    // Script to close the Edit Subject modal
+    document.getElementById('closeEditModalBtn').addEventListener('click', function () {
+      document.getElementById('editModal').classList.remove('show')
+      document.getElementById('editModalBackdrop').classList.remove('show')
+    })
+
+	function getCSRFToken() {
+      return document.querySelector('[name=csrfmiddlewaretoken]').value;
+  }      
+    // SweetAlert2 confirmation before deleting a subject
+    function confirmDelete(subjectId) {
+      Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          const formData = new FormData()
+          formData.append('csrfmiddlewaretoken', '{{ csrf_token }}')
+    
+          fetch(`/deleteSubject/${subjectId}/`, {
+            method: 'POST',
+headers: {
+              'X-CSRFToken': getCSRFToken(),  // Ensure CSRF token is sent in headers
+            },
+            body: formData
+          })
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error('Network response was not ok.')
+              }
+              return response.json()
+            })
+            .then((data) => {
+              if (data.status === 'success') {
+                Swal.fire('Deleted!', 'The subject has been deleted.', 'success').then(() => {
+                  location.reload() // Reload the page to reflect changes
+                })
+              } else if (data.status === 'error' && data.error_type === 'ProtectedError') {
+                // Catching the ProtectedError and showing it in SweetAlert2
+                Swal.fire({
+                  title: 'Error',
+                  text: data.message,
+                  icon: 'error',
+                  confirmButtonText: 'OK'
+                })
+              } else {
+                Swal.fire('Error', 'There was an error deleting the subject.', 'error')
+              }
+            })
+            .catch((error) => {
+              console.error('Error:', error) // Log the error details to the console
+              Swal.fire('Error', 'This subject cannot be deleted because it is referenced in other records.', 'error')
+            })
+        }
+      })
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      const assignTeacherSelect = document.getElementById("id_assign_teacher");
+      const substituteTeacherSelect = document.getElementById("id_substitute_teacher");
+  
+      function updateSubstituteTeachers(selectedTeacherId) {
+          if (!selectedTeacherId) {
+              console.log("No teacher selected, clearing substitute teacher dropdown.");
+              substituteTeacherSelect.innerHTML = "";
+              return;
+          }
+  
+          console.log(`Fetching substitute teachers, excluding ID: ${selectedTeacherId}`);
+  
+          fetch(`/filter_substitute_teacher/${selectedTeacherId}/`)
+              .then(response => response.json())
+              .then(data => {
+                  console.log("Filtered Substitute Teachers Response:", data); // Debugging log
+                  substituteTeacherSelect.innerHTML = "";
+  
+                  const emptyOption = document.createElement("option");
+                  emptyOption.value = "";
+                  emptyOption.textContent = "Select Substitute Teacher";
+                  substituteTeacherSelect.appendChild(emptyOption);
+  
+                  if (data.teachers.length === 0) {
+                      console.log("No available substitute teachers.");
+                      const noOption = document.createElement("option");
+                      noOption.value = "";
+                      noOption.textContent = "No available substitute teachers";
+                      noOption.disabled = true;
+                      substituteTeacherSelect.appendChild(noOption);
+                  } else {
+                      data.teachers.forEach(teacher => {
+                          const option = document.createElement("option");
+                          option.value = teacher.id;
+                          option.textContent = teacher.name;
+                          substituteTeacherSelect.appendChild(option);
+                      });
+                  }
+  
+                  if ($('.select2').length) {
+                      console.log("Refreshing Select2");
+                      $('.select2').select2();
+                  }
+              })
+              .catch(error => console.error("Error fetching substitute teachers:", error));
+      }
+  
+      assignTeacherSelect.addEventListener("change", function () {
+          const selectedTeacherId = this.value;
+          updateSubstituteTeachers(selectedTeacherId);
+      });
+  });  
+  
+    
+  </script>
+
+{% endblock %}

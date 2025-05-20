@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+  Gale Library
+{% endblock %}
+
+{% block content %}
+  <div class="container my-5">
+    <div class="card shadow-sm">
+      <div class="card-header border-bottom">
+        <h2 class="mb-0 fw-bold">Online Databases</h2>
+        <small class="text-muted">Access Credentials to the Online Databases</small>
+      </div>
+      <div class="card-body">
+        <p class="fw-bold fs-8 mb-4">Look for reliable articles and ebooks through the subscribed online databases.</p>
+
+        <!-- Gale Library Section -->
+        <div class="mb-4">
+          <div class="d-flex align-items-center mb-3">
+            <!-- Semi-rounded Gale Logo -->
+            <img src="{% static 'assets/img/gale.png' %}" alt="Gale Logo" class="me-3 rounded-3" style="height: 50px;" />
+            <h5 class="fw-bold mb-0">Gale Research Complete</h5>
+          </div>
+
+          <div class="mb-2">
+            <i class="fas fa-link text-primary me-2"></i>
+            <a href="https://link.gale.com/apps/menu?u=phhccci" target="_blank" class="text-decoration-none">Visit Gale Research Portal</a>
+          </div>
+
+          <div class="alert alert-info mt-3 d-flex align-items-center" role="alert">
+            <i class="fas fa-info-circle me-2"></i>
+            <div>
+              To access the database, click the link above and log in using your <strong>official school email address</strong>.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

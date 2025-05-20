@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+  Inbox
+{% endblock %}
+{% block content %}
+  <div class="card card-chat overflow-hidden">
+    <div class="card-body d-flex p-0 h-100">
+      <div class="chat-sidebar">
+        <div class="contacts-list scrollbar-overlay">
+          <div class="nav nav-tabs border-0 flex-column" role="tablist" aria-orientation="vertical">
+            <div class="hover-actions-trigger chat-contact nav-item active" role="tab" id="chat-link-0" data-bs-toggle="tab" data-bs-target="#chat-0" aria-controls="chat-0" aria-selected="true">
+              <div class="d-md-none d-lg-block">
+                <div class="dropdown dropdown-active-trigger dropdown-chat">
+                  <button class="hover-actions btn btn-link btn-sm text-400 dropdown-caret-none dropdown-toggle end-0 fs-9 mt-4 me-1 z-1 pb-2 mb-n2" type="button" data-boundary="viewport" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="fas fa-cog" data-fa-transform="shrink-3 down-4"></span></button>
+                  <div class="dropdown-menu dropdown-menu-end border py-2 rounded-2">
+                    <a class="dropdown-item" href="#!">Mute</a>
+                    <div class="dropdown-divider"></div><a class="dropdown-item" href="#!">Archive</a><a class="dropdown-item text-danger" href="#!">Delete</a>
+                    <div class="dropdown-divider"></div><a class="dropdown-item" href="#!">Mark as Unread</a><a class="dropdown-item" href="#!">Something's Wrong</a><a class="dropdown-item" href="#!">Ignore Messsages</a><a class="dropdown-item" href="#!">Block Messages</a>
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex p-3">
+                <div class="avatar avatar-xl status-online">
+                  <img class="rounded-circle" src="../assets/img/team/2.jpg" alt="" />
+                </div>
+                <div class="flex-1 chat-contact-body ms-2 d-md-none d-lg-block">
+                  <div class="d-flex justify-content-between">
+                    <h6 class="mb-0 chat-contact-title">Antony Hopkins</h6><span class="message-time fs-11">Tue</span>
+                  </div>
+                  <div class="min-w-0">
+                    <div class="chat-contact-content pe-3">Antony sent 6 photos</div>
+                    <div class="position-absolute bottom-0 end-0 hover-hide"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="hover-actions-trigger chat-contact nav-item" role="tab" id="chat-link-1" data-bs-toggle="tab" data-bs-target="#chat-1" aria-controls="chat-1" aria-selected="false">
+              <div class="d-md-none d-lg-block">
+                <div class="dropdown dropdown-active-trigger dropdown-chat">
+                  <button class="hover-actions btn btn-link btn-sm text-400 dropdown-caret-none dropdown-toggle end-0 fs-9 mt-4 me-1 z-1 pb-2 mb-n2" type="button" data-boundary="viewport" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="fas fa-cog" data-fa-transform="shrink-3 down-4"></span></button>
+                  <div class="dropdown-menu dropdown-menu-end border py-2 rounded-2">
+                    <a class="dropdown-item" href="#!">Mute</a>
+                    <div class="dropdown-divider"></div><a class="dropdown-item" href="#!">Archive</a><a class="dropdown-item text-danger" href="#!">Delete</a>
+                    <div class="dropdown-divider"></div><a class="dropdown-item" href="#!">Mark as Unread</a><a class="dropdown-item" href="#!">Something's Wrong</a><a class="dropdown-item" href="#!">Ignore Messsages</a><a class="dropdown-item" href="#!">Block Messages</a>
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex p-3">
+                <div class="avatar avatar-xl">
+                  <div class="rounded-circle overflow-hidden h-100 d-flex">
+                    <div class="w-50 border-end">
+                      <img src="../assets/img/team/1.jpg" alt="" />
+                    </div>
+                    <div class="w-50 d-flex flex-column">
+                      <img class="h-50 border-bottom" src="../assets/img/team/2.jpg" alt="" /><img class="h-50" src="../assets/img/team/3.jpg" alt="" />
+                    </div>
+                  </div>
+                </div>
+                <div class="flex-1 chat-contact-body ms-2 d-md-none d-lg-block">
+                  <div class="d-flex justify-content-between">
+                    <h6 class="mb-0 chat-contact-title">Avengers</h6><span class="message-time fs-11">Sun</span>
+                  </div>
+                  <div class="min-w-0">
+                    <div class="chat-contact-content pe-3">
+                      Bucky: <a href="#!" class="text-primary">@Emma</a> What do you think about the plan?
+                    </div>
+                    <div class="position-absolute bottom-0 end-0 hover-hide">
+                      <span class="fas fa-check text-success" data-fa-transform="shrink-5 down-4"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="hover-actions-trigger chat-contact nav-item" role="tab" id="chat-link-2" data-bs-toggle="tab" data-bs-target="#chat-2" aria-controls="chat-2" aria-selected="false">
+              <div class="d-md-none d-lg-block">
+                <div class="dropdown dropdown-active-trigger dropdown-chat">
+                  <button class="hover-actions btn btn-link btn-sm text-400 dropdown-caret-none dropdown-toggle end-0 fs-9 mt-4 me-1 z-1 pb-2 mb-n2" type="button" data-boundary="viewport" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="fas fa-cog" data-fa-transform="shrink-3 down-4"></span></button>
+                  <div class="dropdown-menu dropdown-menu-end border py-2 rounded-2">
+                    <a class="dropdown-item" href="#!">Mute</a>
+                    <div class="dropdown-divider"></div><a class="dropdown-item" href="#!">Archive</a><a class="dropdown-item text-danger" href="#!">Delete</a>
+                    <div class="dropdown-divider"></div><a class="dropdown-item" href="#!">Mark as Unread</a><a class="dropdown-item" href="#!">Something's Wrong</a><a class="dropdown-item" href="#!">Ignore Messsages</a><a class="dropdown-item" href="#!">Block Messages</a>
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex p-3">
+                <div class="avatar avatar-xl">
+                  <img class="rounded-circle" src="../assets/img/team/1.jpg" alt="" />
+                </div>
+                <div class="flex-1 chat-contact-body ms-2 d-md-none d-lg-block">
+                  <div class="d-flex justify-content-between">
+                    <h6 class="mb-0 chat-contact-title">Emma Watson</h6><span class="message-time fs-11">Sun</span>
+                  </div>
+                  <div class="min-w-0">
+                    <div class="chat-contact-content pe-3">You: 🙂</div>
+                    <div class="position-absolute bottom-0 end-0 hover-hide">
+                      <span class="fas fa-check text-success" data-fa-transform="shrink-5 down-4"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <form class="contacts-search-wrapper">
+          <div class="form-group mb-0 position-relative d-md-none d-lg-block w-100 h-100">
+            <input class="form-control form-control-sm chat-contacts-search border-0 h-100" type="text" placeholder="Search contacts ..." /><span class="fas fa-search contacts-search-icon"></span>
+          </div>
+          <button class="btn btn-sm btn-transparent d-none d-md-inline-block d-lg-none"><span class="fas fa-search fs-10"></span></button>
+        </form>
+      </div>
+      <div class="tab-content card-chat-content">
+        <div class="tab-pane card-chat-pane active" id="chat-0" role="tabpanel" aria-labelledby="chat-link-0">
+          <div class="chat-content-header">
+            <div class="row flex-between-center">
+              <div class="col-6 col-sm-8 d-flex align-items-center">
+                <a class="pe-3 text-700 d-md-none contacts-list-show" href="#!"><div class="fas fa-chevron-left"></div></a>
+                <div class="min-w-0">
+                  <h5 class="mb-0 text-truncate fs-9">Antony Hopkins</h5>
+                  <div class="fs-11 text-400">Active On Chat</div>
+                </div>
+              </div>
+              <div class="col-auto">
+                <button class="btn btn-sm btn-falcon-primary me-2" type="button" data-index="0" data-bs-toggle="tooltip" data-bs-placement="top" title="Start a Call"><span class="fas fa-phone"></span></button>
+                <button class="btn btn-sm btn-falcon-primary me-2" type="button" data-index="0" data-bs-toggle="tooltip" data-bs-placement="top" title="Start a Video Call"><span class="fas fa-video"></span></button>
+                <button class="btn btn-sm btn-falcon-primary btn-chat-info" type="button" data-index="0" data-bs-toggle="tooltip" data-bs-placement="top" title="Conversation Information"><span class="fas fa-info"></span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-pane card-chat-pane" id="chat-1" role="tabpanel" aria-labelledby="chat-link-1">
+          <div class="chat-content-header">
+            <div class="row flex-between-center">
+              <div class="col-6 col-sm-8 d-flex align-items-center">
+                <a class="pe-3 text-700 d-md-none contacts-list-show" href="#!"><div class="fas fa-chevron-left"></div></a>
+                <div class="min-w-0">
+                  <h5 class="mb-0 text-truncate fs-9">Avengers</h5>
+                  <div class="fs-11 text-400">Active 7h ago</div>
+                </div>
+              </div>
+              <div class="col-auto">
+                <button class="btn btn-sm btn-falcon-primary me-2" type="button" data-index="1" data-bs-toggle="tooltip" data-bs-placement="top" title="Start a Call"><span class="fas fa-phone"></span></button>
+                <button class="btn btn-sm btn-falcon-primary me-2" type="button" data-index="1" data-bs-toggle="tooltip" data-bs-placement="top" title="Start a Video Call"><span class="fas fa-video"></span></button>
+                <button class="btn btn-sm btn-falcon-primary btn-chat-info" type="button" data-index="1" data-bs-toggle="tooltip" data-bs-placement="top" title="Conversation Information"><span class="fas fa-info"></span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-pane card-chat-pane" id="chat-2" role="tabpanel" aria-labelledby="chat-link-2">
+          <div class="chat-content-header">
+            <div class="row flex-between-center">
+              <div class="col-6 col-sm-8 d-flex align-items-center">
+                <a class="pe-3 text-700 d-md-none contacts-list-show" href="#!"><div class="fas fa-chevron-left"></div></a>
+                <div class="min-w-0">
+                  <h5 class="mb-0 text-truncate fs-9">Emma Watson</h5>
+                  <div class="fs-11 text-400">Active 7h ago</div>
+                </div>
+              </div>
+              <div class="col-auto">
+                <button class="btn btn-sm btn-falcon-primary me-2" type="button" data-index="2" data-bs-toggle="tooltip" data-bs-placement="top" title="Start a Call"><span class="fas fa-phone"></span></button>
+                <button class="btn btn-sm btn-falcon-primary me-2" type="button" data-index="2" data-bs-toggle="tooltip" data-bs-placement="top" title="Start a Video Call"><span class="fas fa-video"></span></button>
+                <button class="btn btn-sm btn-falcon-primary btn-chat-info" type="button" data-index="2" data-bs-toggle="tooltip" data-bs-placement="top" title="Conversation Information"><span class="fas fa-info"></span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <form class="chat-editor-area">
+          <div class="emojiarea-editor outline-none scrollbar" contenteditable="true"></div>
+          <input class="d-none" type="file" id="chat-file-upload" />
+          <label class="chat-file-upload cursor-pointer" for="chat-file-upload"><span class="fas fa-paperclip"></span></label>
+          <div class="chat-emoji-picker">
+            <div class="btn btn-link emoji-icon" data-emoji-mart="data-emoji-mart" data-emoji-mart-input-target=".emojiarea-editor">
+              <span class="far fa-laugh-beam"></span>
+            </div>
+          </div>
+          <button class="btn btn-sm btn-send shadow-none" type="submit">Send</button>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Add Question
+{% endblock %}
+
+{% block content %}
+    <h1>Add Question to {{ activity.activity_name }} ({{ quiz_type.name }})</h1>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% if quiz_type.name == 'Participation' %}
+            <div class="form-group">
+                <label for="max_score">Maximum Score:</label>
+                <input type="number" id="max_score" name="max_score" class="form-control" required>
+            </div>
+
+            <h2>Participation Scores</h2>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                        <tr>
+                            <td>{{ student.get_full_name }}</td>
+                            <td>
+                                <input type="number" name="score_{{ student.id }}" class="form-control" required>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            {% if quiz_type.name != 'Matching Type' and quiz_type.name != 'Document' %}
+                <div class="form-group">
+                    <label for="question_text">Question:</label>
+                    <textarea id="question_text" name="question_text" class="form-control" required></textarea>
+                </div>
+            {% endif %}
+            <div class="form-group">
+                <label for="score">Score:</label>
+                <input type="number" id="score" name="score" class="form-control" min="1" required>
+            </div>
+            {% if quiz_type.name == 'Multiple Choice' %}
+                <div id="choices">
+                    <div class="form-group">
+                        <label>Choices:</label>
+                        <div class="input-group mb-3">
+                            <input type="radio" name="correct_answer" value="0" required>
+                            <input type="text" name="choices" class="form-control" placeholder="Choice 1" required>
+                            <input type="text" name="choices" class="form-control" placeholder="Choice 2" required>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-secondary" onclick="addChoice()">Add Another Choice</button>
+            {% elif quiz_type.name == 'True/False' %}
+                <div class="form-group">
+                    <label for="correct_answer">Correct Answer:</label>
+                    <select id="correct_answer" name="correct_answer" class="form-control" required>
+                        <option value="True">True</option>
+                        <option value="False">False</option>
+                    </select>
+                </div>
+            {% elif quiz_type.name == 'Matching Type' %}
+                <div id="matching_pairs">
+                    <div class="form-group">
+                        <label for="matching_pair">Matching Pairs:</label>
+                        <div class="input-group mb-3">
+                            <input type="text" name="matching_left" class="form-control" placeholder="Left side" required>
+                            <input type="text" name="matching_right" class="form-control" placeholder="Right side" required>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-secondary" onclick="addMatchingPair()">Add Another Pair</button>
+            {% elif quiz_type.name == 'Calculated Numeric' %}
+                <div class="form-group">
+                    <label for="correct_answer">Correct Answer:</label>
+                    <input type="number" id="correct_answer" name="correct_answer" class="form-control" required>
+                </div>
+            {% elif quiz_type.name == 'Document' %}
+                <div class="form-group">
+                    <label for="document_file">Upload Document:</label>
+                    <input type="file" id="document_file" name="document_file" class="form-control" required>
+                </div>
+            {% elif quiz_type.name != 'Essay' %}
+                <div class="form-group">
+                    <label for="correct_answer">Correct Answer:</label>
+                    <input type="text" id="correct_answer" name="correct_answer" class="form-control" required>
+                </div>
+            {% endif %}
+            <button type="submit" class="btn btn-primary">Add Question</button>
+            </form>
+
+            <h2>Existing Questions</h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Question</th>
+                        <th>Score</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for question in questions %}
+                        <tr>
+                            <td>{{ question.question_text }}</td>
+                            <td>{{ question.score }}</td>
+                            <td>
+                                <a href="{% url 'edit_question' question.id %}" class="btn btn-sm btn-warning">Edit</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <p>Total Score: {{ total_score }}</p>
+
+            <script>
+                function addChoice() {
+                    const choiceCount = document.querySelectorAll('input[name="choices"]').length;
+                    const choiceIndex = choiceCount;
+                    const choiceContainer = document.createElement('div');
+                    choiceContainer.classList.add('input-group', 'mb-3');
+
+                    const radioInput = document.createElement('input');
+                    radioInput.type = 'radio';
+                    radioInput.name = 'correct_answer';
+                    radioInput.value = choiceIndex;
+                    radioInput.required = true;
+
+                    const textInput = document.createElement('input');
+                    textInput.type = 'text';
+                    textInput.name = 'choices';
+                    textInput.classList.add('form-control');
+                    textInput.placeholder = `Choice ${choiceIndex + 1}`;
+                    textInput.required = true;
+
+                    choiceContainer.appendChild(radioInput);
+                    choiceContainer.appendChild(textInput);
+
+                    document.getElementById('choices').appendChild(choiceContainer);
+                }
+
+                function addMatchingPair() {
+                    const pairContainer = document.createElement('div');
+                    pairContainer.classList.add('input-group', 'mb-3');
+
+                    const leftInput = document.createElement('input');
+                    leftInput.type = 'text';
+                    leftInput.name = 'matching_left';
+                    leftInput.classList.add('form-control');
+                    leftInput.placeholder = 'Left side';
+                    leftInput.required = true;
+
+                    const rightInput = document.createElement('input');
+                    rightInput.type = 'text';
+                    rightInput.name = 'matching_right';
+                    rightInput.classList.add('form-control');
+                    rightInput.placeholder = 'Right side';
+                    rightInput.required = true;
+
+                    pairContainer.appendChild(leftInput);
+                    pairContainer.appendChild(rightInput);
+
+                    document.getElementById('matching_pairs').appendChild(pairContainer);
+                }
+            </script>
+        {% endblock %}

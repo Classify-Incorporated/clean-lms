@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {% load static %}
+    <title>Classroom Mode - {{ subject.subject_name }}</title>
+    <link rel="stylesheet" href="{% static 'css/all.min.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/adminlte.min.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/settings.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/css/custom_modal.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/subject_details.css' %}" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <link rel="icon" type="image/png" href="{% static 'favicon.ico' %}" />
+    {% comment %} <link rel="shortcut icon" href="{% static 'assets/dist/images/gsu_logo.png' %}" /> {% endcomment %}
+  </head>
+  <body>
+    <!-- Classroom Header -->
+    <div class="classroom-header fade-in mb-4">
+      <div class="header-content">
+        <h1>Classroom Mode: {{ subject.subject_name }}</h1>
+        <a href="{% url 'subjectDetail' subject.id %}" class="btn btn-light">Exit Classroom Mode</a>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container fade-in">
+      <!-- Page Header -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary fw-bold"><i class="fas fa-clipboard-check"></i> Grade Activity</h2>
+        <a href="{% url 'activity_detailCM' activity.id %}" class="btn btn-outline-secondary shadow-sm"><i class="fas fa-arrow-left"></i> Back to Activities</a>
+      </div>
+
+      <!-- Activity Information -->
+      <div class="card shadow-sm rounded-3 border-0 p-4" style="background: #fef6e4;">
+        <h4 class="text-dark fw-bold"><i class="fas fa-tasks"></i> Activity: {{ activity.activity_name }}</h4>
+        <p class="text-muted">
+          <strong>Max Score:</strong> {{ activity.max_score }}
+        </p>
+      </div>
+
+      <div class="row mt-4">
+        <!-- Online Mode (Auto-Graded) -->
+        <div class="col-md-6">
+          <div class="card shadow-sm rounded-3 border-0 p-4" style="background: #e5f4e3;">
+            <h5 class="text-success fw-bold"><i class="fas fa-check-circle"></i> Online</h5>
+            <p class="text-muted">Students who submitted online have already been graded.</p>
+
+            {% if students_with_scores %}
+              {% for student_activity in students_with_scores %}
+                {% if student_activity.total_score == 0 %}
+                  <div class="p-3 bg-white rounded shadow-sm mb-2">
+                    <p class="mb-1">
+                      <strong>{{ student_activity.student.get_full_name }}</strong>
+                    </p>
+                    <input type="number" name="student_{{ student_activity.student.id }}" class="form-control" min="0" max="{{ activity.max_score }}" step="0.01" />
+                  </div>
+                {% endif %}
+              {% endfor %}
+            {% else %}
+              <p class="text-muted">No students have been graded online yet.</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Classroom Mode (Manual Grading) -->
+        <div class="col-md-6">
+          <div class="card shadow-sm rounded-3 border-0 p-4" style="background: #fef6e4;">
+            <h5 class="text-primary fw-bold"><i class="fas fa-edit"></i> Classroom</h5>
+
+            <form method="POST" action="{% url 'grade_activityCM' activity.id %}">
+              {% csrf_token %}
+
+              {% if students_without_scores %}
+                {% for student_activity in students_without_scores %}
+                  <div class="p-3 bg-white rounded shadow-sm mb-2">
+                    <p class="mb-1">
+                      <strong>{{ student_activity.student.get_full_name }}</strong>
+                    </p>
+                    <input type="number" name="student_{{ student_activity.student.id }}" class="form-control" min="0" max="{{ activity.max_score }}" step="0.01" />
+                  </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-primary w-100 mt-3"><i class="fas fa-save"></i> Save Score</button>
+              {% else %}
+                <p class="text-muted">All students scores has been recorded.</p>
+              {% endif %}
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    {% comment %}classroom_mode code{% endcomment %}
+    <script src="{% static 'js/classroom-mode.js' %}"></script>
+    <script src="{% static 'js/classroom-mode-full-screen.js' %}"></script>
+    <script src="{% static 'js/file-validation.js' %}"></script>
+    <script src="{% static 'js/modal.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="{% static 'js/classroom-mode.js' %}"></script>  <!-- Global screenshot script -->
+  </body>
+</html>

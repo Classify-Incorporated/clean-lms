@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="container mt-4">
+    <div class="row mb-3">
+      <div class="col-sm-8">
+        <h1 class="text-primary">Evaluate {{ assignment.teacher.get_full_name }}</h1>
+        <h5 class="text-muted">Subject: {{ assignment.subject.subject_name }}</h5>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">Teacher Performance Evaluation</h5>
+      </div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+
+          {% for field in form %}
+            {% if field.name != 'general_feedback' %}
+              <div class="mb-3">
+                <label class="form-label fw-bold">{{ field.label }}</label>
+
+                <!-- Likert Scale Container -->
+                <div class="d-flex align-items-center justify-content-between">
+                  <label class="form-check-label text-muted small">Strongly Disagree</label>
+
+                  <div class="d-flex gap-3">
+                    {% for i in '12345'|make_list %}
+                      <input type="radio" class="btn-check" name="{{ field.name }}" id="{{ field.name }}_{{ i }}" value="{{ forloop.counter }}" />
+                      <label class="btn btn-outline-primary" for="{{ field.name }}_{{ i }}">{{ forloop.counter }}</label>
+                    {% endfor %}
+                  </div>
+
+                  <label class="form-check-label text-muted small">Strongly Agree</label>
+                </div>
+
+                {% if field.errors %}
+                  <div class="text-danger">{{ field.errors }}</div>
+                {% endif %}
+              </div>
+            {% endif %}
+          {% endfor %}
+
+          <!-- General Feedback -->
+          <div class="mb-3">
+            <label class="form-label fw-bold">{{ form.general_feedback.label }}</label>
+            {{ form.general_feedback }}
+            {% if form.general_feedback.errors %}
+              <div class="text-danger">{{ form.general_feedback.errors }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mt-3">
+            <button type="submit" class="btn btn-success">Submit Evaluation</button>
+            <a href="javascript:history.back()" class="btn btn-secondary">Back</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript for Star Rating Interaction -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('.star-rating').forEach(function (starRatingContainer) {
+        const fieldName = starRatingContainer.getAttribute('data-field-name')
+        const hiddenInput = document.getElementsByName(fieldName)[0]
+    
+        starRatingContainer.querySelectorAll('.star').forEach(function (star) {
+          star.addEventListener('click', function () {
+            const ratingValue = star.getAttribute('data-value')
+            hiddenInput.value = ratingValue
+    
+            // Highlight selected stars
+            starRatingContainer.querySelectorAll('.star').forEach(function (s) {
+              s.classList.toggle('selected', s.getAttribute('data-value') <= ratingValue)
+            })
+          })
+    
+          // Hover effect to preview rating
+          star.addEventListener('mouseover', function () {
+            const ratingValue = star.getAttribute('data-value')
+            starRatingContainer.querySelectorAll('.star').forEach(function (s) {
+              s.classList.toggle('hovered', s.getAttribute('data-value') <= ratingValue)
+            })
+          })
+    
+          star.addEventListener('mouseout', function () {
+            starRatingContainer.querySelectorAll('.star').forEach(function (s) {
+              s.classList.remove('hovered')
+            })
+          })
+        })
+    
+        // Clear rating button functionality
+        starRatingContainer.querySelector('.clear-rating').addEventListener('click', function () {
+          hiddenInput.value = ''
+          starRatingContainer.querySelectorAll('.star').forEach(function (s) {
+            s.classList.remove('selected')
+          })
+        })
+      })
+    })
+  </script>
+
+  <!-- CSS for Improved Star Rating Style -->
+  <style>
+    .btn-check:checked + .btn-outline-primary {
+      background-color: #0d6efd;
+      color: white;
+    }
+    .btn-outline-primary {
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      text-align: center;
+      line-height: 30px;
+    }
+  </style>
+{% endblock %}

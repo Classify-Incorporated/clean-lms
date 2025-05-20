@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+  Badge List
+{% endblock %}
+
+{% block content %}
+  <!-- Content Header -->
+  <div class="row mb-2">
+    <div class="col-sm-6">
+      <h3 class="m-0">Badge List</h3>
+    </div>
+  </div>
+
+    <a href="{% url 'create_badge' %}" class="btn btn-primary mb-2" id="openAddModalBtn">Add Badge</a>
+
+  <!-- Table -->
+  <div class="card shadow mb-4">
+    <div class="card-header bg-success text-white">
+      <h5 class="mb-0">Badge List</h5>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table mb-0 data-table fs-10 table-bordered" data-datatables="data-datatables">
+          <thead class="bg-primary">
+            <tr>
+              <th>#</th>
+              <th>Badge Name</th>
+              <th>Image</th>
+              <th>Description</th>
+              <th>Date Awareded</th>
+               <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+              {% for badge in badge %}
+                <tr>
+                  <td>{{ forloop.counter }}</td>
+                  <td>{{ badge.name }}</td>
+                  <td>{{ badge.image }}</td>
+                  <td>{{ badge.description }}</td>
+                  <td>{{ badge.date_awarded }}</td>
+                  <td>
+                    <div class="dropdown">
+                      <a type="button" id="dropdownMenuButton{{ badge.id }}" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-ellipsis-h"></i>
+                      </a>
+                      <div class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton{{ badge.id }}">
+                        <a class="dropdown-item" href="{% url 'update_badge' badge.id %}"><i class="fas fa-edit"></i> Update</a> 
+                        <a class="dropdown-item" href="{% url 'delete_badge' badge.id %}"><i class="fas fa-edit"></i> Delete</a> 
+                      </div>
+                    </div>                          
+                  </td>
+                </tr>
+              {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock %}

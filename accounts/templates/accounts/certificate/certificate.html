@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+  Badge List
+{% endblock %}
+
+{% block content %}
+  <!-- Content Header -->
+  <div class="row mb-2">
+    <div class="col-sm-6">
+      <h3 class="m-0">Badge List</h3>
+    </div>
+  </div>
+
+    <a href="{% url 'create_certificate' %}" class="btn btn-primary mb-2" id="openAddModalBtn">Add Certificate</a>
+
+  <div class="card shadow mb-4">
+    <div class="card-header bg-success text-white">
+      <h5 class="mb-0">Badge List</h5>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table mb-0 data-table fs-10 table-bordered" data-datatables="data-datatables">
+          <thead class="bg-primary">
+            <tr>
+              <th>#</th>
+              <th>Certificate Title</th>
+              <th>File</th>
+              <th>Date Issued</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+              {% for certificate in certificate %}
+                <tr>
+                  <td>{{ forloop.counter }}</td>
+                  <td>{{ certificate.title }}</td>
+                  <td>{{ certificate.file }}</td>
+                  <td>{{ certificate.issued_date }}</td>
+                  <td>
+                    <div class="dropdown">
+                      <a type="button" id="dropdownMenuButton{{ certificate.id }}" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-ellipsis-h"></i>
+                      </a>
+                      <div class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton{{ certificate.id }}">
+                        <a class="dropdown-item" href="{% url 'update_certificate' certificate.id %}"><i class="fas fa-edit"></i> Update</a> 
+                        <a class="dropdown-item" href="{% url 'delete_certificate' certificate.id %}"><i class="fas fa-edit"></i> Delete</a> 
+                      </div>
+                    </div>                          
+                  </td>
+                </tr>
+              {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock %}

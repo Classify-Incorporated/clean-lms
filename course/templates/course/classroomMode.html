@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {% load static %}
+    <title>Classroom Mode - {{ subject.subject_name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <link rel="stylesheet" href="{% static 'css/adminlte.min.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/settings.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/css/custom_modal.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/subject_details.css' %}" />
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <!-- Bootstrap Select -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css" />
+    <!-- Include FullCalendar CSS and JS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet" />
+    <link rel="icon" type="image/png" href="{% static 'favicon.ico' %}" />
+    
+  </head>
+  <body>
+    <!-- Classroom Header -->
+    <div class="classroom-header fade-in">
+      <div class="header-content">
+        <h1>Classroom Mode: {{ subject.subject_name }}</h1>
+        <a href="{% url 'exit_classroom_mode_view' subject.id %}" class="btn btn-light">Exit Classroom Mode</a>
+      </div>
+        <!-- Ongoing Activities -->
+        <div class='ml-2'>
+          {% if is_teacher %}
+            <a href="javascript:void(0);" class="btn btn-primary float-right" id="classActionButton" data-subject-id="{{ subject.id }}" data-is-active="false"><i class="fas fa-chalkboard-teacher"></i> Start Class</a>
+          {% endif %}
+        </div>
+    </div>
+
+    <div class="classroom-container fade-in">
+
+      <!-- Teacher's section -->
+      {% if is_teacher %}
+        {% now 'Y-m-d' as today_date %}
+        {% if selected_semester.start_date|date:'Y-m-d' <= today_date and selected_semester.end_date|date:'Y-m-d' >= today_date %}
+        <div class="row justify-content-center mb-4">
+          <div class="col-md-12">
+            <div class="d-flex flex-wrap justify-content-center">
+              <a class="btn-tablet-mode add" data-toggle="modal" data-target="#addActivityLessonModalCM">
+                <i class="fas fa-plus"></i>
+                <span>Add Activity or Lesson</span>
+              </a>                
+              <a href="{% url 'activityListCM' subject.id %}" class="btn-tablet-mode list">
+                <i class="fas fa-tasks"></i>
+                <span>Activity List</span>
+              </a>
+              <a class="btn-tablet-mode copy" onclick="openCopyActivityModal('{{ subject.id }}')">
+                <i class="fas fa-copy"></i>
+                <span>Copy Activities</span>
+              </a>
+              <button class="btn-tablet-mode lesson" onclick="openCopyLessonModal('{{ subject.id }}')">
+                <i class="fas fa-book"></i>
+                <span>Copy Lessons</span>
+              </button>
+              <a href="{% url 'subjectStudentListCM' subject.id %}?semester={{ selected_semester_id }}" class="btn-tablet-mode students">
+                <i class="fas fa-users"></i>
+                <span>View Students</span>
+              </a>
+              <a href="{% url 'attendanceListCM' subject.id %}" class="btn-tablet-mode attendance">
+                <i class="fas fa-list-alt"></i>
+                <span>Attendance</span>
+              </a>
+            </div>
+          </div>
+        </div>            
+        {% endif %}
+      {% endif %}
+
+      <!-- Lessons Section -->
+      <div class="container mt-4 col-md-12">
+        <!-- Weekly Lessons Header -->
+        <div class="lesson-divider-section text-center">
+            <hr class="lesson-divider">
+            <h4 class="lesson-title-header">📚 Weekly Lessons</h4>
+        </div>
+    
+        <!-- Weekly Schedule Row -->
+        <div class="lesson-container">
+            <!-- Sunday -->
+            <div class="lesson-column" id="sunday-column">
+                <h5 class="lesson-day no-drag">Sunday <span class="lesson-date" id="sunday-date"></span></h5>
+                <div class="lesson-list" id="sunday-lessons"></div> 
+            </div>
+    
+            <!-- Monday -->
+            <div class="lesson-column" id="monday-column">
+                <h5 class="lesson-day no-drag">Monday <span class="lesson-date" id="monday-date"></span></h5>
+                <div class="lesson-list" id="monday-lessons">
+                </div>
+            </div>
+    
+            <!-- Tuesday -->
+            <div class="lesson-column" id="tuesday-column">
+                <h5 class="lesson-day no-drag">Tuesday <span class="lesson-date" id="tuesday-date"></span></h5>
+                <div class="lesson-list" id="tuesday-lessons">
+                </div>
+            </div>
+    
+            <!-- Wednesday -->
+            <div class="lesson-column" id="wednesday-column">
+                <h5 class="lesson-day no-drag">Wednesday <span class="lesson-date" id="wednesday-date"></span></h5>
+                <div class="lesson-list" id="wednesday-lessons">
+                </div>
+            </div>
+    
+            <!-- Thursday -->
+            <div class="lesson-column" id="thursday-column">
+                <h5 class="lesson-day no-drag">Thursday <span class="lesson-date" id="thursday-date"></span></h5>
+                <div class="lesson-list" id="thursday-lessons">
+                </div>
+            </div>
+    
+            <!-- Friday -->
+            <div class="lesson-column" id="friday-column">
+                <h5 class="lesson-day no-drag">Friday <span class="lesson-date" id="friday-date"></span></h5>
+                <div class="lesson-list" id="friday-lessons">
+                </div>
+            </div>
+    
+            <!-- Saturday -->
+            <div class="lesson-column" id="saturday-column">
+                <h5 class="lesson-day no-drag">Saturday <span class="lesson-date" id="saturday-date"></span></h5>
+                <div class="lesson-list" id="saturday-lessons"></div>
+            </div>
+        </div>
+      </div>
+    
+    
+    </div>
+
+    <!-- Bootstrap Modal for Adding Activity or Lesson -->
+    <div class="modal fade" id="addActivityLessonModalCM" tabindex="-1" role="dialog" aria-labelledby="addActivityLessonModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addActivityLessonModalLabel">Add an Activity or Lesson</h5>
+            <button type="button" id="closeAddActivityLessonModalCMBtn" class="close" data-dismiss="modal" aria-label="Close">
+            </button>            
+          </div>
+          <div class="modal-body">
+            <!-- Button-app layout for all content types with colored icons and fixed margin -->
+            <div class="container">
+              <div class="row g-3">
+                <div class="col-md-4 mb-3 d-flex justify-content-center">
+                  <a href="#" class="btn btn-outline-primary w-100 py-3 d-flex flex-column align-items-center" onclick="selectActivityTypeAndRedirect('Assignment', {{ subject.id }}, {{ assignment_activity_type_id }}, true)">
+                    <i class="fas fa-check-square fa-2x mb-2"></i> Assignment
+                  </a>
+                </div>
+                <div class="col-md-4 mb-3 d-flex justify-content-center">
+                  <a href="#" class="btn btn-outline-success w-100 py-3 d-flex flex-column align-items-center" data-dismiss="modal" onclick="openAttendanceModal('{{ subject.id }}')">
+                    <i class="fas fa-user-check fa-2x mb-2"></i> Attendance
+                  </a>
+                </div>
+                <div class="col-md-4 mb-3 d-flex justify-content-center">
+                  <a href="#" class="btn btn-outline-danger w-100 py-3 d-flex flex-column align-items-center" onclick="selectActivityTypeAndRedirect('Participation', {{ subject.id }}, {{ participation_activity_type_id }}, true)">
+                    <i class="fas fa-users fa-2x mb-2"></i> Participation
+                  </a>
+                </div>
+                <div class="col-md-4 mb-3 d-flex justify-content-center">
+                  <a href="#" class="btn btn-outline-warning w-100 py-3 d-flex flex-column align-items-center" onclick="openModuleModalClassroom({{ subject.id }}, 'lesson')">
+                    <i class="fas fa-book fa-2x mb-2"></i> Lesson
+                  </a>              
+                </div>
+
+                <div class="col-md-4 mb-3 d-flex justify-content-center">
+                  <a href="#" class="btn btn-outline-primary w-100 py-3 d-flex flex-column align-items-center" data-dismiss="modal" data-toggle="modal" data-target="#teamsSignInModal">
+                    <i class="fas fa-video fa-2x mb-2"></i> Video Conference
+                  </a>
+                </div>
+                <div class="col-md-4 mb-3 d-flex justify-content-center">
+                  <a href="#" class="btn btn-outline-danger w-100 py-3 d-flex flex-column align-items-center" onclick="selectActivityTypeAndRedirect('Quiz', {{ subject.id }}, {{ quiz_activity_type_id }}, true)">
+                    <i class="fas fa-question-circle fa-2x mb-2"></i> Quiz
+                  </a>
+                </div>
+                <div class="col-md-4 mb-3 d-flex justify-content-center">
+                  <a href="#" class="btn btn-outline-info w-100 py-3 d-flex flex-column align-items-center" onclick="selectActivityTypeAndRedirect('Exam', {{ subject.id }}, {{ exam_activity_type_id }}, true)">
+                    <i class="fas fa-file-alt fa-2x mb-2"></i> Exam
+                  </a>
+                </div>
+                <div class="col-md-4 mb-3 d-flex justify-content-center">
+                  <a href="#" class="btn btn-outline-secondary w-100 py-3 d-flex flex-column align-items-center" onclick="selectActivityTypeAndRedirect('Special', {{ subject.id }}, {{ special_activity_type_id }}, true)">
+                    <i class="fas fa-star fa-2x mb-2"></i> Special Activity
+                  </a>
+                </div>
+                <div class="col-md-4 mb-3 d-flex justify-content-center">
+                  <a href="#" class="btn btn-outline-secondary w-100 py-3 d-flex flex-column align-items-center" onclick="openModuleModalClassroom({{ subject.id }}, 'url')">
+                    <i class="fas fa-link fa-2x mb-2"></i> URL
+                  </a>
+                </div>
+                <div class="col-md-4 mb-3 d-flex justify-content-center">
+                  <a href="#" class="btn btn-outline-success w-100 py-3 d-flex flex-column align-items-center" onclick="openModuleModalClassroom({{ subject.id }}, 'embed')">
+                    <img src="/static/assets/img/embed.png" alt="Embed Icon" style="width: 50px; height: 50px;"> Embed Code
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+  
+
+    <!-- Custom Modal for Adding Participation -->
+    <div id="participationModal" class="custom-modal">
+      <div class="custom-modal-header d-flex justify-content-between">
+        <h5>Select Participation Details</h5>
+        <button class="close-btn" id="closeParticipationModalBtn"></button>
+      </div>
+      <div class="custom-modal-body" id="participationModalBody"></div>
+    </div>
+    <div id="participationModalBackdrop" class="custom-modal-backdrop"></div>
+
+    <!-- Custom Modal for Adding Module -->
+    <div id="moduleModal" class="custom-modal">
+      <div class="custom-modal-header d-flex justify-content-between">
+        <h5 class="text-dark">Add Lesson</h5>
+
+        <button class="close-btn" id="closeModuleModalBtn"></button>
+      </div>
+      <div class="custom-modal-body" id="moduleModalBody"></div>
+    </div>
+    <div id="moduleModalBackdrop" class="custom-modal-backdrop"></div>
+
+    <!-- Copy Lessons Modal -->
+    <div id="copyLessonModal" class="custom-modal">
+      <div class="custom-modal-header d-flex justify-content-between">
+        <h5 class="text-dark">Copy Lessons</h5>
+        <button class="close-btn" id="closeCopyLessonModalBtn"></button>
+      </div>
+      <div class="custom-modal-body" id="copyLessonModalBody"></div>
+    </div>
+    <div id="copyLessonModalBackdrop" class="custom-modal-backdrop"></div>
+
+    <!-- Custom Modal for Copying Activities -->
+    <div id="copyActivityModal" class="custom-modal">
+      <div class="custom-modal-header d-flex justify-content-between">
+        <h5 class="text-dark">Copy Activities</h5>
+        <button class="close-btn" id="closeCopyActivityModalBtn"></button>
+      </div>
+      <div class="custom-modal-body" id="copyActivityModalBody"></div>
+    </div>
+    <div id="copyActivityModalBackdrop" class="custom-modal-backdrop"></div>
+
+    <!-- Modal for Microsoft Teams Sign-in -->
+    <div class="modal" id="teamsSignInModal" tabindex="-1" role="dialog" aria-labelledby="teamsSignInModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content card-style-modal">
+          <div class="modal-header">
+            <h5 class="modal-title" id="teamsSignInModalLabel">Sign in to Microsoft Teams</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          </div>
+          <div class="modal-body text-center">
+            <p>To start your Microsoft Teams meeting, sign in using your school account.</p>
+            <a href="https://teams.microsoft.com" target="_blank" class="btn btn-primary">Sign in to Microsoft Teams</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Attendance Modal -->
+    <div id="attendanceModal" class="custom-modal">
+      <div class="custom-modal-header d-flex justify-content-between">
+        <h5 class="text-dark">Record Attendance</h5>
+        <button class="close-btn" id="closeAttendanceModalBtn"></button>
+      </div>
+      <div class="custom-modal-body" id="attendanceModalBody"></div>
+    </div>
+    <div id="attendanceModalBackdrop" class="custom-modal-backdrop"></div>
+
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- SortableJS for drag-and-drop functionality (Frontend Only) -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+
+    {% comment %}classroom_mode code{% endcomment %}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{% static 'js/classroom-mode.js' %}"></script>
+    <script src="{% static 'js/classroom-mode-full-screen.js' %}"></script>
+    <script src="{% static 'js/file-validation.js' %}"></script>
+    <script src="{% static 'js/modal.js' %}"></script>
+    <!-- Bootstrap Select -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    <script src="{% static 'js/deactivate-classroom-mode.js' %}"></script>
+    <script src="{% static 'js/file-validation.js' %}"></script>
+
+    <script>
+      function confirmDeleteLesson(moduleId) {
+        Swal.fire({
+          title: 'Are you sure?',
+          text: 'This lesson will be deleted and cannot be recovered!',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'Yes, delete it!',
+          cancelButtonText: 'Cancel'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            // Redirect to the delete URL
+            window.location.href = `/deleteModule/${moduleId}/`
+          }
+        })
+      }
+    </script>
+
+
+    <script>
+      $(document).ready(function () {
+          // Event delegation to handle dynamically loaded content inside the modal
+          $(document).on('click', '.selectAll', function () {
+              const statusId = $(this).data('status'); // Get the status ID from data attribute
+
+              // Find and check all radio buttons with the class for this status
+              $(`.status-${statusId}`).prop('checked', true);
+          });
+      });
+    </script>
+
+    <script>
+      function displayToast(message, icon) {
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: icon,
+          title: message,
+          showConfirmButton: false,
+          timer: 5000,
+          timerProgressBar: true,
+        });
+      }
+  
+      // Check for form errors and display them with error icon
+      {% if form.errors %}
+        {% for field in form %}
+          {% for error in field.errors %}
+            displayToast("{{ error }}", 'error');  // Display form errors with 'error' icon
+          {% endfor %}
+        {% endfor %}
+      {% endif %}
+  
+      // Check for Django messages and handle their type
+      {% if messages %}
+        {% for message in messages %}
+          {% if message.tags == 'error' %}
+            displayToast("{{ message }}", 'error');  // Display error messages
+          {% else %}
+            displayToast("{{ message }}", 'success');  // Display success or other messages
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    </script>
+    <script>
+      // Disable past dates in the date input field
+      document.addEventListener('DOMContentLoaded', function () {
+        const dateInput = document.getElementById('attendanceDate');
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.setAttribute('min', today); // Set the minimum selectable date to today
+      });
+    </script>
+
+  {% if is_teacher %}
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const subjectId = "{{ subject.id }}";
+      let semesterId = "{{ selected_semester_id }}";
+  
+      if (!semesterId || semesterId === "None") {
+          semesterId = ""; // Handle missing semester
+      }
+  
+      const apiUrl = `/api/classroom_mode_schedules/${subjectId}/`;
+  
+      fetch(apiUrl)
+          .then(response => response.json())
+          .then(data => {
+              console.log("API Response:", data);
+  
+              if (data.schedule_data.length > 0) {
+                  const today = new Date();
+                  let currentWeekData = null;
+  
+                  // Find the current week based on today's date
+                  data.schedule_data.forEach(week => {
+                      const weekStart = new Date(week.week_start);
+                      const weekEnd = new Date(week.week_end);
+                      if (today >= weekStart && today <= weekEnd) {
+                          currentWeekData = week;
+                      }
+                  });
+  
+                  if (currentWeekData) {
+                      displaySchedule(currentWeekData);
+                  } else {
+                      console.warn("No schedule found for the current week.");
+                  }
+              }
+          })
+          .catch(error => console.error("Error fetching schedule:", error));
+  });
+  
+  function displaySchedule(week) {
+    week.dates.forEach(day => {
+        let dayId = day.day.toLowerCase(); // Convert "Monday" -> "monday"
+        let formattedDate = new Date(day.date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
+        // Insert the formatted date into the correct HTML span
+        let dateElement = document.getElementById(`${dayId}-date`);
+        if (dateElement) {
+            dateElement.innerText = `(${formattedDate})`;
+        }
+
+        // Insert lessons for the day
+        let lessonList = document.getElementById(`${dayId}-lessons`);
+        if (lessonList) {
+            lessonList.innerHTML = ""; // Clear existing lessons
+
+            if (day.lessons.length > 0) {
+                day.lessons.forEach(lesson => {
+                    let lessonCard = document.createElement("div");
+                    lessonCard.classList.add("lesson-card");
+                    lessonCard.setAttribute("data-module-id", lesson.module_id);
+                    lessonCard.style.cursor = "pointer"; // Indicate it's clickable
+
+                    let icon = getModuleIcon(lesson.type);
+                    let activityCount = lesson.activities.length;
+
+                    function formatTime(time) {
+                      if (!time) return 'N/A'; // Handle missing time
+                      const [hours, minutes] = time.split(':'); // Extract hours and minutes
+                      return `${hours}:${minutes}`; // Format as HH:MM
+                  }
+
+                    lessonCard.innerHTML = `
+                        <div class="lesson-icon">${icon}</div>
+                        <div class="lesson-title">${lesson.lesson}</div>
+                        <div class="lesson-time">⏰ ${day.time || 'N/A'}</div>
+                        <div class="activity-count text-muted" style="font-size: 14px;">(${activityCount} activities)</div>
+                    `;
+
+                    // Add click event for redirection
+                    lessonCard.addEventListener("click", function () {
+                        if (lesson.module_id) {
+                            window.location.href = `/viewSubjectModule/${lesson.module_id}/`; // Redirect to module page
+                        }
+                    });
+
+                    // Append to lesson list
+                    lessonList.appendChild(lessonCard);
+                });
+            } else {
+                lessonList.innerHTML = `<p class="text-muted">No lessons</p>`;
+            }
+        }
+    });
+}
+  // Function to determine the appropriate icon based on module type
+  function getModuleIcon(type) {
+    if (!type) return '<i class="fas fa-file text-secondary"></i>'; // Default
+
+    switch (type.toLowerCase()) {
+        case "pdf": return '<i class="fas fa-file-pdf text-danger"></i>';
+        case "image": return '<i class="fas fa-image text-warning"></i>';
+        case "youtube": return '<i class="fab fa-youtube text-danger"></i>';
+        case "url": return '<i class="fas fa-link text-primary"></i>';
+        case "msteams": return '<i class="fab fa-microsoft text-blue"></i>';
+        case "word": return '<i class="fas fa-file-word text-primary"></i>';
+        case "excel": return '<i class="fas fa-file-excel text-success"></i>';
+        case "ppt": return '<i class="fas fa-file-powerpoint text-orange"></i>';
+        case "video": return '<i class="fas fa-video text-purple"></i>';
+        case "embed": return '<img src="/static/assets/dist/images/embed.png" alt="Embed Icon" style="width: 60px; height: 60px;">';
+        default: return '<i class="fas fa-file text-secondary"></i>';
+    }
+}
+    </script>
+    
+  {% endif %}
+  </body>
+</html>

@@ -1,0 +1,85 @@
+<form method="post" action="{% url 'record_attendance' subject.id %}">
+  {% csrf_token %}
+
+  <!-- Select Attendance Date -->
+  <div class="mb-4">
+    <h5 class="text-primary border-bottom pb-2">Select Attendance Date</h5>
+    <div class="mb-3">
+      <label for="date" class="form-label fw-bold">Date</label>
+      {{ form.date }}
+    </div>
+  </div>
+
+  <!-- "Select All" Buttons for Each Status -->
+  <div class="mb-4">
+    <h5 class="text-primary border-bottom pb-2">Select All Status</h5>
+    <div class="d-flex flex-wrap gap-2">
+      {% for status in attendance_statuses %}
+        <div class="form-check form-check-inline">
+          <input type="radio" name="all" id="select-all-{{ status.id }}" class="form-check-input selectAll" data-status="{{ status.id }}" />
+          <label for="select-all-{{ status.id }}" class="form-check-label">Select All {{ status.status }}</label>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Mark Attendance -->
+  <div id="studentList" class="mb-4">
+    <h5 class="text-primary border-bottom pb-2">Mark Attendance</h5>
+    {% if students %}
+      {% for student in students %}
+        <div class="card mb-4 p-3">
+          <h6 class="fw-bold">{{ student.first_name }} {{ student.last_name }}</h6>
+          <div class="d-flex flex-wrap gap-3 mb-2">
+            {% for status in attendance_statuses %}
+              <div class="form-check form-check-inline">
+                <input type="radio" id="status-{{ student.id }}-{{ status.id }}" class="form-check-input status-{{ status.id }}" name="status_{{ student.id }}" value="{{ status.id }}" required />
+                <label for="status-{{ student.id }}-{{ status.id }}" class="form-check-label">{{ status.status }}</label>
+              </div>
+            {% endfor %}
+          </div>
+          <input type="hidden" name="students" value="{{ student.id }}" />
+          <label for="remark_{{ student.id }}" class="form-label">Remark</label>
+          <textarea id="remark_{{ student.id }}" class="form-control" name="remark_{{ student.id }}" rows="2" placeholder="Add any remarks here..."></textarea>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p class="text-danger">No students are enrolled in this subject.</p>
+    {% endif %}
+  </div>
+
+  <!-- Graded Checkbox -->
+  <div class="form-check mb-4">
+    <input type="checkbox" id="graded" class="form-check-input" name="graded" />
+    <label for="graded" class="form-check-label">Mark as Graded</label>
+  </div>
+
+  <!-- Submit Button -->
+  <div class="text-end">
+    <button type="submit" class="btn btn-primary">Submit Attendance</button>
+  </div>
+</form>
+
+<!-- JavaScript for Select All functionality -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    console.log('DOM fully loaded.')
+
+    // Function to select all radio buttons of a particular status
+    function checkAll(statusId) {
+      console.log('Select all for status:', statusId)
+      document.querySelectorAll(`.status-${statusId}`).forEach((radio) => {
+        radio.checked = true
+      })
+    }
+
+    // Attach event listeners to "Select All" radio buttons
+    document.querySelectorAll('.selectAll').forEach((selectAllButton) => {
+      selectAllButton.addEventListener('click', function () {
+        const statusId = this.getAttribute('data-status')
+        checkAll(statusId)
+      })
+    })
+  })
+</script>

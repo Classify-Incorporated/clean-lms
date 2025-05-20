@@ -1,0 +1,263 @@
+{% load static %}
+{% load socialaccount %}
+<!DOCTYPE html>
+<html data-bs-theme="light" lang="en-US" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- =============================================== -->
+    <!-- Document Title -->
+    <!-- =============================================== -->
+    <title>{{ SCHOOL_NAME }}</title>
+
+    <!-- =============================================== -->
+    <!-- Favicons -->
+    <!-- =============================================== -->
+    <link rel="icon" type="image/png" href="{% static 'favicon.ico' %}" />
+    <link rel="manifest" href="{% static 'assets/img/favicons/manifest.json' %}" />
+    <meta name="msapplication-TileImage" content="{% static 'assets/img/favicons/mstile-150x150.png' %}" />
+    <meta name="theme-color" content="#ffffff" />
+    <script src="{% static 'assets/js/config.js' %}"></script>
+    <script src="{% static 'vendors/simplebar/simplebar.min.js' %}"></script>
+
+    <!-- =============================================== -->
+    <!-- Stylesheets -->
+    <!-- =============================================== -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,500,600,700%7cPoppins:300,400,500,600,700,800,900&amp;display=swap" rel="stylesheet" />
+    <link href="{% static 'vendors/simplebar/simplebar.min.css' %}" rel="stylesheet" />
+    <link href="{% static 'assets/css/theme-rtl.css' %}" rel="stylesheet" id="style-rtl" />
+    <link href="{% static 'assets/css/theme.css' %}" rel="stylesheet" id="style-default" />
+    <link href="{% static 'assets/css/user-rtl.css' %}" rel="stylesheet" id="user-style-rtl" />
+    <link href="{% static 'assets/css/user.css' %}" rel="stylesheet" id="user-style-default" />
+
+    <script>
+      var isRTL = JSON.parse(localStorage.getItem('isRTL'))
+      if (isRTL) {
+        var linkDefault = document.getElementById('style-default')
+        var userLinkDefault = document.getElementById('user-style-default')
+        linkDefault.setAttribute('disabled', true)
+        userLinkDefault.setAttribute('disabled', true)
+        document.querySelector('html').setAttribute('dir', 'rtl')
+      } else {
+        var linkRTL = document.getElementById('style-rtl')
+        var userLinkRTL = document.getElementById('user-style-rtl')
+        linkRTL.setAttribute('disabled', true)
+        userLinkRTL.setAttribute('disabled', true)
+      }
+    </script>
+    <style>
+      .btn-microsoft {
+        background-color: #f3f3f3;
+        border: 1px solid #ddd;
+        color: #333;
+        padding: 8px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .btn-microsoft:hover {
+        background-color: #e6e6e6;
+      }
+      
+      .microsoft-icon {
+        display: grid;
+        grid-template-columns: repeat(2, 10px);
+        grid-template-rows: repeat(2, 10px);
+        gap: 1.5px;
+        margin-right: 8px;
+      }
+      
+      .square {
+        width: 10px;
+        height: 10px;
+      }
+      
+      .red {
+        background-color: #f35325;
+      }
+      .green {
+        background-color: #81bc06;
+      }
+      .blue {
+        background-color: #05a6f0;
+      }
+      .yellow {
+        background-color: #ffba08;
+      }
+      .bg-login {
+        background-color: #171f29; /* Matching the sidebar color */
+      }
+    </style>
+  </head>
+
+  <body>
+    <main class="main" id="top">
+      <div class="container-fluid">
+        <script>
+          var isFluid = JSON.parse(localStorage.getItem('isFluid'))
+          if (isFluid) {
+            var container = document.querySelector('[data-layout]')
+            container.classList.remove('container')
+            container.classList.add('container-fluid')
+          }
+        </script>
+        <div class="row min-vh-100 bg-100">
+          <div class="col-6 d-none d-lg-block position-relative">
+            <div id="loginImageCarousel" class="carousel slide" data-bs-ride="carousel">
+              <div class="carousel-inner">
+                <div class="carousel-item active bg-slide" style="background-image: usrl({% static 'assets/img/HCCCI-5.jpg' %});"></div>
+                <div class="carousel-item bg-slide" style="background-image: url({% static 'assets/img/HCCCI-4.jpg' %});"></div>
+                <div class="carousel-item bg-slide" style="background-image: url({% static 'assets/img/HCCCI-1.jpg' %});"></div>
+                <div class="carousel-item bg-slide" style="background-image: url({% static 'assets/img/HCCCI-2.jpg' %});"></div>
+                <div class="carousel-item bg-slide" style="background-image: url({% static 'assets/img/HCCCI-3.jpg' %});"></div>
+              </div>
+
+              <a class="carousel-control-prev" href="#loginImageCarousel" role="button" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+              </a>
+              <a class="carousel-control-next" href="#loginImageCarousel" role="button" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+              </a>
+            </div>
+          </div>
+
+          <style>
+            .bg-slide {
+              height: 100vh; /* Full height */
+              background-size: cover; /* Cover the area */
+              background-position: 50% 20%; /* Keep consistent position */
+              background-repeat: no-repeat;
+            }
+          </style>
+
+          <script>
+            var carousel = new bootstrap.Carousel(document.getElementById('loginImageCarousel'), {
+              interval: 3000, // Change every 3 seconds
+              pause: 'hover' // Pause when hovered
+            })
+          </script>
+          <div class="col-sm-10 col-md-6 px-sm-0 align-self-center mx-auto py-5">
+            <div class="row justify-content-center g-0">
+              <div class="col-lg-9 col-xl-8 col-xxl-6">
+                <div class="card">
+                  <div class="card-header text-center p-2" style="background-color: #C19A6B;">
+                    <a class="font-sans-serif fw-bolder fs-6 z-1 position-relative link-dark d-flex flex-column align-items-center" href="/" data-bs-theme="light">
+                      <img src="{% static 'assets/img/ched.png' %}" alt="School Logo" class="rounded-circle" width="60" height="60" />
+                      <span class="mt-2">Commission on Higher Education (CHED)</span>
+                    </a>
+                  </div>
+                  <div class="card-body p-4">
+                    <div class="row flex-between-center"></div>
+                    <form class="user" method="POST" action="{% url 'admin_login_view' %}">
+                      {% csrf_token %}
+
+                      <!-- Username Field -->
+                      <div class="mb-3">
+                        <label class="form-label" for="id_username">Username</label>
+                        <input class="form-control" id="id_username" type="text" name="username" placeholder="Username" required />
+                      </div>
+
+                      <!-- Password Field with Eye Icon -->
+                      <div class="mb-3 position-relative">
+                        <label class="form-label" for="id_password">Password</label>
+                        <div class="input-group">
+                          <input class="form-control" id="id_password" type="password" name="password" placeholder="Password" required />
+                          <button class="btn btn-outline-secondary" type="button" id="togglePassword"><i class="fas fa-eye"></i></button>
+                        </div>
+                      </div>
+
+                      <script>
+                        document.getElementById('togglePassword').addEventListener('click', function () {
+                          var passwordInput = document.getElementById('id_password')
+                          var icon = this.querySelector('i')
+                        
+                          if (passwordInput.type === 'password') {
+                            passwordInput.type = 'text'
+                            icon.classList.remove('fa-eye')
+                            icon.classList.add('fa-eye-slash')
+                          } else {
+                            passwordInput.type = 'password'
+                            icon.classList.remove('fa-eye-slash')
+                            icon.classList.add('fa-eye')
+                          }
+                        })
+                      </script>
+
+                      <!-- Remember Me & Forgot Password -->
+                      <div class="row flex-between-center">
+                        <div class="col-auto">
+                          <div class="form-check mb-0">
+                            <a href="{% url 'otp_reset' %}" class="small d-block mt-1">Forgot Password?</a>
+                          </div>
+                        </div>
+                        <div class="col-auto">
+                          <a href="{% url 'setup_password' %}" class="fs-10">Setup Password?</a>
+                        </div>
+                      </div>
+
+                      <!-- Login Button -->
+                      <div class="mb-3">
+                        <button type="submit" class="btn btn-primary d-block w-100 mt-3">Log in</button>
+                      </div>
+
+                      <!-- Divider -->
+                      <div class="position-relative mt-4">
+                        <hr />
+                        <div class="divider-content-center">or log in with</div>
+                      </div>
+
+                      <!-- Social Login Button -->
+                      <div class="row g-2">
+                        <div class="col-sm-12">
+                          <a href="{% provider_login_url 'microsoft' %}" class="btn btn-microsoft btn-user btn-block">
+                            <div class="microsoft-icon">
+                              <div class="square red"></div>
+                              <div class="square green"></div>
+                              <div class="square blue"></div>
+                              <div class="square yellow"></div>
+                            </div>Login with Office 365
+                          </a>
+                          {% comment %} <a href="{% provider_login_url 'google' %}" class="btn btn-warning btn-user btn-block">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48">
+                              <path fill="#4285F4" d="M24 9.5c3.4 0 6.3 1.2 8.6 3.4l6.4-6.4C34.9 2.2 30.1 0 24 0 14.9 0 7 5.3 3 13.1l7.9 6.1c1.9-5.6 7.1-9.7 13.1-9.7z" />
+                              <path fill="#34A853" d="M46.3 24.5c0-1.6-.1-3.1-.4-4.5H24v9.2h12.9c-.6 3-2.3 5.5-4.8 7.1l7.4 5.7c4.3-4 6.8-9.8 6.8-16.5z" />
+                              <path fill="#FBBC05" d="M10.8 28.2c-1-3-.9-6.2.1-9.1l-7.9-6.1c-3 6.1-3 13.4 0 19.5l7.8-6.3z" />
+                              <path fill="#EA4335" d="M24 48c6.5 0 12.1-2.1 16.2-5.8l-7.4-5.7c-2.1 1.4-4.8 2.2-7.7 2.2-6 0-11.2-3.9-13.1-9.7l-7.8 6.1C7 42.7 14.9 48 24 48z" />
+                            </svg>Continue with Google
+                          </a> {% endcomment %}
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- =============================================== -->
+    <!-- JavaScripts -->
+    <!-- =============================================== -->
+    <script src="{% static 'vendors/popper/popper.min.js' %}"></script>
+    <script src="{% static 'vendors/bootstrap/bootstrap.min.js' %}"></script>
+    <script src="{% static 'vendors/anchorjs/anchor.min.js' %}"></script>
+    <script src="{% static 'vendors/is/is.min.js' %}"></script>
+    <script src="{% static 'vendors/echarts/echarts.min.js' %}"></script>
+    <script src="{% static 'vendors/fontawesome/all.min.js' %}"></script>
+    <script src="{% static 'vendors/lodash/lodash.min.js' %}"></script>
+    <script src="{% static 'vendors/list.js/list.min.js' %}"></script>
+    <script src="{% static 'assets/js/theme.js' %}"></script>
+    <script src="{% static 'vendors/d3/d3.min.js' %}"></script>
+    <script src="{% static 'assets/data/world.js' %}"></script>
+    <script src="{% static 'vendors/fullcalendar/index.global.min.js' %}"></script>
+  </body>
+</html>

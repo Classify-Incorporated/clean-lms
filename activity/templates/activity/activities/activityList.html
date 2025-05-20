@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Activities for {{ subject.subject_name }}
+{% endblock %}
+
+{% block content %}
+
+    <!-- Content Header -->
+
+  <h1 class="h3 mb-3 text-gray-800">Activities for {{ subject.subject_name }}</h1>
+
+
+    <!-- Main content -->
+
+        <!-- Activities Table -->
+  <div class="card shadow mb-2">
+    <div class="card-header m-0 bg-success text-white fw-bold">Activities List</div>
+
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table mb-0 data-table fs-10 table-bordered" data-datatables="data-datatables">
+          <thead class="bg-primary">
+            <tr>
+              <th>#</th>
+              <th>Activity Name</th>
+              <th>Term</th>
+              <th>Start Time</th>
+              <th>End Time</th>
+              <th>Show Score</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody class="text-center">
+            {% for activity in activities %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td><a href="{% url 'list_activity_questions' activity.id %}">{{ activity.activity_name }}</a></td>
+                <td>{{ activity.term.term_name }}</td>
+                <td>{{ activity.start_time|date:"d M Y, h:i A" }}</td>
+                <td>{{ activity.end_time|date:"d M Y, h:i A" }}</td>
+                <td class="text-center">
+                  <input type="checkbox" data-activity-id="{{ activity.id }}" class="show-score-checkbox" {% if activity.show_score %}checked{% endif %}>
+                </td>
+                <td class="align-middle white-space-nowrap text-end">
+                  <div class="font-sans-serif position-static d-inline-block">
+                    <button class="btn btn-link text-600 btn-sm dropdown-toggle btn-reveal d-inline-flex align-items-center" type="button" id="dropdown-admin-{{ activity.id }}" data-bs-toggle="dropdown" data-boundary="window" aria-haspopup="true" aria-expanded="false" data-bs-reference="parent"><span class="fas fa-ellipsis-h fs-10"></span></button>
+                    <div class="dropdown-menu dropdown-menu-end border py-2" aria-labelledby="dropdown-admin-{{ activity.id }}">
+                      <a class="dropdown-item" href="{% url 'UpdateActivity' activity.id %}"><i class="fas fa-edit"></i> Update</a>
+                      <form method="post" action="{% url 'deleteActivity' activity.id %}" class="delete-form d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="dropdown-item delete-btn" data-id="{{ activity.id }}">
+                          <i class="fas fa-trash"></i> Delete
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <a href="{% url 'subjectDetail' subject.id%}" class="btn btn-secondary mb-2">Back</a>
+
+
+  <!-- SweetAlert2 JavaScript -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <!-- jQuery and Ajax for toggle functionality -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      $('.show-score-checkbox').change(function() {
+        const activityId = $(this).data('activity-id');
+
+        $.ajax({
+          type: 'POST',
+          url: '{% url "toggleShowScore" 0 %}'.replace('0', activityId),
+          data: {
+            'csrfmiddlewaretoken': '{{ csrf_token }}',
+          },
+          success: function(response) {
+            if (response.success) {
+              console.log('Show score toggled to:', response.show_score);
+            } else {
+              console.error('Failed to toggle show score');
+            }
+          },
+          error: function(xhr, status, error) {
+            console.error('An error occurred:', error);
+          }
+        });
+      });
+
+      // Handle delete button click with SweetAlert
+      $('.delete-btn').on('click', function(event) {
+        event.preventDefault(); // Prevent immediate form submission
+
+        const form = $(this).closest('form'); // Get the form related to this delete button
+
+        Swal.fire({
+          title: "Are you sure?",
+          text: "You won't be able to revert this!",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#3085d6",
+          cancelButtonColor: "#d33",
+          confirmButtonText: "Yes, delete it!"
+        }).then((result) => {
+          if (result.isConfirmed) {
+            // Submit the form if confirmed
+            form.submit();
+          }
+        });
+      });
+    });
+  </script>
+{% endblock %}

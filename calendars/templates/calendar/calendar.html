@@ -1,0 +1,307 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+    Calendar
+{% endblock %}
+{% block content %}
+
+    <div class="card">
+        <div class="card-body">
+            <div class="card position-relative">
+                <div class="card-body position-relative">
+                    <div class="bg-holder position-absolute top-0 start-0 w-100 h-100" 
+                         style="background-image: url('{% static "assets/img/icons/spot-illustrations/corner-4.png" %}');
+                                background-size: cover;
+                                background-position: center;
+                                background-repeat: no-repeat;
+                                opacity: 0.7;
+                                z-index: 0;">
+                    </div> 
+                    <div id="calendar" class="position-relative" style="z-index: 1;"></div>
+                </div>
+            </div>            
+            <div id="calendar"></div>
+        </div>
+    </div>
+    {% if user_role == 'time keeper' %}
+  <!-- Modal for Adding/Editing Holidays -->
+        <div class="modal fade" id="addEventModal" tabindex="-1" role="dialog" aria-labelledby="addEventModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addEventModalLabel">Add/Edit Holiday</h5>
+                    </div>
+                    <div class="modal-body">
+                        <form id="eventForm">
+                            <input type="hidden" id="holidayId" name="id" />
+                            <div class="mb-3">
+                                <label for="eventTitle" class="form-label">Holiday Title</label>
+                                <input type="text" class="form-control" id="eventTitle" name="title" required />
+                            </div>
+                            <div class="mb-3">
+                                <label for="eventDate" class="form-label">Holiday Date</label>
+                                <input type="date" class="form-control" id="eventDate" name="date" required />
+                            </div>
+                            <div class="mb-3">
+                                <label for="holidayType" class="form-label">Holiday Type</label>
+                                <select class="form-control" id="holidayType" name="holiday_type" required>
+                                    <option value="Regular Holiday">Regular Holiday</option>
+                                    <option value="Special Holiday">Special Holiday</option>
+                                    <option value="Restday Regular Holiday">Restday Regular Holiday</option>
+                                    <option value="Restday Special Holiday">Restday Special Holiday</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="eventColor" class="form-label">Color</label>
+                                <input type="color" class="form-control form-control-color" id="eventColor" name="color" value="#ff0000" title="Choose a color" />
+                            </div>
+                            <button type="submit" class="btn btn-success">Save</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const csrfToken = getCSRFToken();
+
+            function getCSRFToken() {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== "") {
+                    const cookies = document.cookie.split(";");
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.startsWith("csrftoken=")) {
+                            cookieValue = decodeURIComponent(cookie.substring(10));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+
+        // Handle form submission for adding/updating holidays
+            document.getElementById("eventForm").addEventListener("submit", function (e) {
+                e.preventDefault();
+
+                Swal.fire({
+                    title: "Confirm Submission",
+                    text: "Do you want to save this holiday?",
+                    icon: "question",
+                    showCancelButton: true,
+                    confirmButtonText: "Yes, Save",
+                    cancelButtonText: "Cancel",
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const id = document.getElementById("holidayId").value;
+                        const title = document.getElementById("eventTitle").value;
+                        const date = document.getElementById("eventDate").value;
+                        const holidayType = document.getElementById("holidayType").value;
+                        const color = document.getElementById("eventColor").value;
+
+                        const method = id ? "PUT" : "POST";
+                        const url = "/api/holidays/";
+
+                        fetch(url, {
+                            method: method,
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRFToken": csrfToken,
+                            },
+                            body: JSON.stringify({
+                                id: id,
+                                title: title,
+                                date: date,
+                                holiday_type: holidayType,
+                                color: color,
+                            }),
+                        })
+                            .then((response) => response.json())
+                            .then((data) => {
+                                Swal.fire({
+                                    title: "Success!",
+                                    text: "Holiday saved successfully.",
+                                    icon: "success",
+                                    timer: 2000,
+                                    showConfirmButton: false,
+                                }).then(() => {
+                                    window.location.reload();
+                                });
+                            })
+                            .catch((error) => {
+                                Swal.fire({
+                                    title: "Error!",
+                                    text: "Failed to save holiday.",
+                                    icon: "error",
+                                });
+                            });
+                    }
+                });
+            });
+
+            function closeModal() {
+                const modal = document.getElementById("addEventModal");
+                modal.style.display = "none";
+                modal.classList.remove("show");
+                document.body.classList.remove("modal-open");
+                const backdrop = document.querySelector(".modal-backdrop");
+                if (backdrop) {
+                    backdrop.parentNode.removeChild(backdrop);
+                }
+            }
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const userRole = "{{ user_role }}";
+            const calendarEl = document.getElementById("calendar");
+        
+            // Fetch calendar data from API
+            fetch("/calendar_api/")
+                .then((response) => response.json())
+                .then((calendarData) => {
+                    const now = new Date();
+        
+                    // Define pastel colors for different event types
+                    const eventColors = {
+                        "activity": { background: "#A7C7E7", border: "#87AFC7", text: "#333" },  // Pastel Blue
+                        "holiday": { background: "#B5EAD7", border: "#91D9B6", text: "#333" },  // Pastel Green
+                        "event": { background: "#FFE7A7", border: "#FFD580", text: "#333" },  // Pastel Yellow
+                        "announcement": { background: "#F7B2B7", border: "#E69B9E", text: "#333" }  // Pastel Red
+                    };
+        
+                    // Function to truncate long text and add a tooltip
+                    function getShortenedTitle(title) {
+                        let maxLength = 15; // Limit displayed text length
+                        if (title.length > maxLength) {
+                            return `<span class="event-tooltip" data-bs-toggle="tooltip" title="${title}">
+                                        ${title.substring(0, maxLength)}...
+                                    </span>`;
+                        }
+                        return title;
+                    }
+        
+                    // Map calendar data based on type
+                    const events = calendarData.map((item) => {
+                        let classNames = [];
+                        if (item.type === "activity") {
+                            const start = new Date(item.start);
+                            const end = item.end ? new Date(item.end) : null;
+                            if (end && now > end) {
+                                classNames = ["fc-event-finished"];
+                            } else if (start > now) {
+                                classNames = ["fc-event-upcoming"];
+                            } else if (start <= now && (!end || now <= end)) {
+                                classNames = item.answered ? ["fc-event-answered"] : ["fc-event-ongoing"];
+                            }
+                        }
+        
+                        let formattedStart = item.start;
+                        let formattedEnd = item.end || null;
+        
+                        if (item.type === "event" && item.event_time) {
+                            formattedStart = `${item.date}T${item.event_time}`;
+                            formattedEnd = `${item.date}T${item.event_time}`;
+                        }
+        
+                        return {
+                            id: item.id,
+                            title: item.title,
+                            start: formattedStart,
+                            end: formattedEnd,
+                            allDay: item.allDay || false,
+                            display: item.type === "announcement" ? "list-item" : "auto",
+                            classNames: classNames,
+                            backgroundColor: item.backgroundColor || eventColors[item.type]?.background || "#E0E0E0",
+                            borderColor: item.borderColor || eventColors[item.type]?.border || "#B0B0B0",
+                            textColor: eventColors[item.type]?.text || "#333",
+                            extendedProps: { type: item.type, holiday_type: item.holiday_type}
+                        };
+                    });
+        
+                    // Initialize FullCalendar
+                    const calendar = new FullCalendar.Calendar(calendarEl, {
+                        initialView: "dayGridMonth",
+                        headerToolbar: {
+                            left: "prev,next today",
+                            center: "title",
+                            right: "dayGridMonth,listWeek",
+                        },
+                        selectable: true,
+                        events: events,
+                        eventTimeFormat: {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            meridiem: 'short' // Ensures AM/PM format
+                        },
+                        eventContent: function (arg) {
+                            // Custom rendering for announcements with pastel backgrounds and tooltips
+                            const bgColor = arg.event.backgroundColor;
+                            const textColor = arg.event.textColor || "#333"; // Ensure text is visible
+        
+                            return {
+                                html: `<span style="background-color: ${bgColor}; color: ${textColor}; 
+                                        font-weight: bold; padding: 3px 6px; border-radius: 4px;">
+                                        ${arg.timeText ? arg.timeText + " " : ""}${getShortenedTitle(arg.event.title)}
+                                       </span>`
+                            };
+                        },
+                        select: function (info) {
+                            if (userRole === "time keeper") {
+                                document.getElementById("eventDate").value = info.startStr;
+                                const addEventModal = new bootstrap.Modal(document.getElementById("addEventModal"));
+                                addEventModal.show();
+                            } else {
+                                Swal.fire({
+                                    title: "Access Denied!",
+                                    text: "You do not have permission to add or edit holidays.",
+                                    icon: "warning",
+                                });
+                            }
+                        },
+                        eventClick: function (info) {
+                            const eventId = info.event.id ? info.event.id.toString() : null;
+                            const eventType = info.event.extendedProps.type;
+                        
+                            if (!eventId) {
+                                console.error("Invalid event ID:", info.event.id);
+                                return;
+                            }
+                        
+                            if (eventType === "activity") {
+                                const id = eventId.split("-")[1];
+                                window.location.href = `/studentActivityView/${id}/`;
+                            }
+                        
+                            // ✅ NEW: Handle holiday edit
+                            else if (eventType === "holiday" && userRole === "time keeper") {
+                                const modal = new bootstrap.Modal(document.getElementById("addEventModal"));
+                                modal.show();
+                        
+                                // Pre-fill the modal form with event data
+                                document.getElementById("holidayId").value = eventId.replace("holiday-", "");
+                                document.getElementById("eventTitle").value = info.event.title;
+                                document.getElementById("eventDate").value = info.event.startStr;
+                                document.getElementById("holidayType").value = info.event.extendedProps.holiday_type || "Regular Holiday";
+                                document.getElementById("eventColor").value = info.event.backgroundColor;
+                            }
+                        }                        
+                    });
+        
+                    calendar.render();
+        
+                    // Activate Bootstrap tooltips after rendering events
+                    setTimeout(() => {
+                        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                        tooltipTriggerList.forEach((tooltipEl) => {
+                            new bootstrap.Tooltip(tooltipEl);
+                        });
+                    }, 500);
+                })
+                .catch((error) => console.error("Error fetching calendar data:", error));
+        });        
+    </script>
+{% endblock %}

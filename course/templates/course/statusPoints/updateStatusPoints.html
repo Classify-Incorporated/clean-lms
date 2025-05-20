@@ -1,0 +1,5 @@
+<form method="post" action="{% url 'updatePoints' status_points.id %}">
+    {% csrf_token %}
+    {{ form.as_p }}  <!-- This will render the status field if it's in the form definition -->
+    <button type="submit" class="btn btn-primary">Save Points</button>
+</form>

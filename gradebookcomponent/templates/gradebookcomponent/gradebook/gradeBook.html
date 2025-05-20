@@ -1,0 +1,659 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+  GradeBook and TermBook
+{% endblock %}
+{% block content %}
+  <style>
+  /* Improve Accordion Appearance */
+    .accordion-button {
+      font-weight: bold;
+      transition: background-color 0.3s ease-in-out;
+    }
+
+    .accordion-button:hover {
+      background-color:rgb(180, 180, 180);
+    }
+
+    .accordion-item {
+      border: none;
+      margin-bottom: 8px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+/* Accordion Icon Animation */
+    .accordion-button .fas {
+      transition: transform 0.3s ease-in-out;
+    }
+
+    .accordion-button:not(.collapsed) .fas {
+      transform: rotate(180deg);
+    }
+
+/* Table Styling */
+    .table-hover tbody tr:hover {
+      background-color: rgba(0, 123, 255, 0.1);
+    }
+
+    .badge {
+      font-size: 14px;
+      padding: 5px 10px;
+    }
+
+  </style>
+    <!-- Content Header (Page header) -->
+  <div class="row mb-2">
+    <div class="col-sm-6">
+      <h3 class="m-0">TermBook</h3>
+    </div>
+  </div>
+
+     <!-- TermBook Section -->
+
+        <!-- TermBook Accordion -->
+  <div class="card shadow mb-4">
+    <div class="bg-holder d-none d-lg-block bg-card" 
+              style="background-image: url('{% static 'assets/img/icons/spot-illustrations/corner-3.png' %}');
+                      opacity: 0.7;
+                      pointer-events: none;">
+    </div>
+    <div class="card-header py-3">
+      <button class="btn btn-success" id="openTermBookAddModalBtn">Add Termbook</button>
+    </div>
+    <div class="card-body">
+      <div class="accordion" id="termBookAccordion">
+        {% for subject, termbooks in grouped_termbooks.items %}
+          <div class="accordion-item border rounded shadow-sm overflow-hidden">
+            <h2 class="accordion-header" id="termHeading{{ forloop.counter }}">
+              <button class="accordion-button collapsed d-flex justify-content-between align-items-center"
+                      type="button"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#termCollapse{{ forloop.counter }}"
+                      aria-expanded="false"
+                      aria-controls="termCollapse{{ forloop.counter }}">
+                <div>
+                  <strong>{{ subject }}</strong>
+                  <small class="ms-3 text-muted">(Click to expand)</small>
+                  <span class="badge bg-warning ms-3">{{ termbooks|length }} Terms</span>
+                </div>
+              </button>
+            </h2>
+
+            <div id="termCollapse{{ forloop.counter }}"
+                 class="accordion-collapse collapse"
+                 aria-labelledby="termHeading{{ forloop.counter }}"
+                 data-bs-parent="#termBookAccordion">
+              <div class="accordion-body rounded border">
+                <div class="table-responsive">
+                  <table class="table mb-0 data-table table-hover table-bordered fs-10" data-datatables="data-datatables">
+                    <thead class="bg-primary">
+                      <tr>
+                        <th>Term</th>
+                        <th>Percentage</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody class="text-center">
+                      {% for termbook in termbooks %}
+                        <tr>
+                          <td>{{ termbook.term.term_name }}</td>
+                          <td>{{ termbook.percentage|floatformat:0 }}%</td>
+                          <td class="align-middle white-space-nowrap text-end">
+                            <div class="font-sans-serif position-static d-inline-block">
+                              <button class="btn btn-link text-600 btn-sm dropdown-toggle btn-reveal d-inline-flex align-items-center border-0" type="button" id="dropdown-admin-{{ admin_and_staff.id }}" data-bs-toggle="dropdown" data-boundary="window" aria-haspopup="true" aria-expanded="false" data-bs-reference="parent"><span class="fas fa-ellipsis-h fs-10"></span></button>
+                              <div class="dropdown-menu dropdown-menu-end border py-2" aria-labelledby="dropdown-admin-{{ admin_and_staff.id }}">
+                                <a class="dropdown-item" href="javascript:void(0);" onclick="openTermBookViewModal({{ termbook.id }})"><i class="fas fa-eye"></i> View</a>
+                                <a class="dropdown-item" href="javascript:void(0);" onclick="openTermBookEditModal({{ termbook.id }})"><i class="fas fa-edit"></i> Update</a>
+                                <a class="dropdown-item" href="javascript:void(0);" onclick="confirmTermBookDelete({{ termbook.id }})"><i class="fas fa-trash"></i> Delete</a>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+    </div>
+  </div>
+
+  <div class="row mb-2">
+    <div class="col-sm-6">
+      <h3 class="m-0">GradeBook</h3>
+    </div>
+  </div>
+
+        <!-- GradeBook Accordion -->
+  <div class="card shadow mb-4">
+    <div class="bg-holder d-none d-lg-block bg-card" 
+              style="background-image: url('{% static 'assets/img/icons/spot-illustrations/corner-3.png' %}');
+                      opacity: 0.7;
+                      pointer-events: none;">
+          </div>
+    <div class="card-header py-3">
+      <button class="btn btn-success mb-2" id="openGradeBookAddModalBtn">Add Gradebook</button>
+      <button class="btn btn-secondary mb-2" id="openCopyModalBtn">Copy Gradebook</button>
+      <a href="{% url 'statusPointsList' %}" class="btn btn-secondary mb-2">Attendance Status Points</a>
+      <button class="btn btn-danger mb-2" id="deleteSelectedBtn">Delete Selected</button>
+    </div>
+    <div class="card-body">
+      <div class="accordion" id="gradeBookAccordion">
+        {% for subject, components in grouped_components.items %}
+          <div class="accordion-item border rounded shadow-sm overflow-hidden">
+            <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+              <button class="accordion-button collapsed d-flex justify-content-between align-items-center"
+                      type="button"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#collapse{{ forloop.counter }}"
+                      aria-expanded="false"
+                      aria-controls="collapse{{ forloop.counter }}">
+                <div>
+                  <strong>{{ subject }}</strong>
+                  <small class="ms-3 text-muted">(Click to expand)</small>
+                  <span class="badge bg-warning ms-3">{{ components|length }} Components</span>
+                </div>
+              </button>
+            </h2>
+
+            <div id="collapse{{ forloop.counter }}"
+                 class="accordion-collapse collapse"
+                 aria-labelledby="heading{{ forloop.counter }}"
+                 data-bs-parent="#gradeBookAccordion">
+              <div class="accordion-body rounded">
+                <div class="table-responsive">
+                  <table class="table mb-0 data-table table-hover table-bordered fs-10" data-datatables="data-datatables">
+                    <thead>
+                      <tr>
+                        <th><input type="checkbox" class="selectAllCheckbox" data-target="checkbox-group-{{ forloop.counters }}"></th>
+                        <th>Term</th>
+                        <th>Activity Name</th>
+                        <th>Gradebook Name</th>
+                        <th>Percentage</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody class="text-center checkbox-group-{{ forloop.counter }}">
+                      {% for gradebookcomponent in components %}
+                        <tr>
+                          <td><input type="checkbox" class="selectCheckbox" value="{{ gradebookcomponent.id }}"></td>
+                          <td>{{ gradebookcomponent.term.term_name }}</td>
+                          <td>{{ gradebookcomponent.activity_type|default:"Attendance" }}</td>
+                          <td>{{ gradebookcomponent.gradebook_name }}</td>
+                          <td>{{ gradebookcomponent.percentage|floatformat:0 }}%</td>
+                          <td class="align-middle white-space-nowrap text-end">
+                            <div class="font-sans-serif position-static d-inline-block">
+                              <button class="btn btn-link text-600 btn-sm dropdown-toggle btn-reveal d-inline-flex align-items-center" type="button" id="dropdown-admin-{{ admin_and_staff.id }}" data-bs-toggle="dropdown" data-boundary="window" aria-haspopup="true" aria-expanded="false" data-bs-reference="parent"><span class="fas fa-ellipsis-h fs-10"></span></button>
+                              <div class="dropdown-menu dropdown-menu-end border py-2" aria-labelledby="dropdown-admin-{{ admin_and_staff.id }}">
+                                <a class="dropdown-item" href="javascript:void(0);" onclick="openGradeBookEditModal({{ gradebookcomponent.id }})"><i class="fas fa-edit"></i> Update</a>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+
+        <!-- GradeBook Modals -->
+    <div id="gradeBookAddModal" class="custom-modal">
+      <div class="custom-modal-header">
+        <button class="close-btn" id="closeGradeBookAddModalBtn"></button>
+        <h5>Add GradeBook</h5>
+      </div>
+      <div class="custom-modal-body" id="gradeBookAddModalBody"></div>
+    </div>
+
+    <div id="gradeBookEditModal" class="custom-modal">
+      <div class="custom-modal-header">
+        <button class="close-btn" id="closeGradeBookEditModalBtn"></button>
+        <h5>Edit GradeBook</h5>
+      </div>
+      <div class="custom-modal-body" id="gradeBookEditModalBody"></div>
+    </div>
+
+    <div id="copyModal" class="custom-modal">
+      <div class="custom-modal-header">
+        <button class="close-btn" id="closeCopyModalBtn"></button>
+        <h5>Copy GradeBook</h5>
+      </div>
+      <div class="custom-modal-body" id="copyModalBody">
+            <!-- The content will be loaded dynamically here -->
+      </div>
+    </div>
+    <div id="copyModalBackdrop" class="custom-modal-backdrop"></div>
+
+
+        <!-- TermBook Modals -->
+    <div id="termBookAddModal" class="custom-modal">
+      <div class="custom-modal-header">
+        <button class="close-btn" id="closeTermBookAddModalBtn"></button>
+        <h5>Add Termbook</h5>
+      </div>
+      <div class="custom-modal-body" id="termBookAddModalBody"></div>
+    </div>
+    <div id="termBookEditModal" class="custom-modal">
+      <div class="custom-modal-header">
+        <button class="close-btn" id="closeTermBookEditModalBtn"></button>
+        <h5>Edit Termbook</h5>
+      </div>
+      <div class="custom-modal-body" id="termBookEditModalBody"></div>
+    </div>
+    <div id="termBookViewModal" class="custom-modal">
+      <div class="custom-modal-header">
+        <button class="close-btn" id="closeTermBookViewModalBtn"></button>
+        <h5>View Termbook</h5>
+      </div>
+      <div class="custom-modal-body" id="termBookViewModalBody"></div>
+    </div>
+  </div>
+
+  <!-- JavaScript for Delete Selected Functionality -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const deleteSelectedBtn = document.getElementById("deleteSelectedBtn");
+
+    // Add event listener to the delete selected button
+      deleteSelectedBtn.addEventListener("click", function () {
+      // Collect all selected checkboxes
+        const selectedCheckboxes = document.querySelectorAll(".selectCheckbox:checked");
+        const selectedIds = Array.from(selectedCheckboxes)
+          .map(checkbox => checkbox.value)
+          .filter(id => !isNaN(id) && id.trim() !== "");
+
+        if (selectedIds.length === 0) {
+          Swal.fire("No items selected", "Please select at least one item to delete.", "warning");
+          return;
+        }
+
+      // Confirm deletion
+        Swal.fire({
+          title: 'Are you sure?',
+          text: "You won't be able to revert this!",
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Yes, delete them!'
+        }).then((result) => {
+          if (result.isConfirmed) {
+          // Send POST request to delete selected items
+            fetch("{% url 'delete_multiple_gradebookcomponents' %}", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie("csrftoken")
+              },
+              body: JSON.stringify({ ids: selectedIds })
+            })
+              .then(response => response.json())
+              .then(data => {
+                if (data.status === "success") {
+                  Swal.fire("Deleted!", data.message, "success");
+                  setTimeout(() => location.reload(), 2000); // Reload page after 2 seconds
+                }
+              })
+              .catch(error => console.error("Error:", error));
+          }
+        });
+      });
+
+    // Helper function to get CSRF token
+      function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+          const cookies = document.cookie.split(";");
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + "=")) {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      }
+    });
+  </script>
+
+  <!-- JavaScript for GradeBook and TermBook -->
+  <script>
+    // GradeBook Scripts
+    document.getElementById('openGradeBookAddModalBtn').addEventListener('click', function () {
+      fetch("{% url 'createGradeBookComponents' %}")
+        .then((response) => response.text())
+        .then((html) => {
+          document.getElementById('gradeBookAddModalBody').innerHTML = html;
+          document.getElementById('gradeBookAddModal').classList.add('show');
+          $('.selectpicker').selectpicker('refresh');
+
+          setupFormFieldsToggle();
+        });
+    });
+
+    // Function to setup toggle logic for attendance checkbox and activity type select
+    function setupFormFieldsToggle() {
+      const isAttendanceCheckbox = document.getElementById('id_is_attendance')
+      const activityTypeField = document.getElementById('activityTypeField')
+      const activityTypeSelect = document.getElementById('id_activity_type')
+
+      if (isAttendanceCheckbox && activityTypeSelect) {
+        function toggleFields() {
+          if (isAttendanceCheckbox.checked) {
+            // Hide the activity type field if "Is Attendance" is checked
+            activityTypeField.style.display = 'none'
+          } else {
+            // Show the activity type field if the checkbox is not checked
+            activityTypeField.style.display = 'block'
+          }
+
+          // Hide the attendance checkbox if an activity type is selected
+          if (activityTypeSelect.value) {
+            isAttendanceCheckbox.closest('.form-group').style.display = 'none'
+          } else {
+            // Show the attendance checkbox if no activity type is selected
+            isAttendanceCheckbox.closest('.form-group').style.display = 'block'
+          }
+        }
+
+        // Run toggleFields on page load
+        toggleFields();
+
+        // Add event listeners for change events
+        isAttendanceCheckbox.addEventListener('change', toggleFields)
+        activityTypeSelect.addEventListener('change', toggleFields)
+
+      }
+    }
+
+    document.getElementById('closeGradeBookAddModalBtn').addEventListener('click', function () {
+      document.getElementById('gradeBookAddModal').classList.remove('show');
+    });
+
+    function openGradeBookEditModal(id) {
+      fetch(`/updateGradeBookComponents/${id}/`)
+        .then((response) => response.text())
+        .then((html) => {
+          document.getElementById('gradeBookEditModalBody').innerHTML = html;
+          document.getElementById('gradeBookEditModal').classList.add('show');
+          $('.selectpicker').selectpicker('refresh');
+
+          // Initialize the toggle function for the dynamically loaded content
+          setupFormFieldsToggle();
+        });
+    }
+
+    // Close Edit GradeBook Modal
+    document.getElementById('closeGradeBookEditModalBtn').addEventListener('click', function () {
+      document.getElementById('gradeBookEditModal').classList.remove('show')
+      document.getElementById('editModalBackdrop').classList.remove('show')
+    })
+
+    // Open Copy GradeBook Modal and Load Form
+    document.getElementById('openCopyModalBtn').addEventListener('click', function () {
+      fetch("{% url 'copyGradeBookComponents' %}")
+        .then((response) => response.text())
+        .then((html) => {
+          document.getElementById('copyModalBody').innerHTML = html
+          document.getElementById('copyModal').classList.add('show')
+          document.getElementById('copyModalBackdrop').classList.add('show')
+          $('.selectpicker').selectpicker('refresh') // Initialize or refresh selectpicker
+
+      // Add the event listener after the content is loaded
+          const semesterDropdown = document.getElementById("id_source_semester");
+          if (semesterDropdown) {
+            semesterDropdown.addEventListener("change", function() {
+              const semesterId = this.value;
+
+              console.log(`Selected semester ID: ${semesterId}`);  // Debug statement
+
+              fetch(`/get-terms/${semesterId}/`)
+                .then(response => {
+                  console.log(`Response status: ${response.status}`);  // Debug statement
+                  return response.json();
+                })
+                .then(data => {
+                  console.log("Fetched data:", data);  // Debug statement
+
+                  const termSelect = document.getElementById("id_term");
+                  termSelect.innerHTML = data.terms.map(term => `<option value="${term.id}">${term.term_name}</option>`).join("");
+
+                  const subjectSelect = document.getElementById("id_copy_from_subject");
+                  subjectSelect.innerHTML = data.subjects.map(subject => `<option value="${subject.id}">${subject.subject_name}</option>`).join("");
+
+              // Refresh the selectpicker after updating options
+                  $('.selectpicker').selectpicker('refresh');
+                })
+                .catch(error => console.error("Error fetching terms and subjects:", error));
+            });
+          }
+
+
+          document.getElementById('closeGradeBookEditModalBtn').addEventListener('click', function () {
+            document.getElementById('gradeBookEditModal').classList.remove('show');
+          });
+
+        })
+    })
+
+    // Close Copy GradeBook Modal
+    document.getElementById('closeCopyModalBtn').addEventListener('click', function () {
+      document.getElementById('copyModal').classList.remove('show')
+      document.getElementById('copyModalBackdrop').classList.remove('show')
+    })
+
+    // Close Copy GradeBook Modal
+    document.getElementById('closeCopyModalBtn').addEventListener('click', function () {
+      document.getElementById('copyModal').classList.remove('show')
+      document.getElementById('copyModalBackdrop').classList.remove('show')
+    })
+
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          // Does this cookie string begin with the name we want?
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
+    const csrfToken = getCookie('csrftoken');
+
+    function confirmGradeBookDelete(id) {
+      Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, delete it!'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          fetch(`/deleteGradeBookComponents/${id}/`, {
+            method: 'POST',
+            headers: {
+              'X-CSRFToken': csrfToken
+            }
+          })
+            .then(response => response.json())
+            .then(data => {
+              if (data.status === 'success') {
+                displayToast(data.message, 'success');  // Show the success toast message
+                setTimeout(() => location.reload(), 2000);  // Delay the reload to show toast
+              }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+      });
+    }
+
+
+    // TermBook Scripts
+
+    document.getElementById('openTermBookAddModalBtn').addEventListener('click', function () {
+      fetch("{% url 'createTermGradeBookComponent' %}")  // Ensure this URL is correct in Django
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          return response.text();
+        })
+        .then(html => {
+          document.getElementById('termBookAddModalBody').innerHTML = html;
+          document.getElementById('termBookAddModal').classList.add('show');
+          $('.selectpicker').selectpicker('refresh');  // Ensure Select2 or Bootstrap Select is initialized
+        })
+        .catch(error => console.error("Error loading modal:", error));
+    });
+    
+
+    document.getElementById('closeTermBookAddModalBtn').addEventListener('click', function () {
+      document.getElementById('termBookAddModal').classList.remove('show');
+    });
+
+    function openTermBookEditModal(id) {
+      fetch(`/updateTermBookComponent/${id}/`)
+        .then((response) => response.text())
+        .then((html) => {
+          document.getElementById('termBookEditModalBody').innerHTML = html;
+          document.getElementById('termBookEditModal').classList.add('show');
+          $('.selectpicker').selectpicker();
+        });
+    }
+
+    document.getElementById('closeTermBookEditModalBtn').addEventListener('click', function () {
+      document.getElementById('termBookEditModal').classList.remove('show');
+    });
+
+    function openTermBookViewModal(id) {
+      fetch(`/viewTermBookComponent/${id}/`)
+        .then((response) => response.text())
+        .then((html) => {
+          document.getElementById('termBookViewModalBody').innerHTML = html;
+          document.getElementById('termBookViewModal').classList.add('show');
+        });
+    }
+
+    document.getElementById('closeTermBookViewModalBtn').addEventListener('click', function () {
+      document.getElementById('termBookViewModal').classList.remove('show');
+    });
+
+    function confirmTermBookDelete(id) {
+      Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, delete it!'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          fetch(`/deleteTermBookComponent/${id}/`, {
+            method: 'POST',
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": getCookie("csrftoken")  // Add CSRF token here
+            }
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error("CSRF token missing or invalid");
+            }
+            return response.json();
+          })
+          .then(data => {
+            Swal.fire("Deleted!", "Termbook has been deleted.", "success");
+            setTimeout(() => location.reload(), 2000);
+          })
+          .catch(error => console.error("Error:", error));
+        }
+      });
+    }
+  </script>
+
+  <!-- JavaScript for Select All and Delete Selected Functionality -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+    // Handle "Select All" functionality for each table
+      const selectAllCheckboxes = document.querySelectorAll(".selectAllCheckbox");
+
+      selectAllCheckboxes.forEach(selectAll => {
+        selectAll.addEventListener("change", function () {
+          const targetGroup = document.querySelectorAll(`.${this.dataset.target} .selectCheckbox`);
+          targetGroup.forEach(checkbox => {
+            checkbox.checked = this.checked;
+          });
+        });
+      });
+
+    // Delete Selected functionality
+      const deleteSelectedBtn = document.getElementById("deleteSelectedBtn");
+      deleteSelectedBtn.addEventListener("click", function () {
+        const selectedCheckboxes = document.querySelectorAll(".selectCheckbox:checked");
+        const selectedIds = Array.from(selectedCheckboxes).map(checkbox => checkbox.value);
+
+        if (selectedIds.length === 0) {
+          Swal.fire("No items selected", "Please select at least one item to delete.", "warning");
+          return;
+        }
+
+        Swal.fire({
+          title: 'Are you sure?',
+          text: "You won't be able to revert this!",
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Yes, delete them!'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            fetch("{% url 'delete_multiple_gradebookcomponents' %}", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie("csrftoken")
+              },
+              body: JSON.stringify({ ids: selectedIds })
+            })
+              .then(response => response.json())
+              .then(data => {
+                if (data.status === "success") {
+                  Swal.fire("Deleted!", data.message, "success");
+                  setTimeout(() => location.reload(), 2000); // Reload page after 2 seconds
+                }
+              })
+              .catch(error => console.error("Error:", error));
+          }
+        });
+      });
+    // Helper function to get CSRF token
+      function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+          const cookies = document.cookie.split(";");
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + "=")) {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      }
+    });
+  </script>
+{% endblock %}

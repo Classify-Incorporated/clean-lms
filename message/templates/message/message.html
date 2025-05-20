@@ -1,0 +1,83 @@
+<div id="sendMessageModal" class="custom-modal">
+  <div class="custom-modal-header">
+    <button class="close-btn" id="closeSendMessageModalBtn"></button>
+    <h5>Send Message</h5>
+  </div>
+
+  <div class="custom-modal-body">
+    <form id="messageForm" method="post" action="{% url 'send_message' %}" class="needs-validation" novalidate>
+      {% csrf_token %}
+
+      <!-- Recipient Select with Select2 -->
+      <div class="tab-content">
+        <div class="tab-pane preview-tab-pane active" role="tabpanel">
+          <label for="recipient_id">To:</label>
+          <select id="recipient_id" name="recipient_id" class="form-select select2" multiple data-options='{"removeItemButton":true,"placeholder":true}'>
+            {% for friend in friends %}
+              <option value="{{ friend.id }}">{{ friend.name }}</option>
+            {% endfor %}
+          </select>
+          <div class="invalid-feedback">Please select at least one recipient.</div>
+        </div>
+      </div>
+
+      <!-- Subject Input -->
+      <div class="form-group">
+        <label for="subject">Subject:</label>
+        <input type="text" id="subject" name="subject" class="form-control" required />
+        <div class="invalid-feedback">Please provide a subject.</div>
+      </div>
+
+      <!-- Message Body Input (TinyMCE) -->
+      <div class="form-group">
+        <label for="body">Body:</label>
+        <textarea id="body" name="body" class="form-control tinymce" required></textarea>
+        <div class="invalid-feedback">Please provide a message body.</div>
+      </div>
+
+      <button type="submit" class="btn btn-primary mt-2">Send</button>
+    </form>
+  </div>
+</div>
+
+<!-- JavaScript for TinyMCE and Select2 -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // Initialize TinyMCE
+    tinymce.init({
+      selector: 'textarea.tinymce',
+      menubar: false,
+      plugins: 'lists link code',
+      toolbar: 'bold italic | alignleft aligncenter alignright | bullist numlist | link code',
+      setup: function (editor) {
+        editor.on('change', function () {
+          editor.save() // Ensures the content is saved to textarea
+        })
+      }
+    })
+  
+    // Initialize Select2
+    $('#recipient_id').select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Select Friend',
+      allowClear: true,
+      width: '100%',
+      dropdownParent: $('#sendMessageModal'),
+      multiple: true
+    })
+  
+    // Handle form submission to fix the double-click issue
+    document.getElementById('messageForm').addEventListener('submit', function (event) {
+      event.preventDefault() // Prevent default for debugging
+  
+      tinyMCE.triggerSave() // Ensure TinyMCE saves content to textarea
+      const form = this
+  
+      if (form.checkValidity()) {
+        form.submit() // Submit only if form is valid
+      } else {
+        form.classList.add('was-validated') // Show validation messages
+      }
+    })
+  })
+</script>

@@ -327,7 +327,7 @@
               </div>
             </a>
             <ul class="nav collapse" id="coilProgram">
-              {% if user|has_perm:'subject.view_subject' and user.profile.role.name|lower != 'registrar' %}
+              {% if user|has_perm:'subject.view_subject' %}
                 <li class="nav-item">
                   <a class="nav-link" href="{% url 'coil_subjectList' %}">
                     <div class="d-flex align-items-center">
@@ -364,7 +364,7 @@
               </div>
             </a>
             <ul class="nav collapse" id="haliProgram">
-              {% if user|has_perm:'subject.view_subject' and user.profile.role.name|lower != 'registrar' %}
+              {% if user|has_perm:'subject.view_subject' %}
                 <li class="nav-item">
                   <a class="nav-link" href="{% url 'hali_subjectList' %}">
                     <div class="d-flex align-items-center">

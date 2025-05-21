@@ -33,14 +33,14 @@ def register_coil_school(request):
 
 def verify_school(request, school_id):
     school = get_object_or_404(CoilPartnerSchool, id=school_id)
-    school.status = 'verified'
+    school.status = 'Partner'
     school.save()
-    messages.success(request, f"{school.school_name} has been verified.")
+    messages.success(request, f"{school.school_name} has been Partner.")
     return redirect('coil_school_list')
 
 def reject_school(request, school_id):
     school = get_object_or_404(CoilPartnerSchool, id=school_id)
-    school.status = 'rejected'
+    school.status = 'Rejected'
     school.save()
     messages.warning(request, f"{school.school_name} has been rejected.")
     return redirect('coil_school_list')
@@ -53,6 +53,9 @@ def send_school_invite(request):
     if not school:
         messages.error(request, "School not found.")
         return redirect('coil_school_list')
+    
+    school.status = 'Pending Acceptance'
+    school.save()
 
     invite_url = request.build_absolute_uri(
         reverse('accept_school_invite', args=[str(school.invite_token)])

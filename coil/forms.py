@@ -16,8 +16,8 @@ class CoilPartnerSchoolRegistrationForm(forms.ModelForm):
 class CoilSchoolInviteUpdateForm(forms.ModelForm):
 
     STATUS_CHOICES = [
-        ('verified', 'Accept'),
-        ('rejected', 'Decline'),
+        ('Partner', 'Accept'),
+        ('Rejected', 'Decline'),
     ]
 
     status = forms.ChoiceField(

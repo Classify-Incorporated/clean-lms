@@ -40,6 +40,33 @@ from django.urls import reverse
 from coil.utils import get_partner_school_by_email
 from django.core.mail import send_mail
 from django.conf import settings
+from .serializers import SubjectEnrollmentSerializers
+from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
+
+class CustomPagination(PageNumberPagination):
+    page_size = 10  # You can change this to your preferred page size
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+
+class EnrolledStudentList(viewsets.ReadOnlyModelViewSet):
+    queryset = SubjectEnrollment.objects.all()  
+    serializer_class = SubjectEnrollmentSerializers
+    pagination_class = CustomPagination
+
+    def get_queryset(self):
+        enrollments = SubjectEnrollment.objects.filter(
+            student__profile__is_coil_user=True,
+            subject__isnull=False
+        ).filter(
+            Q(subject__is_coil=True) | Q(subject__is_hali=True)
+        ).select_related('student__profile', 'subject', 'semester')
+
+        # 🧠 Group by unique student using dictionary trick
+        unique_students = {enrollment.student.id: enrollment for enrollment in enrollments}
+        return list(unique_students.values())
+
 
 @method_decorator(login_required, name='dispatch')
 class enrollStudentView(View):

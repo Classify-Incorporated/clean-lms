@@ -1,7 +1,12 @@
-from django.urls import path
+from django.urls import path, include
 from .views import *
+from rest_framework.routers import DefaultRouter
+
+router = DefaultRouter()
+router.register(r'enrolled_student_list', EnrolledStudentList, basename='enrolled_student_list')
 
 urlpatterns = [
+     path('api/', include(router.urls)),
     #enrolled student
     path('enrollStudent/', enrollStudent, name='enrollStudent'),
     path('enrollStudentView/', enrollStudentView.as_view(), name='enrollStudentView'),

@@ -5,15 +5,16 @@ import uuid
 
 class CoilPartnerSchool(models.Model):
     STATUS_CHOICES = [
-        ('pending', 'Pending Verification'),
-        ('verified', 'Verified'),
-        ('rejected', 'Rejected'),
+        ('Pending Acceptance', 'Pending Acceptance'),
+        ('Partner', 'Partner'),
+        ('Rejected', 'Rejected'),
+        ('Send Invite', 'Send Invite'),
     ]
 
     school_name = models.CharField(max_length=255)
     school_domain = models.CharField(max_length=255, help_text="e.g. hccci.edu.ph")
     student_participating = models.PositiveIntegerField(default=0)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Send Invite')
     location = models.CharField(max_length=255, null=True, blank=True)
     contact_person = models.CharField(max_length=255, null=True, blank=True)
     contact_number = models.CharField(max_length=20, null=True, blank=True)

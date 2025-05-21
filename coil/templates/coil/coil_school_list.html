@@ -19,9 +19,8 @@
               <th>#</th>
               <th>School Name</th>
               <th>School Domain</th>
-              <th>Student Participating</th>
+              <th>Number of Student</th>
               <th>Status</th>
-              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -31,48 +30,24 @@
                   <td>{{ school.school_name }}</td>
                   <td>{{ school.school_domain|default:"--" }}</td>
                   <td>{{ school.student_participating|default:"--" }}</td>
-                  <td>
-                    {% if school.status == "verified" %}
-                      <span class="badge bg-success text-white text-capitalize">{{ school.status }}</span>
-                    {% elif school.status == "pending" %}
-                      <span class="badge bg-warning text-dark text-capitalize">{{ school.status }}</span>
-                    {% elif school.status == "rejected" %}
-                      <span class="badge bg-danger text-white text-capitalize">{{ school.status }}</span>
+                  <td class="align-middle white-space-nowrap text-end">
+                    {% if school.status == "Pending Acceptance" %}
+                      <span class="badge bg-warning text-dark">Pending Acceptance</span>
+                    {% elif school.status == "Partner" %}
+                      <span class="badge bg-success text-white">Partner</span>
+                    {% elif school.status == "Rejected" %}
+                      <span class="badge bg-danger text-white">Rejected</span>
                     {% else %}
-                      <span class="badge bg-secondary text-white">--</span>
+                      <!-- Show Send Invite button only if not yet invited -->
+                      <form method="POST" action="{% url 'send_school_invite' %}" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="school_email" value="{{ school.school_email }}">
+                        <button type="submit" class="btn btn-sm btn-primary">
+                          <i class="fas fa-envelope"></i> Send Invite
+                        </button>
+                      </form>
                     {% endif %}
                   </td>
-                  <td class="align-middle white-space-nowrap text-end">
-                    <div class="font-sans-serif position-static d-inline-block">
-                      <button class="btn btn-link text-600 btn-sm dropdown-toggle btn-reveal d-inline-flex align-items-center"
-                              type="button" id="dropdown-admin-{{ school.id }}"
-                              data-bs-toggle="dropdown" data-boundary="window"
-                              aria-haspopup="true" aria-expanded="false"
-                              data-bs-reference="parent">
-                        <span class="fas fa-ellipsis-h fs-10"></span>
-                      </button>
-                      <div class="dropdown-menu dropdown-menu-end border py-2" aria-labelledby="dropdown-admin-{{ school.id }}">
-                        {% if school.status != 'verified' %}
-                          <a href="{% url 'verify_school' school.id %}" class="dropdown-item text-success">
-                            <i class="fas fa-check-circle"></i> Verify
-                          </a>
-                          {% if school.status != 'rejected' %}
-                            <a href="{% url 'reject_school' school.id %}" class="dropdown-item text-danger">
-                              <i class="fas fa-times-circle"></i> Reject
-                            </a>
-                          {% endif %}
-                        {% endif %}
-                  
-                        <form method="POST" action="{% url 'send_school_invite' %}" class="d-inline">
-                          {% csrf_token %}
-                          <input type="hidden" name="school_email" value="{{ school.school_email }}">
-                          <button type="submit" class="dropdown-item">
-                            <i class="fas fa-envelope"></i> Send Invite
-                          </button>
-                        </form>
-                      </div>
-                    </div>
-                  </td>                  
                 </tr>
               {% endfor %}
           </tbody>
